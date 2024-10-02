@@ -2552,7 +2552,7 @@ function powerpress_edit_post($post_ID, $post)
 
 				if( !$ContentType && !empty($Powerpress['url']) )
 				{
-					$error = __('Error', 'powerpress') ." [{$Powerpress['url']}]: " .__('Unable to determine content type of media (e.g. audio/mpeg). Verify file extension is correct and try again.', 'powerpress');
+					$error = __('Error', 'powerpress') ." [" . htmlspecialchars($Powerpress['url']) . "]: " .__('Unable to determine content type of media (e.g. audio/mpeg). Verify file extension is correct and try again.', 'powerpress');
 					powerpress_add_error($error);
 				}
 
@@ -2605,10 +2605,10 @@ function powerpress_edit_post($post_ID, $post)
                                     $MediaInfo = powerpress_get_media_info_local($MediaURL, $ContentType, 0, $Duration);
 
                                 if (isset($MediaInfo['error'])) {
-                                    $error = __('Error', 'powerpress') . " (<a href=\"$MediaURL\" target=\"_blank\">{$MediaURL}</a>): {$MediaInfo['error']}";
+                                    $error = __('Error', 'powerpress') . " (<a href=\"" . htmlspecialchars($MediaURL) . "\" target=\"_blank\">" . htmlspecialchars($MediaURL) . "</a>): {$MediaInfo['error']}";
                                     powerpress_add_error($error);
                                 } else if (empty($MediaInfo['length'])) {
-                                    $error = __('Error', 'powerpress') . " (<a href=\"$MediaURL\" target=\"_blank\">{$MediaURL}</a>): " . __('Unable to obtain size of media.', 'powerpress');
+                                    $error = __('Error', 'powerpress') . " (<a href=\"" . htmlspecialchars($MediaURL) . "\" target=\"_blank\">" . htmlspecialchars($MediaURL) . "</a>): " . __('Unable to obtain size of media.', 'powerpress');
                                     powerpress_add_error($error);
                                 } else {
                                     // Detect the duration
@@ -2626,6 +2626,7 @@ function powerpress_edit_post($post_ID, $post)
 
 				// If we made if this far, we have the content type and file size...
                 if (!empty($MediaURL)) {
+                    $MediaURL = str_replace(array('<', '>', '"', '\''), array('', '', '', ''), $MediaURL);
                     $EnclosureData = $MediaURL . "\n" . $FileSize . "\n" . $ContentType;
                 } else {
                     $EnclosureData = "no\n0\n0";
@@ -2635,7 +2636,7 @@ function powerpress_edit_post($post_ID, $post)
                     $AltEnclosureData = array();
                     foreach ($Powerpress['alternate_enclosure'] as $alt_idx => $alt_enclosure_data) {
                         // Initialize the important variables:
-                        $MediaURL = $alt_enclosure_data['url'];
+                        $MediaURL = str_replace(array('<', '>', '"', '\''), array('', '', '', ''), $alt_enclosure_data['url']);
                         if( !empty($GeneralSettings['default_url']) && strpos($MediaURL, 'http://') !== 0 && strpos($MediaURL, 'https://') !== 0 && empty($Powerpress['hosting']) ) // If the url entered does not start with a http:// or https://
                         {
                             if( !empty($MediaURL) )
@@ -2998,7 +2999,7 @@ function powerpress_edit_post($post_ID, $post)
                         if (strpos($Powerpress['pci_transcript_url'], 'http') !== 0) {
                             powerpress_add_error(__('Transcript Error: Transcript should be a link, starting with http.', 'powerpress'));
                         } else {
-                            $ToSerialize['pci_transcript_url'] = stripslashes($Powerpress['pci_transcript_url']);
+                            $ToSerialize['pci_transcript_url'] = str_replace(array('<', '>', '"', '\''), array('', '', '', ''), stripslashes($Powerpress['pci_transcript_url']));
                         }
                     }
                     if (isset($Powerpress['pci_transcript_language']) && trim($Powerpress['pci_transcript_language']) != '') {
@@ -3169,12 +3170,12 @@ function powerpress_edit_post($post_ID, $post)
 					$MediaInfo = powerpress_get_media_info_local($WebMSrc, 'video/webm', 0, '');
 					if( isset($MediaInfo['error']) )
 					{
-						$error = __('Error', 'powerpress') ." ({$WebMSrc}): {$MediaInfo['error']}";
+						$error = __('Error', 'powerpress') ." (" . htmlspecialchars($WebMSrc) . "): {$MediaInfo['error']}";
 						powerpress_add_error($error);
 					}
 					else if( empty($MediaInfo['length']) )
 					{
-						$error = __('Error', 'powerpress') ." ({$WebMSrc}): ". __('Unable to obtain size of media.', 'powerpress');
+						$error = __('Error', 'powerpress') ." (" . htmlspecialchars($WebMSrc) . "): ". __('Unable to obtain size of media.', 'powerpress');
 						powerpress_add_error($error);
 					}
 					else
@@ -5054,7 +5055,7 @@ function powerpress_process_hosting($post_ID, $post_title)
                         $error = __('Blubrry Hosting Error (media info)', 'powerpress') . ': ' . $results['error'];
                         powerpress_add_error($error);
                     } else {
-                        $error = sprintf(__('Blubrry Hosting Error (media info): An error occurred publishing media %s.', 'powerpress'), $EnclosureURL);
+                        $error = sprintf(__('Blubrry Hosting Error (media info): An error occurred publishing media %s.', 'powerpress'), htmlspecialchars($EnclosureURL));
                         $error .= ' ';
                         $rand_id = rand(100, 2000);
                         $error .= '<a href="#" onclick="document.getElementById(\'powerpress_error_' . $rand_id . '\');this.style.display=\'none\';return false;">' . __('Display Error', 'powerpress') . '</a>';
@@ -6128,12 +6129,12 @@ function powerpressadmin_community_news($items=4, $pp_settings=false)
 			if( $enclosure && !empty($enclosure->link) )
 			{
 				$poster_image = '';
-				$poster_tag = $item->get_item_tags('http://www.rawvoice.com/rawvoiceRssModule/', 'poster');
+				$poster_tag = $item->get_item_tags('https://blubrry.com/developer/rawvoice-rss/', 'poster');
 				if( $poster_tag && !empty($poster_tag[0]['attribs']['']['url']) )
 					$poster_image = $item->sanitize($poster_tag[0]['attribs']['']['url'], SIMPLEPIE_CONSTRUCT_TEXT);
 				
 				$embed = '';
-				$embed_tag = $item->get_item_tags('http://www.rawvoice.com/rawvoiceRssModule/', 'embed');
+				$embed_tag = $item->get_item_tags('https://blubrry.com/developer/rawvoice-rss/', 'embed');
 				if( $embed_tag && !empty($embed_tag[0]['data']) )
 					$embed = $embed_tag[0]['data'];
 				

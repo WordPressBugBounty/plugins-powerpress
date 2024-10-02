@@ -259,7 +259,7 @@ function episode_box_top($EnclosureURL, $FeedSlug, $ExtraData, $GeneralSettings,
                         onclick="showHideTranscriptBox('transcript', '<?php echo $FeedSlug; ?>');"/>
                     <?php echo esc_html(__('Edit transcript', 'powerpress')); ?>
                     <?php if (!empty($PCITranscriptURL)) { ?>
-                        - <a href="<?php echo $PCITranscriptURL ?>" title="Transcript Link" target="_blank"><?php echo $PCITranscriptURL; ?></a>
+                        - <a href="<?php echo htmlspecialchars($PCITranscriptURL); ?>" title="Transcript Link" target="_blank"><?php echo htmlspecialchars($PCITranscriptURL); ?></a>
                     <?php } ?>
                 </p>
             <?php } else { ?>
