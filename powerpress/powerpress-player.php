@@ -1713,6 +1713,11 @@ function powerpress_shortcode_skipto($attributes, $content = null)
 	} else if (isset($attributes['ts'])) {
 		$pos = $attributes['ts'];
 	}
+
+    // only allow digits and colons to prevent XSS
+    if (!preg_match('/^[\d:]+$/', $pos)) {
+        $pos = '';
+    }
 	
 	if( empty($pos) )
 		return $content;
