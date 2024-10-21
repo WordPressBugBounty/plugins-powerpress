@@ -175,7 +175,9 @@ function powerpress_admin_jquery_init()
             }
             $alt_enclosure_id_suffix = '';
             $alt_enclosure_query_string = '';
+            $alt_enclosure_link_num = false;
             if (isset($_GET['alternate_enclosure_idx'])) {
+                $alt_enclosure_link_num = intval($_GET['alternate_enclosure_idx']);
                 $alt_enclosure_id_suffix = '_alternate_' . intval($_GET['alternate_enclosure_idx']);
                 $alt_enclosure_query_string = '&altEnclosure=true';
             }
@@ -272,12 +274,24 @@ function powerpress_admin_jquery_init()
             else if( !is_array($results_programs) )
             {
                 $Error = $json_data_programs;
-            }
-            else {
+            } else {
+                // make sure programs is an array (Deprecated: Automatic conversion of false to array is deprecated)
+                if ($Programs === false) {
+                    $Programs = [];
+                }
+
                 // Get all the programs for this user...
                 foreach ($results_programs as $null => $row) {
-                    $Programs[$row['program_keyword']] = $row['program_title'];
+                    if (isset($row['program_keyword']) && isset($row['program_title'])) {
+                        $Programs[$row['program_keyword']] = $row['program_title'];
+                    }
                 }
+
+                // if we didnt get any programs make sure its false
+                if (empty($Programs)) {
+                    $Programs = false;
+                }
+
             }
 			powerpress_admin_jquery_header( __('Select Media', 'powerpress'), true );
             if( $Error ) {
@@ -334,9 +348,11 @@ window.addEventListener('message', function(event) {
       }
     }, false);
 
+// selecting an unpublished media file...
 function SelectMedia(File)
 {
-     let curr_keyword;
+    let curr_keyword;
+    let feedSlug = '<?php echo $FeedSlug; ?>';
     if (document.querySelector('#blubrry_program_keyword')) {
         // multi-program mode
         curr_keyword = document.querySelector('#blubrry_program_keyword').value;
@@ -346,47 +362,83 @@ function SelectMedia(File)
     }
     let fullMediaURL = 'https://media.blubrry.com/'+ curr_keyword +'/content.blubrry.com/' + curr_keyword + '/';
 
-	self.parent.document.getElementById('powerpress_hosting_<?php echo $FeedSlug; ?><?php echo $alt_enclosure_id_suffix; ?>').value='1';
+
+	// set the hosting input flag, for regular media id will just be 'powerpress_hosting_podcast'. for alt enclosure id will be 'powerpress_hosting_posting_alternate_NUM'
+    let powerpressHostingId = `powerpress_hosting_${feedSlug}`;
+    let altEnclosureIdSuffix = '<?php echo ($alt_enclosure_id_suffix ?: "");?>';
+    let altEnclosureHostingId = `${powerpressHostingId}${altEnclosureIdSuffix}`;
+    let alternateEnclosureLinkNum = '<?php echo $alt_enclosure_link_num; ?>';
+
+	self.parent.document.getElementById(altEnclosureHostingId).value='1';
 	self.parent.document.getElementById('powerpress_program_keyword_<?php echo $FeedSlug; ?><?php echo $alt_enclosure_id_suffix; ?>').value= document.querySelector('#blubrry_program_keyword').value;
     <?php if (empty($alt_enclosure_id_suffix)) { ?>
-	self.parent.document.getElementById('powerpress_url_<?php echo $FeedSlug; ?>').value= fullMediaURL + File;
-    self.parent.document.getElementById('powerpress_url_display_<?php echo $FeedSlug; ?>').value=File;
-	self.parent.document.getElementById('powerpress_url_display_<?php echo $FeedSlug; ?>').readOnly=true;
-	self.parent.document.getElementById('powerpress_hosting_note_<?php echo $FeedSlug; ?>').style.display='block';
-    if (document.querySelector('#blubrry_program_transcript_plan').value == 1) {
-        // auto select 'generate transcript for me'
-        self.parent.document.getElementById('powerpress_transcript_generate_<?php echo $FeedSlug; ?>').click();
-    }
-	// verify automatically to get around an odd bug in the info_media endpoint which only happens on publish
-	let verify_button = self.parent.document.getElementById('continue-to-episode-settings-<?php echo $FeedSlug; ?>');
-	if (verify_button.onclick) {
-       verify_button.onclick();
-    } else if (verify_button.click) {
-       verify_button.click();
-    }
-	if( self.parent.powerpress_update_for_video )
-		self.parent.powerpress_update_for_video(File, '<?php echo $FeedSlug; ?>');
+        self.parent.document.getElementById('powerpress_url_<?php echo $FeedSlug; ?>').value= fullMediaURL + File;
+        self.parent.document.getElementById('powerpress_url_display_<?php echo $FeedSlug; ?>').value=File;
+        self.parent.document.getElementById('powerpress_url_display_<?php echo $FeedSlug; ?>').readOnly=true;
+        self.parent.document.getElementById('powerpress_hosting_note_<?php echo $FeedSlug; ?>').style.display='block';
+        if (document.querySelector('#blubrry_program_transcript_plan').value == 1) {
+            // auto select 'generate transcript for me'
+            self.parent.document.getElementById('powerpress_transcript_generate_<?php echo $FeedSlug; ?>').click();
+        }
+        // verify automatically to get around an odd bug in the info_media endpoint which only happens on publish
+        let verify_button = self.parent.document.getElementById('continue-to-episode-settings-<?php echo $FeedSlug; ?>');
+        if (verify_button.onclick) {
+           verify_button.onclick();
+        } else if (verify_button.click) {
+           verify_button.click();
+        }
+        if( self.parent.powerpress_update_for_video ) {
+            self.parent.powerpress_update_for_video(File, '<?php echo $FeedSlug; ?>');
+        }
     <?php } else { ?>
-    	self.parent.document.getElementById('powerpress_url_<?php echo $FeedSlug; ?><?php echo $alt_enclosure_id_suffix; ?>').value= File;
+        // handle alt enclosure frontend logic
+        let altEnclosureId = `powerpress_url_podcast_alternate_enclosure_${alternateEnclosureLinkNum}`;
+        let uploadContainerId = `alt-enc-upload-${alternateEnclosureLinkNum}-container`;
+
+        // set input to filename, make readonly
+        self.parent.document.getElementById(altEnclosureId).value = File;
+        self.parent.document.getElementById(altEnclosureId).readOnly = true;
+
+        // remove upload container
+        self.parent.document.getElementById(uploadContainerId).remove();
+
     <?php } ?>
+
 	self.parent.tb_remove();
 }
+
+// selecting published media file (url)
 function SelectURL(url)
 {
 	self.parent.document.getElementById('powerpress_hosting_<?php echo $FeedSlug; ?><?php echo $alt_enclosure_id_suffix; ?>').value='0';
 	self.parent.document.getElementById('powerpress_program_keyword_<?php echo $FeedSlug; ?><?php echo $alt_enclosure_id_suffix; ?>').value= document.querySelector('#blubrry_program_keyword').value;
-	self.parent.document.getElementById('powerpress_url_<?php echo $FeedSlug; ?><?php echo $alt_enclosure_id_suffix; ?>').value=url;
+
 	<?php if (empty($alt_enclosure_id_suffix)) { ?>
-    self.parent.document.getElementById('powerpress_url_display_<?php echo $FeedSlug; ?>').readOnly=false;
-	self.parent.document.getElementById('powerpress_url_display_<?php echo $FeedSlug; ?>').value=url;
-	self.parent.document.getElementById('powerpress_hosting_note_<?php echo $FeedSlug; ?>').style.display='none';
-	if (document.querySelector('#blubrry_program_transcript_plan').value == 1) {
-        // auto select 'generate transcript for me'
-        self.parent.document.getElementById('powerpress_transcript_generate_<?php echo $FeedSlug; ?>').click();
-    }
-    if( self.parent.powerpress_update_for_video )
-		self.parent.powerpress_update_for_video(url, '<?php echo $FeedSlug; ?>');
-	    <?php } ?>
+	    self.parent.document.getElementById('powerpress_url_<?php echo $FeedSlug; ?>').value=url;
+        self.parent.document.getElementById('powerpress_url_display_<?php echo $FeedSlug; ?>').readOnly=false;
+        self.parent.document.getElementById('powerpress_url_display_<?php echo $FeedSlug; ?>').value=url;
+        self.parent.document.getElementById('powerpress_hosting_note_<?php echo $FeedSlug; ?>').style.display='none';
+        if (document.querySelector('#blubrry_program_transcript_plan').value == 1) {
+            // auto select 'generate transcript for me'
+            self.parent.document.getElementById('powerpress_transcript_generate_<?php echo $FeedSlug; ?>').click();
+        }
+        if( self.parent.powerpress_update_for_video ) {
+            self.parent.powerpress_update_for_video(url, '<?php echo $FeedSlug; ?>');
+        }
+    <?php } else { ?>
+        // handle alt enclosure frontend logic
+        let alternateEnclosureLinkNum = '<?php echo $alt_enclosure_link_num; ?>';
+        let altEnclosureId = `powerpress_url_podcast_alternate_enclosure_${alternateEnclosureLinkNum}`;
+        let uploadContainerId = `alt-enc-upload-${alternateEnclosureLinkNum}-container`;
+
+        // set input to filename, make readonly
+        self.parent.document.getElementById(altEnclosureId).value = url;
+        self.parent.document.getElementById(altEnclosureId).readOnly = true;
+
+        // remove upload container
+        self.parent.document.getElementById(uploadContainerId).remove();
+
+    <?php } ?>
     self.parent.tb_remove();
 }
 function DeleteMedia(File)
@@ -2140,6 +2192,7 @@ if( $jquery )
 
 do_action('admin_print_scripts');
 if (!is_plugin_active('woocommerce/woocommerce.php')) {
+    // comment out line below to silence deprecated warning when clicking "Blubrry Hosting Settings":
     do_action('admin_head');
 }
 
@@ -2206,6 +2259,7 @@ if( $jquery )
 
 do_action('admin_print_scripts');
 if (!is_plugin_active('woocommerce/woocommerce.php')) {
+    // comment out to silence deprecated warning when selecting media on episode page
     do_action('admin_head');
 }
 

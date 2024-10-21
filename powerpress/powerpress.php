@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.9.19
+Version: 11.10.0
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -132,7 +132,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.9.19' );
+define('POWERPRESS_VERSION', '11.10.0' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -1285,6 +1285,21 @@ function powerpress_rss2_item()
                 PHP_EOL);
     }
 
+    if (!empty($EpisodeData['content_link'])) {
+        foreach ($EpisodeData['content_link'] as $i => $content_link) {
+            $url = htmlspecialchars($content_link['url']);
+            $label = htmlspecialchars($content_link['label'] ?? '');
+
+            if (filter_var($url, FILTER_VALIDATE_URL)) {
+                $href_string = 'href="' . trim($url) . '"';
+                echo "\t\t" . sprintf('<podcast:contentLink %s>%s</podcast:contentLink>%s',
+                        $href_string,
+                        $label,
+                        PHP_EOL);
+            }
+        }
+    }
+
     if (!empty($EpisodeData['alternate_enclosure'])) {
         foreach ($EpisodeData['alternate_enclosure'] as $alternate_enclosure) {
             $size_string = "";
@@ -1293,22 +1308,17 @@ function powerpress_rss2_item()
                 $size_string = 'length="' . trim($alternate_enclosure['size']) . '"';
             }
 
-            $youtube_regexp = "/^https?:\/\/(?:www\.)?(?:youtube.com|youtu.be)\/(?:watch\?(?=.*v=([\w\-]+))(?:\S+)?|([\w\-]+))$/i";
-
-            if (preg_match($youtube_regexp, $alternate_enclosure['url']))
-                $alternate_enclosure['type'] = 'video/youtube';
-
             if (!empty($alternate_enclosure['type'])) {
                 $type_string = 'type="' . trim($alternate_enclosure['type']) . '"';
             }
-            echo "\t" . sprintf('<podcast:alternateEnclosure %s %s>%s',
+            echo "\t\t" . sprintf('<podcast:alternateEnclosure %s %s>%s',
                     $size_string,
                     $type_string,
                     PHP_EOL);
-            echo "\t\t" . sprintf('<podcast:source uri="%s" />%s',
+            echo "\t\t\t" . sprintf('<podcast:source uri="%s" />%s',
                     powerpress_url_in_feed(trim($alternate_enclosure['url'])),
                     PHP_EOL);
-            echo "\t" . sprintf('</podcast:alternateEnclosure>%s', PHP_EOL);
+            echo "\t\t" . sprintf('</podcast:alternateEnclosure>%s', PHP_EOL);
         }
     }
 
@@ -1361,7 +1371,7 @@ function powerpress_rss2_item()
         }
 
         if (!empty($subtitle)) {
-            echo "\t<itunes:subtitle>" . powerpress_format_itunes_value($subtitle, 'subtitle') . '</itunes:subtitle>' . PHP_EOL;
+            echo "\t\t<itunes:subtitle>" . powerpress_format_itunes_value($subtitle, 'subtitle') . '</itunes:subtitle>' . PHP_EOL;
         }
 
         if (!empty($summary)) {
@@ -4627,6 +4637,72 @@ function powerpress_admin_migration_notice() {
         . '<p>&nbsp; <a style="float:right;" href="#" class="notice-dismiss-link"></a></p>' . PHP_EOL;
     powerpress_page_message_add_notice($html, 'inline', false);
 }
+
+// rvMigrateMedia::isYoutubeURL
+function isYoutubeURL($url)
+{
+    $host = parse_url($url, PHP_URL_HOST);
+    if (empty($host)) {
+        return false;
+    }
+
+    $youtubeHostnames = [
+        'www.youtube.com',
+        'youtube.com',
+        'm.youtube.com',
+        'www.youtube-nocookie.com',
+    ];
+
+    if (in_array($host, $youtubeHostnames)) {
+        return true;
+    }
+
+    // see https://gist.github.com/afeld/1254889 for regex details
+    $youtube_regexp = "/^https?:\/\/(?:www\.)?(?:youtube.com|youtu.be)\/(?:watch\?(?=.*v=([\w\-]+))(?:\S+)?|([\w\-]+))$/i";
+
+    if (preg_match($youtube_regexp, $url)) {
+        return true;
+    }
+
+    return false;
+}
+
+function getRemoteFileSize($url, $userAgent = 'PowerPress')
+{
+    $cUrl = curl_init();
+    curl_setopt($cUrl, CURLOPT_USERAGENT, $userAgent);
+    curl_setopt($cUrl, CURLOPT_URL, $url);
+    curl_setopt($cUrl, CURLOPT_FOLLOWLOCATION, 1); // Handles location: refreshes
+    curl_setopt($cUrl, CURLOPT_MAXREDIRS, 12); // Max 12
+    curl_setopt($cUrl, CURLOPT_HEADER, 1);
+    curl_setopt($cUrl, CURLOPT_TIMEOUT, (45)); // trnasfer timeout (45 seconds)
+    curl_setopt($cUrl, CURLOPT_CONNECTTIMEOUT, 15); // Connect time out (15 seconds)
+    curl_setopt($cUrl, CURLOPT_ENCODING, 'gzip,deflate'); // Added to support compression
+    curl_setopt($cUrl, CURLOPT_SSL_VERIFYHOST, 2);
+    curl_setopt($cUrl, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($cUrl, CURLOPT_CAINFO, dirname(__FILE__) . '/certificates/ca-bundle.crt');
+    curl_setopt($cUrl, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($cUrl, CURLOPT_NOBODY, true); // convert to a HEAD request
+
+    $contentLength = 0;
+    $pageContent = curl_exec($cUrl);
+    $length = curl_getinfo($cUrl, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+    if (!empty($length)) {
+        $contentLength = intval($length);
+    } else {
+        $lines = explode("\n", $pageContent);
+        foreach ($lines as $rowNumber => $line) {
+
+            if (preg_match('/^content-length: (.*)$/i', $line, $matches)) {
+                $contentLength = $matches[1];
+            }
+        }
+    }
+
+    curl_close($cUrl);
+    return $contentLength;
+}
+
 /*
 End Helper Functions
 */

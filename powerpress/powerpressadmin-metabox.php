@@ -2006,79 +2006,153 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
         </div>
 
         <div class="pp-section-container container" style="margin-left: 0; padding-left: 0;">
-             <div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center;">
+            <div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center;">
                 <h4 class="pp-section-title-block" style="width: auto !important;">
                     <?php echo esc_html(__('Alternate Enclosure', 'powerpress')); ?>
                 </h4>
-                 <div class="pp-tooltip-right" style="margin: 0 0 0 1ch;">i
-                     <span class="text-pp-tooltip" style="top: -50%; min-width: 200px; text-align: left;">
+                <div class="pp-tooltip-right" style="margin: 0 0 0 1ch;">i
+                    <span class="text-pp-tooltip" style="top: -50%; min-width: 200px; text-align: left;">
                          <?php echo esc_html(__('Alternate enclosure supports alternate forms of media with the same content', 'powerpress')); ?>
                      </span>
-                 </div>
-             </div>
+                </div>
+            </div>
             <div class="row mt-2 mb-3">
-                 <div class="col-lg-12">
+                <div class="col-lg-12">
                     <p class="pp-ep-box-text"><?php echo esc_html(__('Three types of links are supported:', 'powerpress')); ?></p>
                     <ul class="pp-ep-box-text" style="margin-left: 2em; list-style: disc outside;">
                         <li><?php echo esc_html(__('Media files', 'powerpress')); ?> (mp3, m4a, mp4)</li>
                         <li><?php echo esc_html(__('Documents', 'powerpress')); ?> (pdf)</li>
-                        <li><?php echo esc_html(__('Fixed YouTube episode link (no channel or playlist links), which allows video playback in supporting podcast apps.', 'powerpress')); ?></li>
+                        <li><?php echo esc_html(__('Media uploaded to your Blubrry hosting account.', 'powerpress')); ?></li>
                     </ul>
-                 </div>
-            </div>
-             <div class="row mt-2 mb-3">
-                 <div class="col-lg-12">
-                    <label for="Powerpress[<?php echo $FeedSlug; ?>][alternate_enclosure][0][url]" class="pp-ep-box-label"><?php echo __('URL', 'powerpress'); ?></label>
-                    <input id="powerpress_url_<?php echo $FeedSlug; ?>_alternate_0" class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][alternate_enclosure][0][url]" value="<?php echo isset($ExtraData['alternate_enclosure'][0]['url']) ? esc_attr($ExtraData['alternate_enclosure'][0]['url']) : ""; ?>" placeholder="https://www.youtube.com/watch?v=MIeNG64NezY" />
-                 </div>
-             </div>
-            <div class="row mt-2 mb-3">
-                <div class="col-lg-12">
-                    <label for="Powerpress[<?php echo $FeedSlug; ?>][alternate_enclosure][0][size]" class="pp-ep-box-label"><?php echo __('Filesize in bytes (Optional)', 'powerpress'); ?></label>
-                    <input class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][alternate_enclosure][0][size]" value="<?php echo isset($ExtraData['alternate_enclosure'][0]['size']) ? esc_attr($ExtraData['alternate_enclosure'][0]['size']) : ""; ?>" placeholder="100000" />
                 </div>
             </div>
-            <input type="hidden" id="powerpress_hosting_<?php echo $FeedSlug; ?>_alternate_0"
-                   name="Powerpress[<?php echo $FeedSlug; ?>][alternate_enclosure][0][hosting]"
-                   value="<?php echo(!empty($ExtraData['alternate_enclosure'][0]['hosting']) ? '1' : '0'); ?>"/>
-            <input type="hidden" id="powerpress_program_keyword_<?php echo $FeedSlug; ?>_alternate_0"
-                   name="Powerpress[<?php echo $FeedSlug; ?>][alternate_enclosure][0][program_keyword]"
-                   value="<?php echo !empty($ExtraData['alternate_enclosure'][0]['program_keyword']) ? $ExtraData['alternate_enclosure'][0]['program_keyword'] : ''; ?>"/>
-            <?php if($GeneralSettings['blubrry_hosting']) { ?>
-                <div id="ep-box-blubrry-connected-<?php echo $FeedSlug; ?>">
-                    <img class="ep-box-blubrry-icon" src="<?php echo powerpress_get_root_url(); ?>images/blubrry_icon.png" alt="" />
-                    <div class="ep-box-blubrry-info-container">
-                        <h4 class="blubrry-connect-info"><?php echo __('Your Blubrry account is connected', 'powerpress'); ?></h4>
-                        <p class="blubrry-connect-info"><?php echo __('Select or upload your media to your Blubrry hosting account.', 'powerpress'); ?></p>
-                    </div>
-                    <a id="pp-change-media-link-<?php echo $FeedSlug; ?>"
-                       href="<?php echo admin_url(); ?>?action=powerpress-jquery-media&podcast-feed=<?php echo $FeedSlug; ?>&alternate_enclosure_idx=0&KeepThis=true&TB_iframe=true&modal=false"
-                       class="thickbox">
-                        <div id="change-media-button-<?php echo $FeedSlug; ?>"><?php echo esc_html(__('CHOOSE FILE', 'powerpress')); ?></div>
-                    </a>
-                </div>
-            <?php } else {
+            <?php
+            $currentAltEnclosureCount = 0;
+            if (isset($ExtraData['alternate_enclosure']) && !empty($ExtraData['alternate_enclosure'])) {
+                foreach ($ExtraData['alternate_enclosure'] as $a) {
+                    $remove = "remove-alt-enc-$currentAltEnclosureCount";
+                    $containerId = "alternate-enclosure-$currentAltEnclosureCount-container";
+
+                    $url = htmlspecialchars($a['url']);
+
+                    $newHtml = '';
+                    $newHtml = '<div class="mt-2 mb-3" id="' . $containerId . '">' .
+                        '<div class="row">' .
+                        '<div class="col-lg-11">' .
+                        '<label for="Powerpress[' . $FeedSlug . '][alternate_enclosure][' . $currentAltEnclosureCount . '][url]">URL</label>' .
+                        '<input readonly id="powerpress_url_' . $FeedSlug . '_alternate_enclosure_' . $currentAltEnclosureCount . '" class="pp-ep-box-input alternate-enclosure-input" type="text" name="Powerpress[' . $FeedSlug . '][alternate_enclosure][' . $currentAltEnclosureCount . '][url]" value="' . $url . '" placeholder="https://www.youtube.com/watch?v=MIeNG64NezY"/>' .
+                        '</div>' . // close first input column
+                        '<div class="col-lg-1 d-flex justify-content-center">' .
+                        '<button class="pt-1" type="button" style="border: none; background: inherit; color: red; font-size: 25px;" id="' . $remove . '" name="' . $remove . '">x</button>' .
+                        '</div>' . // close remove column
+                        '</div>' . // close row
+                        '<hr/>' .
+                        '<input type="hidden" id="powerpress_hosting_' . $FeedSlug . '_alternate_' . $currentAltEnclosureCount . '" name="Powerpress[' . $FeedSlug . '][alternate_enclosure][' . $currentAltEnclosureCount . '][hosting]" value="0"/>' .
+                        '<input type="hidden" id="powerpress_program_keyword_' . $FeedSlug . '_alternate_' . $currentAltEnclosureCount . '" name="Powerpress[' . $FeedSlug . '][alternate_enclosure][' . $currentAltEnclosureCount . '][program_keyword]" value="' . (!empty($ExtraData['alternate_enclosure'][0]['program_keyword']) ? $ExtraData['alternate_enclosure'][0]['program_keyword'] : '') . '"/>' .
+                        '</div>'; // close container div
+                    echo $newHtml;
+                    $currentAltEnclosureCount++;
+                }
+            }
+            ?>
+
+            <div id="alternate-enclosure-container">
+                <button type="button" style="border: none; background: inherit; color: #1976D2;"
+                        id="<?php echo $FeedSlug; ?>-newaltenclosure" name="newaltenclosure">+ Add Alternate enclosure
+                </button>
+            </div>
+
+            <?php if (!$GeneralSettings['blubrry_hosting']) {
                 $pp_nonce = powerpress_login_create_nonce();
                 ?>
                 <div id="ep-box-blubrry-connect-<?php echo $FeedSlug; ?>">
-                    <img class="ep-box-blubrry-icon" src="<?php echo powerpress_get_root_url(); ?>images/blubrry_icon.png" alt="" />
+                    <img class="ep-box-blubrry-icon"
+                         src="<?php echo powerpress_get_root_url(); ?>images/blubrry_icon.png" alt=""/>
                     <div class="ep-box-blubrry-info-container">
                         <h4 class="blubrry-connect-info"><?php echo __('If you host with Blubrry', 'powerpress'); ?></h4>
                         <p class="blubrry-connect-info"><?php echo __('You can select a media file from your computer by connecting your hosting account.', 'powerpress'); ?></p>
                     </div>
-                    <a class="button-blubrry" id="ep-box-connect-account-<?php echo $FeedSlug; ?>" title="<?php echo esc_attr(__('Blubrry Services Integration', 'powerpress')); ?>" href="<?php echo esc_attr(add_query_arg( '_wpnonce', $pp_nonce, admin_url("admin.php?page=powerpressadmin_onboarding.php&step=blubrrySignin&from=new_post"))); ?>">
+                    <a class="button-blubrry" id="ep-box-connect-account-<?php echo $FeedSlug; ?>"
+                       title="<?php echo esc_attr(__('Blubrry Services Integration', 'powerpress')); ?>"
+                       href="<?php echo esc_attr(add_query_arg('_wpnonce', $pp_nonce, admin_url("admin.php?page=powerpressadmin_onboarding.php&step=blubrrySignin&from=new_post"))); ?>">
                         <div id="ep-box-connect-account-button-<?php echo $FeedSlug; ?>"><?php echo __('Connect to Blubrry', 'powerpress'); ?></div>
                     </a>
                 </div>
                 <div id="ep-box-min-blubrry-connect-<?php echo $FeedSlug; ?>">
                     <div id="pp-connect-account-<?php echo $FeedSlug; ?>">
-                        <a id="pp-connect-account-link-<?php echo $FeedSlug; ?>" class="pp-media-edit-details button-blubrry" title="<?php echo esc_attr(__("Blubrry Services Integration","powerpress")); ?>" href="<?php echo esc_attr(add_query_arg( '_wpnonce', $pp_nonce, admin_url("admin.php?page=powerpressadmin_onboarding.php&step=blubrrySignin&from=new_post"))); ?>">
+                        <a id="pp-connect-account-link-<?php echo $FeedSlug; ?>"
+                           class="pp-media-edit-details button-blubrry"
+                           title="<?php echo esc_attr(__("Blubrry Services Integration", "powerpress")); ?>"
+                           href="<?php echo esc_attr(add_query_arg('_wpnonce', $pp_nonce, admin_url("admin.php?page=powerpressadmin_onboarding.php&step=blubrrySignin&from=new_post"))); ?>">
                             <b><?php echo esc_html(__('Connect Blubrry Account', 'powerpress')); ?></b>
                         </a>
                     </div>
                 </div>
             <?php } ?>
         </div>
+
+        <div class="pp-section-container container" style="margin-left: 0; padding-left: 0;">
+            <div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center;">
+                <h4 class="pp-section-title-block" style="width: auto !important;">
+                    <?php echo esc_html(__('Content Link', 'powerpress')); ?>
+                </h4>
+                <div class="pp-tooltip-right" style="margin: 0 0 0 1ch;">i
+                    <span class="text-pp-tooltip" style="top: -50%; min-width: 200px; text-align: left;">
+                         <?php echo esc_html(__('The content link field is used to indicate that the content being delivered by the parent element can be found at an external location instead of, or in addition to, the tag itself within an app.', 'powerpress')); ?>
+                     </span>
+                </div>
+            </div>
+            <div class="row" style="margin-bottom: 10px;">
+                <div class="col-lg-12">
+                    <p class="pp-ep-box-text"><?php echo esc_html(__('Add your links here to ensure that your entire audience can access your content, even if they are not using the original designated platform, i.e. YouTube but are in fact using Twitch.', 'powerpress')); ?></p>
+                </div>
+            </div>
+            <?php
+            $currentContentlinkCount = 0;
+            if (isset($ExtraData['content_link']) && !empty($ExtraData['content_link'])) {
+                $linkCount = 1;
+                foreach ($ExtraData['content_link'] as $l) {
+                    $containerId = "content-link-$linkCount-container";
+                    $remove = "remove-content-link-$linkCount";
+
+                    $url = esc_attr($l['url']);
+                    $labelText = esc_attr($l['label'] ?? '');
+
+                    $newHtml = '<div class="mt-2 mb-3" id="' . $containerId . '">' .
+                        '<div class="row">' .
+                        '<div class="col-lg-12">' .
+                        '<label for="Powerpress[' . $FeedSlug . '][content_link][' . $linkCount . '][url]">URL</label>' .
+                        '<input id="powerpress_url_' . $FeedSlug . '_content_link_' . $linkCount . '" class="pp-ep-box-input content-link-input" type="text" name="Powerpress[' . $FeedSlug . '][content_link][' . $linkCount . '][url]" value="' . $url . '" placeholder="https://www.youtube.com/watch?v=MIeNG64NezY"/>' .
+                        '</div>' . // close first input column
+                        '</div>' . // close first row
+                        '<div class="row">' .
+                        '<div class="col-lg-11">' .
+                        '<label for="Powerpress[' . $FeedSlug . '][content_link][' . $linkCount . '][label]">Label</label>' .
+                        '<input id="powerpress_label_' . $FeedSlug . '_content_link_' . $linkCount . '" class="pp-ep-box-input" type="text" name="Powerpress[' . $FeedSlug . '][content_link][' . $linkCount . '][label]" value="' . $labelText . '" placeholder="Watch on YouTube" />' .
+                        '</div>' . // close second input column
+                        '<div class="col-lg-1 d-flex justify-content-center">' .
+                        '<button class="pt-1" type="button" style="border: none; background: inherit; color: red; font-size: 25px;" id="' . $remove . '" name="' . $remove . '">x</button>' .
+                        '</div>' . // close remove column
+                        '</div>' . // close second row
+                        '<hr/>' .
+                        '</div>'; // close container div
+
+                    echo __($newHtml, 'powerpress');
+                    $linkCount++;
+                    $currentContentlinkCount++;
+                }
+            }
+
+            ?>
+            <div id="content-link-container">
+                <button type="button" style="border: none; background: inherit; color: #1976D2;"
+                        id="<?php echo $FeedSlug; ?>-newcontentlink" name="newcontentlink">+ Add Content Link
+                </button>
+            </div>
+
+        </div>
+
+
         <script>
             function <?php echo str_replace('-', '_', $FeedSlug); ?>_powerpress_locationInput(event){
                 let el = event.currentTarget;
@@ -2092,12 +2166,17 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
 
             let <?php echo str_replace('-', '_', $FeedSlug); ?>_currentRoleCount = <?php echo $currentRoleCount; ?>;
             let <?php echo str_replace('-', '_', $FeedSlug); ?>_currentSoundBiteCount = <?php echo $currentSoundbiteCount; ?>;
+            let currentContentlinkCount = <?php echo ($currentContentlinkCount ?? 0); ?>;
+            let currentAltEnclosureCount = <?php echo ($currentAltEnclosureCount ?? 0); ?>;
+            let hasHosting = <?php echo ($GeneralSettings['blubrry_hosting'] ?: 0); ?>;
+            let powerpressRootUrl = '<?php echo powerpress_get_root_url(); ?>';
+            let adminUrl = '<?php echo admin_url(); ?>';
 
             jQuery(document).ready(function() {
                 jQuery(document).on('click',"[name*='<?php echo $FeedSlug; ?>-remove-role-']",function (e) {
                     <?php echo str_replace('-', '_', $FeedSlug); ?>_currentRoleCount -= 1;
                     let roleNum = this.id[this.id.length - 1];
-                    jQuery("#<?php echo $FeedSlug; ?>-role-" + roleNum + "-container").css({"visibility": "hidden", "position": "absolute"});;
+                    jQuery("#<?php echo $FeedSlug; ?>-role-" + roleNum + "-container").css({"visibility": "hidden", "position": "absolute"});
                     jQuery("#<?php echo $FeedSlug; ?>-role-" + roleNum + "-name").val("");
                 });
 
@@ -2153,7 +2232,7 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                     let biteNum = this.id[this.id.length - 1];
                     jQuery("#<?php echo $FeedSlug; ?>-soundbite-" + biteNum + "-container").css({"visibility": "hidden", "position": "absolute"});
                     jQuery("[name='Powerpress[<?php echo $FeedSlug; ?>][soundbite-" + biteNum + "-start]']").val("");
-                })
+                });
 
                 jQuery("[name='newsoundbite']").on('click', function () {
                     <?php echo str_replace('-', '_', $FeedSlug); ?>_currentSoundBiteCount += 1;
@@ -2201,7 +2280,165 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                         jQuery(newHTML).insertAfter(prevId)
                     }
                 });
+                jQuery("[name='newcontentlink']").click(function (e) {
+                    currentContentlinkCount += 1;
+
+                    // get open spot in case we deleted links
+                    let linkNum = findOpenId('content-link');
+
+                    if (currentContentlinkCount >= 10 || linkNum === false) {
+                        jQuery('#newcontentlink').hide();
+                    } else {
+                        jQuery('#newcontentlink').show();
+                    }
+
+                    if (linkNum !== false) {
+                        let feedSlug = '<?php echo $FeedSlug; ?>';
+
+                        let remove = `remove-content-link-${linkNum}`;
+                        let containerId = `content-link-${linkNum}-container`;
+                        let id = `powerpress_url_${feedSlug}_content_link_${linkNum}`;
+                        let labelId = `powerpress_label_${feedSlug}-content_link_${linkNum}`;
+
+                        let newHTML =
+                            `<div class="mt-2 mb-3" id="${containerId}">` +
+                            '<div class="row">' +
+                            '<div class="col-lg-12">' +
+                            `<label for="Powerpress[${feedSlug}][content_link][${linkNum}][url]">URL</label>` +
+                            `<input id="${id}" class="pp-ep-box-input content-link-input" type="text" name="Powerpress[${feedSlug}][content_link][${linkNum}][url]" value="" placeholder="https://www.youtube.com/watch?v=MIeNG64NezY" />` +
+                            '</div>' +
+                            '</div>' +
+                            '<div class="row">' +
+                            '<div class="col-lg-11 ">' +
+                            `<label for="Powerpress[${feedSlug}][content_link][${linkNum}][label]">Label</label>` +
+                            `<input id="${labelId}" class="pp-ep-box-input" type="text" name="Powerpress[${feedSlug}][content_link][${linkNum}][label]" value="" placeholder="Watch on YouTube" />` +
+                            '</div>' +
+                            '<div class="col-lg-1 d-flex justify-content-center">' +
+                            `<button type="button" style="border: none; background: inherit; color: red; font-size: 25px;" id="${remove}" name="${remove}">x</button>` +
+                            '</div>' +
+                            '</div>' +
+                            '<hr/>' +
+                            '</div>';
+
+                        jQuery(newHTML).insertBefore('#content-link-container');
+                    }
+                });
+
+                jQuery(document).on('click', "[name*='remove-content-link-']", function (e) {
+                    currentContentlinkCount -= 1;
+                    if (currentContentlinkCount < 0) {
+                        currentContentlinkCount = 0;
+                    }
+
+                    if (currentContentlinkCount >= 10) {
+                        jQuery('#newcontentlink').hide();
+                    } else {
+                        jQuery('#newcontentlink').show();
+                    }
+
+                    let linkNum = e.currentTarget.id.match(/\d+/)[0];
+                    jQuery(`#content-link-${linkNum}-container`).remove();
+                });
+
+                jQuery("[name='newaltenclosure']").click(function (e) {
+                    currentAltEnclosureCount += 1;
+
+                    // get open spot in case we deleted links
+                    let linkNum = findOpenId('alternate-enclosure');
+
+                    if (currentAltEnclosureCount >= 10 || linkNum === false) {
+                        jQuery('#newaltenclosure').hide();
+                    } else {
+                        jQuery('#newaltenclosure').show();
+                    }
+
+                    if (linkNum !== false) {
+                        let feedSlug = '<?php echo $FeedSlug; ?>';
+                        let programKeyword = '<?php echo !empty($ExtraData['program_keyword']) ? $ExtraData['program_keyword'] : ''; ?>';
+                        let id = `powerpress_url_${feedSlug}_alternate_enclosure_${linkNum}`;
+                        let remove = `remove-alt-enc-${linkNum}`
+                        let containerId = `alternate-enclosure-${linkNum}-container`;
+                        let uploadContainerId = `alt-enc-upload-${linkNum}-container`;
+
+                        let newHTML =
+                            `<div class="mt-2 mb-3" id="${containerId}">` +
+                            '<div class="row">' +
+                            '<div class="col-lg-11">' +
+                            `<label for="Powerpress[${feedSlug}][alternate_enclosure][${linkNum}][url]">URL</label>` +
+                            `<input id="${id}" class="pp-ep-box-input alternate-enclosure-input" type="text" name="Powerpress[${feedSlug}][alternate_enclosure][${linkNum}][url]" value="" placeholder="Media URL" />` +
+                            '</div>' +
+                            '<div class="col-lg-1 d-flex justify-content-center">' +
+                            `<button type="button" style="border: none; background: inherit; color: red; font-size: 25px;" id="${remove}" name="${remove}">x</button>` +
+                            '</div>' +
+                            '</div>';
+
+                        // add upload button for the input if the user is hosting
+                        if (hasHosting == 1) {
+                            newHTML +=
+                                `<div class="row" id="${uploadContainerId}" >` +
+                                `<div id="ep-box-blubrry-connected-${feedSlug}">` +
+                                `<img class="ep-box-blubrry-icon" src="${powerpressRootUrl}images/blubrry_icon.png" alt="" />` +
+                                '<div class="ep-box-blubrry-info-container">' +
+                                '<h4 class="blubrry-connect-info">Your Blubrry account is connected.</h4>' +
+                                '<p class="blubrry-connect-info">Select or upload your media to your Blubrry hosting account.</p>' +
+                                '</div>' +
+                                `<a id="pp-change-media-link-${feedSlug}" href="${adminUrl}?action=powerpress-jquery-media&podcast-feed=${feedSlug}&alternate_enclosure_idx=${linkNum}&KeepThis=true&TB_iframe=true&modal=false" class="thickbox">` +
+                                `<div id="change-media-button-${feedSlug}">CHOOSE FILE</div>` +
+                                '</a>' +
+                                '</div>' +
+                                '</div>';
+                        }
+
+                        newHTML += '<hr/>';
+
+                        // add hidden inputs
+                        newHTML += `<input type="hidden" id="powerpress_hosting_${feedSlug}_alternate_${linkNum}" name="Powerpress[${feedSlug}][alternate_enclosure][${linkNum}][hosting]" value="0"/>`;
+                        newHTML += `<input type="hidden" id="powerpress_program_keyword_${feedSlug}_alternate_${linkNum}" name="Powerpress[${feedSlug}][alternate_enclosure][${linkNum}][program_keyword]" value="${programKeyword}"/>`;
+
+                        // close container
+                        newHTML += '</div>';
+
+                        jQuery(newHTML).insertBefore('#alternate-enclosure-container');
+                    }
+                });
+
+                jQuery(document).on('click', "[name*='remove-alt-enc-']", function (e) {
+                    currentAltEnclosureCount -= 1;
+                    if (currentAltEnclosureCount < 0) {
+                        currentAltEnclosureCount = 0;
+                    }
+
+                    if (currentAltEnclosureCount >= 10) {
+                        jQuery('#newaltenclosure').hide();
+                    } else {
+                        jQuery('#newaltenclosure').show();
+                    }
+
+                    let linkNum = e.currentTarget.id.match(/\d+/)[0];
+                    let containerId = `#alternate-enclosure-${linkNum}-container`;
+                    jQuery(containerId).remove();
+                });
+
             });
+
+            function findOpenId(type) {
+                // we have no existing content link inputs, so return one
+                let inputClass = `.${type}-input`;
+                if (jQuery(inputClass).length == 0) {
+                    return 1;
+                } else {
+                    // we have some content links, lets find which one is open
+                    for (let i = 1; i < 11; i++) {
+                        let containerId = `#${type}-${i}-container`;
+                        let element = jQuery(containerId);
+                        if (element.length == 0) {
+                            return i;
+                        }
+                    }
+                }
+
+                return false;
+            }
         </script>
     </div>
 

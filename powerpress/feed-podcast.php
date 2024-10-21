@@ -214,9 +214,7 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'."\n"; 
 		}
 		?>
 <?php rss_enclosure(); ?>
-	<?php
-    apply_filters('rss2_item'.$FeedActionHook, '');
-    ?>
+<?php apply_filters('rss2_item'.$FeedActionHook, ''); ?>
 	<?php
 	if( $iTunesOrderNumber > 0 )
 	{
