@@ -151,7 +151,7 @@ function subscribeSetting($directory, $feed_url, $listing_url) {
                         <span class="directory-summary-head"><?php echo __('Tunein', 'powerpress'); ?></span>
                         <?php powerpress_settings_save_button(); ?>
                     </h2>
-                    <p class="pp-settings-text"><b><a href="https://blubrry.com/manual/podcast-promotion/publish-podcast-tunein/?podcast-feed=<?php echo urlencode($feed_url); ?>" target="_blank"><?php echo  __('How to submit a podcast to TuneIn', 'powerpress'); ?></a></b></p>
+                    <p class="pp-settings-text"><b><?php echo  __('TuneIn is no longer taking podcast submissions. If you have a valid TuneIn URL from before they stopped taking submissions, you can enter it below.', 'powerpress'); ?></b></p>
                     <input class="pp-settings-text-input-less-wide" type="text" id="tunein_url<?php echo $id_tail; ?>" name="Feed[tunein_url]" placeholder="<?php echo __('TuneIn Listing URL', 'powerpress'); ?>" value="<?php echo esc_attr($listing_url); ?>" maxlength="255" />
                     <label for="tunein_url" class="pp-settings-label-under"><?php echo sprintf(__('e.g. %s', 'powerpress'), 'http://tunein.com/radio/your-podcast-p000000/'); ?></label>
 

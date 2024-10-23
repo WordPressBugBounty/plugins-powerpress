@@ -3081,7 +3081,10 @@ function powerpress_edit_post($post_ID, $post)
                         $existingIms = $_POST[$feed_slug."-existingIms"];
                         $removeIms = $_POST[$feed_slug."-removeExisting"];
 
-                        $numChapters = count($chapterStarts);
+                        $numChapters = 0;
+                        if (!empty($chapterStarts)) {
+                            $numChapters = count($chapterStarts);
+                        }
                         $tempChapters = array();
 
                         for ($i = 0; $i < $numChapters; $i++) {
