@@ -3,11 +3,11 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.10.1
+Version: 11.10.2
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
-Tested up to: 6.6
+Tested up to: 6.7
 Text Domain: powerpress
 Change Log:
 	Please see readme.txt for detailed change log.
@@ -132,7 +132,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.10.1' );
+define('POWERPRESS_VERSION', '11.10.2' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -602,6 +602,53 @@ function powerpress_rss2_ns()
         //echo 'xmlns:googleplay="http://www.google.com/schemas/play-podcasts/1.0/play-podcasts.xsd"'.PHP_EOL;
     }
 }
+
+
+
+function powerpress_check_for_chartable()
+{
+    $found_chartable = false;
+    $General = get_option('powerpress_general');
+    if (!empty($General['redirect1'])) {
+        if (strpos($General['redirect1'], 'chrt.fm') !== false || strpos($General['redirect1'], 'chtbl.comm') !== false) {
+            update_option('powerpress_chartable_check', 'has_chartable');
+            $found_chartable = true;
+        }
+    }
+    if (!empty($General['redirect2'])) {
+        if (strpos($General['redirect2'], 'chrt.fm') !== false || strpos($General['redirect2'], 'chtbl.comm') !== false) {
+            update_option('powerpress_chartable_check', 'has_chartable');
+            $found_chartable = true;
+        }
+    }
+    if (!empty($General['redirect3'])) {
+        if (strpos($General['redirect3'], 'chrt.fm') !== false || strpos($General['redirect3'], 'chtbl.comm') !== false) {
+            update_option('powerpress_chartable_check', 'has_chartable');
+            $found_chartable = true;
+        }
+    }
+
+    // if we haven't found chartable in the saved redirects, check all media just to be safe
+    if (!$found_chartable) {
+        global $wpdb;
+        $query = "SELECT meta_id, post_id, meta_key, meta_value FROM {$wpdb->postmeta} WHERE meta_key LIKE \"%enclosure\"";
+        $results_data = $wpdb->get_results($query, ARRAY_A);
+        foreach ($results_data as $idx => $data) {
+            $meta_parts = explode("\n", $data['meta_value']);
+            $post_enclosure_url = $meta_parts[0];
+            if (strpos($post_enclosure_url, 'chrt.fm') !== false) {
+                update_option('powerpress_chartable_check', 'has_chartable');
+                $found_chartable = true;
+            }
+        }
+    }
+
+    if (!$found_chartable) {
+        update_option('powerpress_chartable_check', 'no_chartable');
+    }
+}
+add_action('powerpress_check_for_chartable_hook', 'powerpress_check_for_chartable');
+
 
 add_action('rss2_ns', 'powerpress_rss2_ns');
 add_action('rss2_ns_powerpress', 'powerpress_rss2_ns');

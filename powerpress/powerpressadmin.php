@@ -287,7 +287,8 @@ function powerpress_admin_init()
 	add_thickbox(); // we use the thckbox for some settings
 	wp_enqueue_script('jquery');
 	wp_enqueue_script('jquery-ui-core'); // Now including the library at Google
-
+    // Classes to handle notices
+    require_once( POWERPRESS_ABSPATH .'/powerpressadmin-notifications.php');
 	// Powerpress page
 	if( isset($_GET['page']) && strstr($_GET['page'], 'powerpress' ) !== false )
 	{
@@ -300,7 +301,7 @@ function powerpress_admin_init()
 		{
 			wp_enqueue_style( 'wp-color-picker' );
 		}
-		
+
 		if( preg_match('/powerpressadmin_migrate/', $_GET['page']) )
 		{
 			wp_enqueue_script('media-upload'); // For the readjustment of the thickbox only
@@ -309,7 +310,7 @@ function powerpress_admin_init()
 
 	if( function_exists('powerpress_admin_jquery_init') )
 		powerpress_admin_jquery_init();
-	
+
 	if( !current_user_can(POWERPRESS_CAPABILITY_MANAGE_OPTIONS) )
 	{
 		powerpress_page_message_add_error( __('You do not have sufficient permission to manage options.', 'powerpress') );
@@ -319,16 +320,36 @@ function powerpress_admin_init()
 	// Check for other podcasting plugin
 	if( defined('PODPRESS_VERSION') || isset($GLOBALS['podcasting_player_id']) || isset($GLOBALS['podcast_channel_active']) || defined('PODCASTING_VERSION') )
 		powerpress_page_message_add_error( __('Another podcasting plugin has been detected, PowerPress is currently disabled.', 'powerpress') );
-	
+
 	global $wp_version;
 	$VersionDiff = version_compare($wp_version, 3.6);
 	if( $VersionDiff < 0 )
 		powerpress_page_message_add_error( __('Blubrry PowerPress requires Wordpress version 3.6 or greater.', 'powerpress') );
-	
+
 	// Check for incompatible plugins:
 	if( isset($GLOBALS['objWPOSFLV']) && is_object($GLOBALS['objWPOSFLV']) )
 		powerpress_page_message_add_error( __('The WP OS FLV plugin is not compatible with Blubrry PowerPress.', 'powerpress') );
-	
+
+    // TEMPORARY: check for chartable prefixes and display a warning if they are there
+    $program_has_chartable = get_option('powerpress_chartable_check');
+    if (true || $program_has_chartable === false) {
+        // schedule this check to happen in the background
+        if (!wp_next_scheduled('powerpress_check_for_chartable_hook')) {
+            delete_option('powerpress_chartable_check');
+            $scheduled = wp_schedule_single_event(time(), 'powerpress_check_for_chartable_hook');
+        }
+    }
+
+    // display a warning if necessary
+    if ($program_has_chartable == 'has_chartable') {
+        $PowerPressNotificationManager = new PowerPress_Notification_Manager();
+        $message = "With Chartable shutting down, now is the time to switch to Blubrry Stats for reliable, IAB-certified podcast stats. Easily integrate from PowerPress, get comprehensive insights and real support--visit ";
+        $message .= "<a href='https://blubrry.com/services/podcast-statistics/' target='_blank'>Blubrry stats to sign up</a>! ";
+        $message .= "<a href='https://blubrry.com/podcast-insider/2024/11/01/podcasters-transition-from-chartable-to-blubrry-podcast-statistics/' target='_blank'>Learn more here</a>. ";
+        $message .= "And be sure to remove your Chartable redirect by Dec. 12th!";
+        $PowerPressNotificationManager->add('chartable-shutting-downn', $message);
+    }
+
 	// Security step, we must be in a powerpress/* page...
 	if( isset($_GET['page']) && ( strstr($_GET['page'], 'powerpress/' ) !== false || strstr($_GET['page'], 'powerpressadmin_' ) !== false ) )
 	{
@@ -1431,32 +1452,6 @@ function powerpress_admin_init()
 			switch( $_GET['action'] )
 			{
                 case 'powerpress-sync-progad': {
-                    function buildRedirect($Redirects) {
-                        $redirect_result = '';
-                        for( $x = 3; $x >= 0; $x-- )
-                        {
-                            $key = sprintf('redirect%d', $x);
-                            if( !empty($Redirects[ $key ]) )
-                            {
-                                if( preg_match('/^https?:\/\/(.*)$/', trim($Redirects[ $key ]) , $matches ) == 0 )
-                                    continue;
-
-                                $RedirectClean = $matches[1];
-                                if( substr($RedirectClean, -1, 1) != '/' ) // Rediercts need to end with a slash /.
-                                    $RedirectClean .= '/';
-
-                                if( !empty($RedirectClean) )
-                                {
-                                    if( strpos($RedirectClean, '/') == 0 ) // Not a valid redirect URL
-                                        continue;
-
-                                    if( !strstr($redirect_result, $RedirectClean) ) // If the redirect is not already added...
-                                        $redirect_result = $RedirectClean . $redirect_result;
-                                }
-                            }
-                        }
-                        return 'https://' . $redirect_result;
-                    }
                     // grab the redirect url prefixes for each feed slug and make an array
                     $General = powerpress_get_settings('powerpress_general');
                     // append general redirects to each other (starting with redirect1)
@@ -1927,9 +1922,6 @@ function powerpress_admin_init()
 	// Hnadle player settings
 	require_once( POWERPRESS_ABSPATH .'/powerpressadmin-player.php');
 	powerpress_admin_players_init();
-
-	// Handle notices
-	require_once( POWERPRESS_ABSPATH .'/powerpressadmin-notifications.php');
 }
 
 function delete_post_refresh_player($postId) {
@@ -2138,7 +2130,7 @@ function powerpress_save_settings($SettingsNew=false, $field = 'powerpress_gener
 			if( empty($Settings['donate_label']) )
 				unset($Settings['donate_label']);
 			if( isset($Settings['allow_feed_comments'] ) && $Settings['allow_feed_comments'] == 0 )
-				unset($Settings['allow_feed_comments']);	
+				unset($Settings['allow_feed_comments']);
 			if( empty($Settings['episode_itunes_image']) )
 				unset($Settings['episode_itunes_image']);
 		}
@@ -3369,6 +3361,33 @@ function powerpress_edit_post($post_ID, $post)
 
 add_action('save_post', 'powerpress_edit_post', 10, 2);
 
+function buildRedirect($Redirects) {
+    $redirect_result = '';
+    for( $x = 3; $x >= 0; $x-- )
+    {
+        $key = sprintf('redirect%d', $x);
+        if( !empty($Redirects[ $key ]) )
+        {
+            if( preg_match('/^https?:\/\/(.*)$/', trim($Redirects[ $key ]) , $matches ) == 0 )
+                continue;
+
+            $RedirectClean = $matches[1];
+            if( substr($RedirectClean, -1, 1) != '/' ) // Rediercts need to end with a slash /.
+                $RedirectClean .= '/';
+
+            if( !empty($RedirectClean) )
+            {
+                if( strpos($RedirectClean, '/') == 0 ) // Not a valid redirect URL
+                    continue;
+
+                if( !strstr($redirect_result, $RedirectClean) ) // If the redirect is not already added...
+                    $redirect_result = $RedirectClean . $redirect_result;
+            }
+        }
+    }
+    return 'https://' . $redirect_result;
+}
+
 if( defined('POWERPRESS_DO_ENCLOSE_FIX') )
 {
 	function powerpress_insert_post_data($data, $postarr)
@@ -3723,6 +3742,15 @@ function powerpress_check_url(url, DestDiv)
 		if( x == 5 )
 			validChars = validChars.substring(1); // remove the colon, should no longer appear in URLs
 	}
+
+    if (url.includes('chrt.fm') || url.includes('chtbl.com')) {
+        Div.html('<?php echo esc_js( __('Previous Chartable Users: If you’re publishing a new episode please ensure that you have removed the Chartable stats redirect on your RSS feed. Chartable: Remove. Blubrry Prefix: Include.', 'powerpress')); ?>');
+        Div.css('display', 'block');
+        jQuery('#powerpress_fail_'+FeedSlug).css("display", 'inline-block');
+        jQuery( '#powerpress_url_show_'+FeedSlug ).css('background-color', '#FFF3CD');
+        jQuery( '#powerpress_url_show_'+FeedSlug ).css('background-color');
+        return false;
+    }
 
 	Div.css('display', 'none');
 	return true;
@@ -4182,6 +4210,13 @@ function powerpress_media_info_ajax()
     }
 
     echo "$feed_slug\n";
+    if (strpos($media_url, 'chrt.fm') !== false || strpos($media_url, 'chtbl') !== false) {
+        if (empty($MediaInfo['error'])) {
+            $MediaInfo['error'] = __("Previous Chartable Users: If you’re publishing a new episode please ensure that you have removed the Chartable stats redirect on your RSS feed. Chartable: Remove. Blubrry Prefix: Include.", 'powerpress') . " ";
+        } else {
+            $MediaInfo['error'] .= __(" Previous Chartable Users: If you’re publishing a new episode please ensure that you have removed the Chartable stats redirect on your RSS feed. Chartable: Remove. Blubrry Prefix: Include.", 'powerpress') . " ";
+        }
+    }
     if( !empty($MediaInfo['error']) ) {
         echo $MediaInfo['error'];
         if( preg_match('/^https?\:\/\//i', $media_url) )
