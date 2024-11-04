@@ -332,7 +332,7 @@ function powerpress_admin_init()
 
     // TEMPORARY: check for chartable prefixes and display a warning if they are there
     $program_has_chartable = get_option('powerpress_chartable_check');
-    if (true || $program_has_chartable === false) {
+    if ($program_has_chartable === false) {
         // schedule this check to happen in the background
         if (!wp_next_scheduled('powerpress_check_for_chartable_hook')) {
             delete_option('powerpress_chartable_check');

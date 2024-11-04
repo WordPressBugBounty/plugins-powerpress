@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.10.2
+Version: 11.10.3
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -132,7 +132,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.10.2' );
+define('POWERPRESS_VERSION', '11.10.3' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -610,19 +610,19 @@ function powerpress_check_for_chartable()
     $found_chartable = false;
     $General = get_option('powerpress_general');
     if (!empty($General['redirect1'])) {
-        if (strpos($General['redirect1'], 'chrt.fm') !== false || strpos($General['redirect1'], 'chtbl.comm') !== false) {
+        if (strpos($General['redirect1'], 'chrt.fm') !== false || strpos($General['redirect1'], 'chtbl.com') !== false) {
             update_option('powerpress_chartable_check', 'has_chartable');
             $found_chartable = true;
         }
     }
     if (!empty($General['redirect2'])) {
-        if (strpos($General['redirect2'], 'chrt.fm') !== false || strpos($General['redirect2'], 'chtbl.comm') !== false) {
+        if (strpos($General['redirect2'], 'chrt.fm') !== false || strpos($General['redirect2'], 'chtbl.com') !== false) {
             update_option('powerpress_chartable_check', 'has_chartable');
             $found_chartable = true;
         }
     }
     if (!empty($General['redirect3'])) {
-        if (strpos($General['redirect3'], 'chrt.fm') !== false || strpos($General['redirect3'], 'chtbl.comm') !== false) {
+        if (strpos($General['redirect3'], 'chrt.fm') !== false || strpos($General['redirect3'], 'chtbl.com') !== false) {
             update_option('powerpress_chartable_check', 'has_chartable');
             $found_chartable = true;
         }
@@ -636,7 +636,7 @@ function powerpress_check_for_chartable()
         foreach ($results_data as $idx => $data) {
             $meta_parts = explode("\n", $data['meta_value']);
             $post_enclosure_url = $meta_parts[0];
-            if (strpos($post_enclosure_url, 'chrt.fm') !== false) {
+            if (strpos($post_enclosure_url, 'chrt.fm') !== false || strpos($post_enclosure_url, 'chtbl.com') !== false) {
                 update_option('powerpress_chartable_check', 'has_chartable');
                 $found_chartable = true;
             }
