@@ -165,8 +165,8 @@
                     </script>
                     <div class="pp_container">
                         <h2><?php echo __('Blubrry Account Connected', 'powerpress'); ?></h2>
-                        <h5 style="margin: 0;"><?php echo __('You can now now able to upload episodes from within WordPress to Blubrry and view free stats from the WordPress dashboard.', 'powerpress'); ?></h5>
-                        <h5 style="margin-top: 0;"><?php echo __('If this is the wrong Blubrry account,  visit settings to unlink this account.', 'powerpress'); ?></h5>
+                        <h5 style="margin: 0;"><?php echo __('You are now able to upload episodes from within WordPress to Blubrry and/or view show stats from the WordPress dashboard.', 'powerpress'); ?></h5>
+                        <h5 style="margin-top: 0;"><?php echo __('If this is the wrong Blubrry account, visit settings to unlink this account.', 'powerpress'); ?></h5>
                         <hr class="pp_align-center"/>
 
                         <?php powerpress_page_message_print() ?>

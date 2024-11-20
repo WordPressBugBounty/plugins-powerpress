@@ -4,7 +4,7 @@ Tags: podcasting, podcast, podcaster, powerpress, itunes, apple, apple podcasts,
 Requires at least: 3.6
 Requires PHP: 5.2
 Tested up to: 6.7
-Stable tag: 11.10.3
+Stable tag: 11.10.4
 Donate link: https://blubrry.com/services/podcast-hosting/
 License: GPLv2 or later
 
@@ -162,6 +162,12 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 
 
 == Changelog ==
+
+= 11.10.4 =
+* Released on 11/20/2024
+* Fix poster image aspect ratio
+* Hide Blubrry Podcast Directory destination for non-hosting customers
+* Copy tweaks
 
 = 11.10.3 =
 * Released on 11/4/2024

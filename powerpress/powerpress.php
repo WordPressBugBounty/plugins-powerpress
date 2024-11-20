@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.10.3
+Version: 11.10.4
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -132,7 +132,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.10.3' );
+define('POWERPRESS_VERSION', '11.10.4' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -1229,7 +1229,7 @@ function powerpress_rss2_head()
 
             if( !empty($Feed['itunes_url']) )
                 echo " itunes=\"". htmlspecialchars( $Feed['itunes_url'] ) .'"';
-            if( !empty($Feed['blubrry_url']) )
+            if( !empty($Feed['blubrry_url']) && !empty($General['blubrry_hosting']) )
                 echo " blubrry=\"". htmlspecialchars( $Feed['blubrry_url'] ) .'"';
             if( !empty($Feed['tunein_url']) )
                 echo " tunein=\"". htmlspecialchars( $Feed['tunein_url'] ) .'"';

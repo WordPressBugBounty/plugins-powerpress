@@ -488,8 +488,8 @@ img[id^="pp-image-preview"] {
 }
 
 img[id^="poster-pp-image-preview"] {
-    width: 16vh;
-    height: 16vh;
+    width: 32vh;
+    height: 18vh; /* this needs to be 16:9 */
     border: 3px solid #717171;
 }
 

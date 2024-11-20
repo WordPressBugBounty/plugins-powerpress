@@ -1150,7 +1150,7 @@ jQuery(document).ready(function($) {
                     </select>
                 </p>
                 <p>
-                    <label for="blubrry_network_mode"><?php echo __('Multi-program mode (publish to multiple Blubrry Hosting Accounts)', 'powerpress') ?></label>
+                    <label for="blubrry_network_mode"><?php echo __('Multi-program mode (publish to multiple media hosting subscriptions within your Blubrry Account)', 'powerpress') ?></label>
                     <input type="checkbox" id="blubrry_network_mode" value="1" name="Settings[network_mode]" <?php echo $Settings['network_mode'] == '1' ? 'checked' : ''; ?> />
                 </p>
             <?php } ?>
