@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.10.4
+Version: 11.10.5
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -132,7 +132,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.10.4' );
+define('POWERPRESS_VERSION', '11.10.5' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -649,6 +649,290 @@ function powerpress_check_for_chartable()
 }
 add_action('powerpress_check_for_chartable_hook', 'powerpress_check_for_chartable');
 
+if (!function_exists('buildRedirect')) {
+    function buildRedirect($Redirects)
+    {
+        $redirect_result = '';
+        for ($x = 3; $x >= 0; $x--) {
+            $key = sprintf('redirect%d', $x);
+            if (!empty($Redirects[$key])) {
+                if (preg_match('/^https?:\/\/(.*)$/', trim($Redirects[$key]), $matches) == 0)
+                    continue;
+
+                $RedirectClean = $matches[1];
+                if (substr($RedirectClean, -1, 1) != '/') // Rediercts need to end with a slash /.
+                    $RedirectClean .= '/';
+
+                if (!empty($RedirectClean)) {
+                    if (strpos($RedirectClean, '/') == 0) // Not a valid redirect URL
+                        continue;
+
+                    if (!strstr($redirect_result, $RedirectClean)) // If the redirect is not already added...
+                        $redirect_result = $RedirectClean . $redirect_result;
+                }
+            }
+        }
+        return 'https://' . $redirect_result;
+    }
+}
+
+if (!function_exists('powerpress_getAccessToken')) {
+    function powerpress_getAccessToken()
+    {
+        // Look at the creds and use the latest access token, if its not the latest refresh it...
+        $creds = get_option('powerpress_creds', array());
+        if (!empty($creds['access_token']) && !empty($creds['access_expires']) && $creds['access_expires'] > time()) { // If access token did not expire
+            return $creds['access_token'];
+        }
+
+        if (!empty($creds['refresh_token']) && !empty($creds['client_id']) && !empty($creds['client_secret'])) {
+
+            // Create new access token with refresh token here...
+            require_once('powerpressadmin-auth.class.php');
+            $auth = new PowerPressAuth();
+            $resultTokens = $auth->getAccessTokenFromRefreshToken($creds['refresh_token'], $creds['client_id'], $creds['client_secret']);
+
+            if (!empty($resultTokens['access_token']) && !empty($resultTokens['expires_in'])) {
+                update_option('powerpress_creds', array('access_token' => $resultTokens['access_token'], 'access_expires' => (time() + $resultTokens['expires_in'] - 10)));
+
+                return $resultTokens['access_token'];
+            } else {
+                //if their refresh token is expired, sign them out so they can re-authenticate
+                delete_option('powerpress_creds');
+            }
+        }
+
+        // If we failed to get credentials, return false
+        return false;
+    }
+}
+
+function powerpress_sync_progad() {
+
+    // grab the redirect url prefixes for each feed slug and make an array
+    $General = get_option('powerpress_general');
+    // append general redirects to each other (starting with redirect1)
+    $Redirects = array('redirect0'=>'', 'redirect1'=>'', 'redirect2'=>'', 'redirect3'=>'');
+    if( !empty($General['redirect1']) )
+        $Redirects['redirect1'] = $General['redirect1'];
+    if( !empty($General['redirect2']) )
+        $Redirects['redirect2'] = $General['redirect2'];
+    if( !empty($General['redirect3']) )
+        $Redirects['redirect3'] = $General['redirect3'];
+
+    // add to redirect array with key 'enclosure'
+    $main_redirect = buildRedirect($Redirects);
+    $redirect_array = array('enclosure' => $main_redirect);
+
+    // then append custom feed redirects to beginning of main feed redirect with _slug:enclosure for each custom feed
+    // channels
+    if (!empty($General['custom_feeds'])) {
+        foreach ($General['custom_feeds'] as $slug => $title) {
+            $Feed = get_option('powerpress_feed_' . $slug, array());
+            if (!empty($Feed['redirect'])) {
+                $Redirects['redirect0'] = $Feed['redirect'];
+                $redirect_array += array('_' . $slug . ':enclosure' => buildRedirect($Redirects));
+                $Redirects['redirect0'] = '';
+            } else {
+                $redirect_array += array('_' . $slug . ':enclosure' => $main_redirect);
+                // default stats redirect
+            }
+        }
+    }
+
+    // categories
+    if (!empty($General['custom_cat_feeds'])) {
+        foreach ($General['custom_cat_feeds'] as $idx => $id) {
+            $category = get_category($id);
+            // $category['slug']
+            $Feed = get_option('powerpress_cat_feed_' . $id, array());
+            if (!empty($Feed['redirect'])) {
+                $Redirects['redirect0'] = $Feed['redirect'];
+                $redirect_array += array('_' . $category->slug . ':enclosure' => buildRedirect($Redirects));
+                $Redirects['redirect0'] = '';
+            } else {
+                $redirect_array += array('_' . $category->slug . ':enclosure' => $main_redirect);
+                // default stats redirect
+            }
+        }
+    }
+
+    // taxonomies
+    $PowerPressTaxonomies = get_option('powerpress_taxonomy_podcasting', array());
+    if (!empty($PowerPressTaxonomies)) {
+        foreach ($PowerPressTaxonomies as $tt_id => $null) {
+
+            $taxonomy_type = '';
+            $term_ID = '';
+
+            global $wpdb;
+            $term_info = $wpdb->get_results("SELECT term_id, taxonomy FROM $wpdb->term_taxonomy WHERE term_taxonomy_id = $tt_id", ARRAY_A);
+            if (!empty($term_info[0]['term_id'])) {
+                $term_ID = $term_info[0]['term_id'];
+                $taxonomy_type = $term_info[0]['taxonomy'];
+            } else {
+                continue; // we didn't find this taxonomy relationship
+            }
+
+            $Feed = get_option('powerpress_taxonomy_' . $tt_id);
+            $term_object = get_term( $term_ID, $taxonomy_type, OBJECT, 'edit');
+            if (!empty($Feed['redirect'])) {
+                $Redirects['redirect0'] = $Feed['redirect'];
+                $redirect_array += array('_' . $term_object->slug . ':enclosure' => buildRedirect($Redirects));
+                $Redirects['redirect0'] = '';
+            } else {
+                $redirect_array += array('_' . $term_object->slug . ':enclosure' => $main_redirect);
+                // default stats redirect
+            }
+        }
+    }
+
+    // post types
+
+    $post_types = array();
+    $post_types_wp = get_post_types();
+    foreach( $post_types_wp as $index => $post_type )
+    {
+        if( $post_type == 'redirect_rule' || $post_type == 'attachment' || $post_type == 'nav_menu_item' || $post_type == 'revision' || $post_type == 'action' )
+            continue;
+
+        $post_types[] = $post_type;
+
+    }
+    if (!empty($post_types)) {
+        foreach ($post_types as $null => $post_type) {
+            $PostTypeSettingsArray = get_option('powerpress_posttype_' . $post_type, array());
+            if (empty($PostTypeSettingsArray))
+                continue;
+
+            foreach ($PostTypeSettingsArray as $feed_slug => $Feed) {
+                if (!empty($Feed['redirect'])) {
+                    $Redirects['redirect0'] = $Feed['redirect'];
+                    $redirect_array += array('_' . $feed_slug . ':enclosure' => buildRedirect($Redirects));
+                    $Redirects['redirect0'] = '';
+                } else {
+                    $redirect_array += array('_' . $feed_slug . ':enclosure' => $main_redirect);
+                    // default stats redirect
+                }
+            }
+        }
+    }
+
+    // figure out which shows we are enabling/disabling
+    require_once('powerpressadmin-auth.class.php');
+    $progad_error = '';
+    $progad_enable_urls = array();
+    $progad_disable_urls = array();
+    $auth = new PowerPressAuth();
+    $accessToken = powerpress_getAccessToken();
+    $req_url = sprintf('/2/media/prog_ad_status.json?cache=' . md5(rand(0, 999) . time()));
+    $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '?' . POWERPRESS_BLUBRRY_API_QSA : '');
+    $req_url .= (defined('POWERPRESS_PUBLISH_PROTECTED') ? '&protected=true' : '');
+    $progad_enabled_shows = $auth->api($accessToken, $req_url, array(), false, 60 * 30);
+    if (!$progad_enabled_shows) {
+        $progad_error = $auth->getLastError();
+    }
+    $past_shows_with_progad = get_option('pp_programmatic_enabled_shows');
+    if (!empty($past_shows_with_progad) && !empty($progad_enabled_shows['programs'])) {
+        $shows_to_enable = array_diff($progad_enabled_shows['programs'], $past_shows_with_progad);
+        $shows_to_disable = array_diff($past_shows_with_progad, $progad_enabled_shows['programs']);
+    } elseif (!empty($past_shows_with_progad) && empty($progad_enabled_shows['programs'])) {
+        $shows_to_disable = $past_shows_with_progad;
+    } elseif (!empty($progad_enabled_shows['programs']) && empty($past_shows_with_progad)) {
+        $shows_to_enable = $progad_enabled_shows['programs'];
+    }
+    update_option('pp_programmatic_enabled_shows', $progad_enabled_shows['programs']);
+
+    // use the API to get associated URLs for all URLs in any program whose ads were just enabled
+    if (!empty($shows_to_enable)) {
+        foreach ($shows_to_enable as $idx => $keyword) {
+            $req_url = sprintf('/2/media/' . $keyword . '/prog_ad_urls.json?cache=' . md5(rand(0, 999) . time()));
+            if (defined('POWERPRESS_PROGRAMMATIC_FIX')) {
+                $req_url .= '&pp_first_release_fix=true';
+            }
+            $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '?' . POWERPRESS_BLUBRRY_API_QSA : '');
+            $req_url .= (defined('POWERPRESS_PUBLISH_PROTECTED') ? '&protected=true' : '');
+            $result_prog = $auth->api($accessToken, $req_url, array(), false, 60 * 30);
+            if (isset($result_prog['urls']) && is_array($result_prog['urls'])) {
+                foreach ($result_prog['urls'] as $i => $url_pair) {
+                    // add the redirect to the key before adding this pair
+                    $progad_enable_urls += $url_pair;
+                }
+            } elseif (isset($result_prog['message']) && $result_prog['message'] == 'no media') {
+                // no error--continue
+            }
+            else {
+                $progad_error = $auth->getLastError();
+            }
+        }
+    }
+
+    // use the API to get associated URLs for all URLs in any program whose ads were just disabled
+    if (!empty($shows_to_disable)) {
+        foreach ($shows_to_disable as $idx => $keyword) {
+            $req_url = sprintf('/2/media/' . $keyword . '/prog_ad_urls.json?disable=true&cache=' . md5(rand(0, 999) . time()));
+            $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '?' . POWERPRESS_BLUBRRY_API_QSA : '');
+            $req_url .= (defined('POWERPRESS_PUBLISH_PROTECTED') ? '&protected=true' : '');
+            $result_prog = $auth->api($accessToken, $req_url, array(), false, 60 * 30);
+            $progad_error = $auth->getLastError();
+            if (isset($result_prog['urls']) && is_array($result_prog['urls'])) {
+                foreach ($result_prog['urls'] as $i => $url_pair) {
+                    // add the redirect to the key before adding this pair
+                    $progad_disable_urls += $url_pair;
+                }
+            } elseif (isset($result_prog['message']) && $result_prog['message'] == 'no media') {
+                // no error--continue
+            }
+            else {
+                $progad_error = $auth->getLastError();
+            }
+        }
+    }
+
+    // query the wordpress database to match up the URLs that we need to update
+    global $wpdb;
+    $query = "SELECT meta_id, post_id, meta_key, meta_value FROM {$wpdb->postmeta} WHERE meta_key LIKE \"%enclosure\"";
+    $results_data = $wpdb->get_results($query, ARRAY_A);
+    foreach ($results_data as $idx => $data) {
+        $meta_parts = explode("\n", $data['meta_value']);
+
+        if (strpos($meta_parts[0], 'ins.blubrry.com')) {
+            $parts_array = explode('ins.blubrry.com', $meta_parts[0]);
+        } else if (strpos($meta_parts[0], 'content3.blubrry.biz')) {
+            $parts_array = explode('content3.blubrry.biz', $meta_parts[0]);
+        } else if (strpos($meta_parts[0], 'mc.blubrry.com')) {
+            $parts_array = explode('mc.blubrry.com', $meta_parts[0]);
+        } elseif (strpos($meta_parts[0], 'content.blubrry.com')) {
+            $parts_array = explode('content.blubrry.com', $meta_parts[0]);
+        } else {
+            // not Blubrry hosted
+            continue;
+        }
+        $url_without_prefix = $parts_array[1];
+        $parts_drop_qs = explode('?', $url_without_prefix);
+        if (!empty($progad_enable_urls) && array_key_exists($parts_drop_qs[0], $progad_enable_urls)) {
+            // now, if they have a redirect for the feed that this url is in, we need to replace the https://media.blubrry.com/{keyword}/ with those redirects
+            $progad_url_with_pp_redirect = preg_replace('#https://media.blubrry.com/(.*)/#U', $redirect_array[$data['meta_key']], $progad_enable_urls[$parts_drop_qs[0]]);
+            // replace the url in the meta_parts array, implode it back together, and update the program meta
+            $meta_parts[0] = $progad_url_with_pp_redirect;
+            $new_meta_value = implode("\n", $meta_parts);
+            update_post_meta($data['post_id'], $data['meta_key'], $new_meta_value);
+        } else if (!empty($progad_disable_urls) && array_key_exists($parts_drop_qs[0], $progad_disable_urls)) {
+            $hosting_url_with_pp_redirect = preg_replace('#http(s?)://#U', $redirect_array[$data['meta_key']], $progad_disable_urls[$parts_drop_qs[0]]);
+            // replace the url in the meta_parts array, implode it back together, and update the program meta
+            $meta_parts[0] = $hosting_url_with_pp_redirect;
+            $new_meta_value = implode("\n", $meta_parts);
+            update_post_meta($data['post_id'], $data['meta_key'], $new_meta_value);
+        }
+    }
+
+    if ($progad_error) {
+        update_option("pp_progad_sync_error", __("Error syncing Programmatic Advertising Settings:", 'powerpress') . " " . $progad_error);
+    } else {
+        update_option("pp_progad_sync_success", __("Successfully synced Programmatic Advertising Settings from Blubrry.", 'powerpress'));
+    }
+}
+add_action('powerpress_sync_progad_hook', 'powerpress_sync_progad');
 
 add_action('rss2_ns', 'powerpress_rss2_ns');
 add_action('rss2_ns_powerpress', 'powerpress_rss2_ns');
@@ -2274,6 +2558,32 @@ add_filter('pre_transient_rewrite_rules', 'powerpress_pre_transient_rewrite_rule
 
 function powerpress_init()
 {
+    // Translation support loaded:
+    load_plugin_textdomain('powerpress', // domain / keyword name of plugin
+        POWERPRESS_ABSPATH .'/languages', // Absolute path
+        basename(POWERPRESS_ABSPATH).'/languages' ); // relative path in plugins folder
+
+    /*
+    ####
+    # Defines that effect translation defined now:
+    ####
+    */
+    // Set specific play and download labels for your installation of PowerPress
+    if( !defined('POWERPRESS_LINKS_TEXT') )
+        define('POWERPRESS_LINKS_TEXT', __('Podcast', 'powerpress') );
+    if( !defined('POWERPRESS_DURATION_TEXT') )
+        define('POWERPRESS_DURATION_TEXT', __('Duration', 'powerpress') );
+    if( !defined('POWERPRESS_PLAY_IN_NEW_WINDOW_TEXT') )
+        define('POWERPRESS_PLAY_IN_NEW_WINDOW_TEXT', __('Play in new window', 'powerpress') );
+    if( !defined('POWERPRESS_DOWNLOAD_TEXT') )
+        define('POWERPRESS_DOWNLOAD_TEXT', __('Download', 'powerpress') );
+    if( !defined('POWERPRESS_PLAY_TEXT') )
+        define('POWERPRESS_PLAY_TEXT', __('Play', 'powerpress') );
+    if( !defined('POWERPRESS_EMBED_TEXT') )
+        define('POWERPRESS_EMBED_TEXT', __('Embed', 'powerpress') );
+    if( !defined('POWERPRESS_READ_TEXT') )
+        define('POWERPRESS_READ_TEXT', __('Read', 'powerpress') );
+
     $GeneralSettings = get_option('powerpress_general');
 
 
@@ -2562,31 +2872,6 @@ add_filter('request', 'powerpress_request');
 
 function powerpress_plugins_loaded()
 {
-    // Translation support loaded:
-    load_plugin_textdomain('powerpress', // domain / keyword name of plugin
-        POWERPRESS_ABSPATH .'/languages', // Absolute path
-        basename(POWERPRESS_ABSPATH).'/languages' ); // relative path in plugins folder
-
-    /*
-    ####
-    # Defines that effect translation defined now:
-    ####
-    */
-    // Set specific play and download labels for your installation of PowerPress
-    if( !defined('POWERPRESS_LINKS_TEXT') )
-        define('POWERPRESS_LINKS_TEXT', __('Podcast', 'powerpress') );
-    if( !defined('POWERPRESS_DURATION_TEXT') )
-        define('POWERPRESS_DURATION_TEXT', __('Duration', 'powerpress') );
-    if( !defined('POWERPRESS_PLAY_IN_NEW_WINDOW_TEXT') )
-        define('POWERPRESS_PLAY_IN_NEW_WINDOW_TEXT', __('Play in new window', 'powerpress') );
-    if( !defined('POWERPRESS_DOWNLOAD_TEXT') )
-        define('POWERPRESS_DOWNLOAD_TEXT', __('Download', 'powerpress') );
-    if( !defined('POWERPRESS_PLAY_TEXT') )
-        define('POWERPRESS_PLAY_TEXT', __('Play', 'powerpress') );
-    if( !defined('POWERPRESS_EMBED_TEXT') )
-        define('POWERPRESS_EMBED_TEXT', __('Embed', 'powerpress') );
-    if( !defined('POWERPRESS_READ_TEXT') )
-        define('POWERPRESS_READ_TEXT', __('Read', 'powerpress') );
 }
 add_action('plugins_loaded', 'powerpress_plugins_loaded');
 

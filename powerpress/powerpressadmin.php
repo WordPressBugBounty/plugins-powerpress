@@ -224,36 +224,37 @@ function powerpress_page_message_add_notice($msg, $classes='inline', $escape=tru
 		$g_powerpress_page_message = '<div class="updated fade powerpress-notice '.$classes.'">'. ($msg) . '</div>' . $g_powerpress_page_message;
 }
 
-
-function powerpress_getAccessToken()
-{
-    // Look at the creds and use the latest access token, if its not the latest refresh it...
-    $creds = get_option('powerpress_creds', array());
-    if( !empty($creds['access_token']) && !empty($creds['access_expires']) && $creds['access_expires'] > time() ) { // If access token did not expire
-        return $creds['access_token'];
-    }
-
-    if( !empty($creds['refresh_token']) && !empty($creds['client_id']) && !empty($creds['client_secret']) ) {
-
-        // Create new access token with refresh token here...
-        $auth = new PowerPressAuth();
-        $resultTokens = $auth->getAccessTokenFromRefreshToken($creds['refresh_token'], $creds['client_id'], $creds['client_secret']);
-
-        if( !empty($resultTokens['access_token']) && !empty($resultTokens['expires_in']) ) {
-            powerpress_save_settings( array('access_token'=>$resultTokens['access_token'], 'access_expires'=>( time() + $resultTokens['expires_in'] - 10 ) ), 'powerpress_creds');
-
-            return $resultTokens['access_token'];
-        } else {
-            //if their refresh token is expired, sign them out so they can re-authenticate
-            delete_option('powerpress_creds');
-            powerpress_page_message_add_error(__('Your account has been logged out due to inactivity with Blubrry services.', 'powerpress'));
-            powerpress_page_message_print();
-
+if (!function_exists('powerpress_getAccessToken')) {
+    function powerpress_getAccessToken()
+    {
+        // Look at the creds and use the latest access token, if its not the latest refresh it...
+        $creds = get_option('powerpress_creds', array());
+        if (!empty($creds['access_token']) && !empty($creds['access_expires']) && $creds['access_expires'] > time()) { // If access token did not expire
+            return $creds['access_token'];
         }
-    }
 
-    // If we failed to get credentials, return false
-    return false;
+        if (!empty($creds['refresh_token']) && !empty($creds['client_id']) && !empty($creds['client_secret'])) {
+
+            // Create new access token with refresh token here...
+            $auth = new PowerPressAuth();
+            $resultTokens = $auth->getAccessTokenFromRefreshToken($creds['refresh_token'], $creds['client_id'], $creds['client_secret']);
+
+            if (!empty($resultTokens['access_token']) && !empty($resultTokens['expires_in'])) {
+                powerpress_save_settings(array('access_token' => $resultTokens['access_token'], 'access_expires' => (time() + $resultTokens['expires_in'] - 10)), 'powerpress_creds');
+
+                return $resultTokens['access_token'];
+            } else {
+                //if their refresh token is expired, sign them out so they can re-authenticate
+                delete_option('powerpress_creds');
+                powerpress_page_message_add_error(__('Your account has been logged out due to inactivity with Blubrry services.', 'powerpress'));
+                powerpress_page_message_print();
+
+            }
+        }
+
+        // If we failed to get credentials, return false
+        return false;
+    }
 }
 
 function powerpress_page_message_print()
@@ -348,6 +349,19 @@ function powerpress_admin_init()
         $message .= "<a href='https://blubrry.com/podcast-insider/2024/11/01/podcasters-transition-from-chartable-to-blubrry-podcast-statistics/' target='_blank'>Learn more here</a>. ";
         $message .= "And be sure to remove your Chartable redirect by Dec. 12th!";
         $PowerPressNotificationManager->add('chartable-shutting-downn', $message);
+    }
+
+    // check for a message from programmatic sync
+    $pp_progad_sync_error = get_option("pp_progad_sync_error");
+    if ($pp_progad_sync_error) {
+        powerpress_add_error($pp_progad_sync_error);
+        delete_option('pp_progad_sync_error');
+    }
+
+    $pp_progad_sync_success = get_option("pp_progad_sync_success");
+    if ($pp_progad_sync_success) {
+        powerpress_page_message_add_notice($pp_progad_sync_success, 'inline', false);
+        delete_option('pp_progad_sync_success');
     }
 
 	// Security step, we must be in a powerpress/* page...
@@ -1452,216 +1466,13 @@ function powerpress_admin_init()
 			switch( $_GET['action'] )
 			{
                 case 'powerpress-sync-progad': {
-                    // grab the redirect url prefixes for each feed slug and make an array
-                    $General = powerpress_get_settings('powerpress_general');
-                    // append general redirects to each other (starting with redirect1)
-                    $Redirects = array('redirect0'=>'', 'redirect1'=>'', 'redirect2'=>'', 'redirect3'=>'');
-                    if( !empty($General['redirect1']) )
-                        $Redirects['redirect1'] = $General['redirect1'];
-                    if( !empty($General['redirect2']) )
-                        $Redirects['redirect2'] = $General['redirect2'];
-                    if( !empty($General['redirect3']) )
-                        $Redirects['redirect3'] = $General['redirect3'];
 
-                    // add to redirect array with key 'enclosure'
-                    $main_redirect = buildRedirect($Redirects);
-                    $redirect_array = array('enclosure' => $main_redirect);
-
-                    // then append custom feed redirects to beginning of main feed redirect with _slug:enclosure for each custom feed
-                    // channels
-                    if (!empty($General['custom_feeds'])) {
-                        foreach ($General['custom_feeds'] as $slug => $title) {
-                            $Feed = get_option('powerpress_feed_' . $slug, array());
-                            if (!empty($Feed['redirect'])) {
-                                $Redirects['redirect0'] = $Feed['redirect'];
-                                $redirect_array += array('_' . $slug . ':enclosure' => buildRedirect($Redirects));
-                                $Redirects['redirect0'] = '';
-                            } else {
-                                $redirect_array += array('_' . $slug . ':enclosure' => $main_redirect);
-                                // default stats redirect
-                            }
-                        }
+                    // schedule this check to happen in the background then refresh to get rid of query string
+                    if (!wp_next_scheduled('powerpress_sync_progad_hook')) {
+                        $scheduled = wp_schedule_single_event(time(), 'powerpress_sync_progad_hook');
                     }
+                    wp_redirect(admin_url() . "admin.php?page=powerpressadmin_basic");
 
-                    // categories
-                    if (!empty($General['custom_cat_feeds'])) {
-                        foreach ($General['custom_cat_feeds'] as $idx => $id) {
-                            $category = get_category($id);
-                            // $category['slug']
-                            $Feed = get_option('powerpress_cat_feed_' . $id, array());
-                            if (!empty($Feed['redirect'])) {
-                                $Redirects['redirect0'] = $Feed['redirect'];
-                                $redirect_array += array('_' . $category->slug . ':enclosure' => buildRedirect($Redirects));
-                                $Redirects['redirect0'] = '';
-                            } else {
-                                $redirect_array += array('_' . $category->slug . ':enclosure' => $main_redirect);
-                                // default stats redirect
-                            }
-                        }
-                    }
-
-                    // taxonomies
-                    $PowerPressTaxonomies = get_option('powerpress_taxonomy_podcasting', array());
-                    if (!empty($PowerPressTaxonomies)) {
-                        foreach ($PowerPressTaxonomies as $tt_id => $null) {
-
-                            $taxonomy_type = '';
-                            $term_ID = '';
-
-                            global $wpdb;
-                            $term_info = $wpdb->get_results("SELECT term_id, taxonomy FROM $wpdb->term_taxonomy WHERE term_taxonomy_id = $tt_id", ARRAY_A);
-                            if (!empty($term_info[0]['term_id'])) {
-                                $term_ID = $term_info[0]['term_id'];
-                                $taxonomy_type = $term_info[0]['taxonomy'];
-                            } else {
-                                continue; // we didn't find this taxonomy relationship
-                            }
-
-                            $Feed = powerpress_get_settings('powerpress_taxonomy_' . $tt_id);
-                            $term_object = get_term( $term_ID, $taxonomy_type, OBJECT, 'edit');
-                            if (!empty($Feed['redirect'])) {
-                                $Redirects['redirect0'] = $Feed['redirect'];
-                                $redirect_array += array('_' . $term_object->slug . ':enclosure' => buildRedirect($Redirects));
-                                $Redirects['redirect0'] = '';
-                            } else {
-                                $redirect_array += array('_' . $term_object->slug . ':enclosure' => $main_redirect);
-                                // default stats redirect
-                            }
-                        }
-                    }
-
-                    // post types
-                    $post_types = powerpress_admin_get_post_types(false);
-                    if (!empty($post_types)) {
-                        foreach ($post_types as $null => $post_type) {
-                            $PostTypeSettingsArray = get_option('powerpress_posttype_' . $post_type, array());
-                            if (empty($PostTypeSettingsArray))
-                                continue;
-
-                            foreach ($PostTypeSettingsArray as $feed_slug => $Feed) {
-                                if (!empty($Feed['redirect'])) {
-                                    $Redirects['redirect0'] = $Feed['redirect'];
-                                    $redirect_array += array('_' . $feed_slug . ':enclosure' => buildRedirect($Redirects));
-                                    $Redirects['redirect0'] = '';
-                                } else {
-                                    $redirect_array += array('_' . $feed_slug . ':enclosure' => $main_redirect);
-                                    // default stats redirect
-                                }
-                            }
-                        }
-                    }
-
-                    // figure out which shows we are enabling/disabling
-                    $progad_error = '';
-                    $progad_enable_urls = array();
-                    $progad_disable_urls = array();
-                    $auth = new PowerPressAuth();
-                    $accessToken = powerpress_getAccessToken();
-                    $req_url = sprintf('/2/media/prog_ad_status.json?cache=' . md5(rand(0, 999) . time()));
-                    $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '?' . POWERPRESS_BLUBRRY_API_QSA : '');
-                    $req_url .= (defined('POWERPRESS_PUBLISH_PROTECTED') ? '&protected=true' : '');
-                    $progad_enabled_shows = $auth->api($accessToken, $req_url, array(), false, 60 * 30);
-                    if (!$progad_enabled_shows) {
-                        $progad_error = $auth->getLastError();
-                    }
-                    $past_shows_with_progad = get_option('pp_programmatic_enabled_shows');
-                    if (!empty($past_shows_with_progad) && !empty($progad_enabled_shows['programs'])) {
-                        $shows_to_enable = array_diff($progad_enabled_shows['programs'], $past_shows_with_progad);
-                        $shows_to_disable = array_diff($past_shows_with_progad, $progad_enabled_shows['programs']);
-                    } elseif (!empty($past_shows_with_progad) && empty($progad_enabled_shows['programs'])) {
-                        $shows_to_disable = $past_shows_with_progad;
-                    } elseif (!empty($progad_enabled_shows['programs']) && empty($past_shows_with_progad)) {
-                        $shows_to_enable = $progad_enabled_shows['programs'];
-                    }
-                    update_option('pp_programmatic_enabled_shows', $progad_enabled_shows['programs']);
-
-                    // use the API to get associated URLs for all URLs in any program whose ads were just enabled
-                    if (!empty($shows_to_enable)) {
-                        foreach ($shows_to_enable as $idx => $keyword) {
-                            $req_url = sprintf('/2/media/' . $keyword . '/prog_ad_urls.json?cache=' . md5(rand(0, 999) . time()));
-                            if (defined('POWERPRESS_PROGRAMMATIC_FIX')) {
-                                $req_url .= '&pp_first_release_fix=true';
-                            }
-                            $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '?' . POWERPRESS_BLUBRRY_API_QSA : '');
-                            $req_url .= (defined('POWERPRESS_PUBLISH_PROTECTED') ? '&protected=true' : '');
-                            $result_prog = $auth->api($accessToken, $req_url, array(), false, 60 * 30);
-                            if (isset($result_prog['urls']) && is_array($result_prog['urls'])) {
-                                foreach ($result_prog['urls'] as $i => $url_pair) {
-                                    // add the redirect to the key before adding this pair
-                                    $progad_enable_urls += $url_pair;
-                                }
-                            } elseif (isset($result_prog['message']) && $result_prog['message'] == 'no media') {
-                                // no error--continue
-                            }
-                            else {
-                                $progad_error = $auth->getLastError();
-                            }
-                        }
-                    }
-
-                    // use the API to get associated URLs for all URLs in any program whose ads were just disabled
-                    if (!empty($shows_to_disable)) {
-                        foreach ($shows_to_disable as $idx => $keyword) {
-                            $req_url = sprintf('/2/media/' . $keyword . '/prog_ad_urls.json?disable=true&cache=' . md5(rand(0, 999) . time()));
-                            $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '?' . POWERPRESS_BLUBRRY_API_QSA : '');
-                            $req_url .= (defined('POWERPRESS_PUBLISH_PROTECTED') ? '&protected=true' : '');
-                            $result_prog = $auth->api($accessToken, $req_url, array(), false, 60 * 30);
-                            $progad_error = $auth->getLastError();
-                            if (isset($result_prog['urls']) && is_array($result_prog['urls'])) {
-                                foreach ($result_prog['urls'] as $i => $url_pair) {
-                                    // add the redirect to the key before adding this pair
-                                    $progad_disable_urls += $url_pair;
-                                }
-                            } elseif (isset($result_prog['message']) && $result_prog['message'] == 'no media') {
-                                // no error--continue
-                            }
-                            else {
-                                $progad_error = $auth->getLastError();
-                            }
-                        }
-                    }
-
-                    // query the wordpress database to match up the URLs that we need to update
-                    global $wpdb;
-                    $query = "SELECT meta_id, post_id, meta_key, meta_value FROM {$wpdb->postmeta} WHERE meta_key LIKE \"%enclosure\"";
-                    $results_data = $wpdb->get_results($query, ARRAY_A);
-                    foreach ($results_data as $idx => $data) {
-                        $meta_parts = explode("\n", $data['meta_value']);
-
-                        if (strpos($meta_parts[0], 'ins.blubrry.com')) {
-                            $parts_array = explode('ins.blubrry.com', $meta_parts[0]);
-                        } else if (strpos($meta_parts[0], 'content3.blubrry.biz')) {
-                            $parts_array = explode('content3.blubrry.biz', $meta_parts[0]);
-                        } else if (strpos($meta_parts[0], 'mc.blubrry.com')) {
-                            $parts_array = explode('mc.blubrry.com', $meta_parts[0]);
-                        } elseif (strpos($meta_parts[0], 'content.blubrry.com')) {
-                            $parts_array = explode('content.blubrry.com', $meta_parts[0]);
-                        } else {
-                            // not Blubrry hosted
-                            continue;
-                        }
-                        $url_without_prefix = $parts_array[1];
-                        $parts_drop_qs = explode('?', $url_without_prefix);
-                        if (!empty($progad_enable_urls) && array_key_exists($parts_drop_qs[0], $progad_enable_urls)) {
-                            // now, if they have a redirect for the feed that this url is in, we need to replace the https://media.blubrry.com/{keyword}/ with those redirects
-                            $progad_url_with_pp_redirect = preg_replace('#https://media.blubrry.com/(.*)/#U', $redirect_array[$data['meta_key']], $progad_enable_urls[$parts_drop_qs[0]]);
-                            // replace the url in the meta_parts array, implode it back together, and update the program meta
-                            $meta_parts[0] = $progad_url_with_pp_redirect;
-                            $new_meta_value = implode("\n", $meta_parts);
-                            update_post_meta($data['post_id'], $data['meta_key'], $new_meta_value);
-                        } else if (!empty($progad_disable_urls) && array_key_exists($parts_drop_qs[0], $progad_disable_urls)) {
-                            $hosting_url_with_pp_redirect = preg_replace('#http(s?)://#U', $redirect_array[$data['meta_key']], $progad_disable_urls[$parts_drop_qs[0]]);
-                            // replace the url in the meta_parts array, implode it back together, and update the program meta
-                            $meta_parts[0] = $hosting_url_with_pp_redirect;
-                            $new_meta_value = implode("\n", $meta_parts);
-                            update_post_meta($data['post_id'], $data['meta_key'], $new_meta_value);
-                        }
-                    }
-                    if ($progad_error) {
-                        powerpress_add_error("Error syncing Programmatic Advertising Settings: " . $progad_error);
-                    } else {
-                        powerpress_page_message_add_notice("Successfully synced Programmatic Advertising Settings from Blubrry.", 'inline', false);
-                    }
                 }; break;
                 case 'powerpress_dismiss': {
                     update_option('powerpress_' . $_GET['notice'] . '_notice_dismissed', 'true');
@@ -3361,31 +3172,31 @@ function powerpress_edit_post($post_ID, $post)
 
 add_action('save_post', 'powerpress_edit_post', 10, 2);
 
-function buildRedirect($Redirects) {
-    $redirect_result = '';
-    for( $x = 3; $x >= 0; $x-- )
+if (!function_exists('buildRedirect')) {
+    function buildRedirect($Redirects)
     {
-        $key = sprintf('redirect%d', $x);
-        if( !empty($Redirects[ $key ]) )
-        {
-            if( preg_match('/^https?:\/\/(.*)$/', trim($Redirects[ $key ]) , $matches ) == 0 )
-                continue;
-
-            $RedirectClean = $matches[1];
-            if( substr($RedirectClean, -1, 1) != '/' ) // Rediercts need to end with a slash /.
-                $RedirectClean .= '/';
-
-            if( !empty($RedirectClean) )
-            {
-                if( strpos($RedirectClean, '/') == 0 ) // Not a valid redirect URL
+        $redirect_result = '';
+        for ($x = 3; $x >= 0; $x--) {
+            $key = sprintf('redirect%d', $x);
+            if (!empty($Redirects[$key])) {
+                if (preg_match('/^https?:\/\/(.*)$/', trim($Redirects[$key]), $matches) == 0)
                     continue;
 
-                if( !strstr($redirect_result, $RedirectClean) ) // If the redirect is not already added...
-                    $redirect_result = $RedirectClean . $redirect_result;
+                $RedirectClean = $matches[1];
+                if (substr($RedirectClean, -1, 1) != '/') // Rediercts need to end with a slash /.
+                    $RedirectClean .= '/';
+
+                if (!empty($RedirectClean)) {
+                    if (strpos($RedirectClean, '/') == 0) // Not a valid redirect URL
+                        continue;
+
+                    if (!strstr($redirect_result, $RedirectClean)) // If the redirect is not already added...
+                        $redirect_result = $RedirectClean . $redirect_result;
+                }
             }
         }
+        return 'https://' . $redirect_result;
     }
-    return 'https://' . $redirect_result;
 }
 
 if( defined('POWERPRESS_DO_ENCLOSE_FIX') )
