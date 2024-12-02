@@ -236,11 +236,18 @@ if (!function_exists('powerpress_getAccessToken')) {
         if (!empty($creds['refresh_token']) && !empty($creds['client_id']) && !empty($creds['client_secret'])) {
 
             // Create new access token with refresh token here...
+            require_once('powerpressadmin-auth.class.php');
             $auth = new PowerPressAuth();
             $resultTokens = $auth->getAccessTokenFromRefreshToken($creds['refresh_token'], $creds['client_id'], $creds['client_secret']);
 
             if (!empty($resultTokens['access_token']) && !empty($resultTokens['expires_in'])) {
-                powerpress_save_settings(array('access_token' => $resultTokens['access_token'], 'access_expires' => (time() + $resultTokens['expires_in'] - 10)), 'powerpress_creds');
+                powerpress_save_settings(
+                    array(
+                        'access_token' => $resultTokens['access_token'], 
+                        'access_expires' => (time() + $resultTokens['expires_in'] - 10)
+                    ), 
+                    'powerpress_creds'
+                );
 
                 return $resultTokens['access_token'];
             } else {
@@ -248,7 +255,6 @@ if (!function_exists('powerpress_getAccessToken')) {
                 delete_option('powerpress_creds');
                 powerpress_page_message_add_error(__('Your account has been logged out due to inactivity with Blubrry services.', 'powerpress'));
                 powerpress_page_message_print();
-
             }
         }
 
@@ -1790,181 +1796,183 @@ function powerpress_admin_notices()
 
 add_action( 'admin_notices', 'powerpress_admin_notices' );
 
-function powerpress_save_settings($SettingsNew=false, $field = 'powerpress_general' )
-{
-	if(  $field == 'powerpress_taxonomy_podcasting' || $field == 'powerpress_itunes_featured' ) { // No merging settings for these fields...
-		update_option($field,  $SettingsNew);
-		return;
-	}
-	// Save general settings
-	if( $SettingsNew )
-	{
-		$Settings = get_option($field);
-		if( !is_array($Settings) )
-			$Settings = array();
-		foreach( $SettingsNew as $key => $value ) {
-			$Settings[$key] = $value;
-		}
-		if( $field == 'powerpress_general' && !isset($Settings['timestamp']) )
-			$Settings['timestamp'] = time();
-			
-		// Special case fields, if they are empty, we can delete them., this will keep the Settings array uncluttered
-		if( isset($Settings['feed_links']) && $Settings['feed_links'] == 0 ) // If set to default value, no need to save it in the database
-			unset($Settings['feed_links']);
-        if( isset($Settings['suppress_unused_item_tags']) && $Settings['suppress_unused_item_tags'] == 0 ) // If set to default value, no need to save it in the database
-            unset($Settings['suppress_unused_item_tags']);
+if (!function_exists('powerpress_save_settings')) {
+    function powerpress_save_settings($SettingsNew=false, $field = 'powerpress_general' )
+    {
+        if(  $field == 'powerpress_taxonomy_podcasting' || $field == 'powerpress_itunes_featured' ) { // No merging settings for these fields...
+            update_option($field,  $SettingsNew);
+            return;
+        }
+        // Save general settings
+        if( $SettingsNew )
+        {
+            $Settings = get_option($field);
+            if( !is_array($Settings) )
+                $Settings = array();
+            foreach( $SettingsNew as $key => $value ) {
+                $Settings[$key] = $value;
+            }
+            if( $field == 'powerpress_general' && !isset($Settings['timestamp']) )
+                $Settings['timestamp'] = time();
 
-		// We can unset settings that are set to their defaults to save database size...
-		if( $field == 'powerpress_general' )
-		{
-		    if( isset($SettingsNew['new_episode_box_flag'])) {
-                /* Switch the settings over to the actual field name (to fix FCGI mode problem with older versions of PHP.
-                if (isset($SettingsNew['ebititle'])) {
-                    if ($SettingsNew['ebititle'] == 'false') {
-                        $Settings['new_episode_box_itunes_title'] = 2;
-                    } else {
-                        $Settings['new_episode_box_itunes_title'] = 1;
-                        $SettingsNew['new_episode_box_itunes_title'] = 1;
+            // Special case fields, if they are empty, we can delete them., this will keep the Settings array uncluttered
+            if( isset($Settings['feed_links']) && $Settings['feed_links'] == 0 ) // If set to default value, no need to save it in the database
+                unset($Settings['feed_links']);
+            if( isset($Settings['suppress_unused_item_tags']) && $Settings['suppress_unused_item_tags'] == 0 ) // If set to default value, no need to save it in the database
+                unset($Settings['suppress_unused_item_tags']);
+
+            // We can unset settings that are set to their defaults to save database size...
+            if( $field == 'powerpress_general' )
+            {
+                if( isset($SettingsNew['new_episode_box_flag'])) {
+                    /* Switch the settings over to the actual field name (to fix FCGI mode problem with older versions of PHP.
+                    if (isset($SettingsNew['ebititle'])) {
+                        if ($SettingsNew['ebititle'] == 'false') {
+                            $Settings['new_episode_box_itunes_title'] = 2;
+                        } else {
+                            $Settings['new_episode_box_itunes_title'] = 1;
+                            $SettingsNew['new_episode_box_itunes_title'] = 1;
+                        }
+                        unset($Settings['ebititle']);
                     }
-                    unset($Settings['ebititle']);
+
+                    if (isset($SettingsNew['ebinst'])) {
+                        if ($SettingsNew['ebinst'] == 'false') {
+                            $Settings['new_episode_box_itunes_nst'] = 2;
+                        } else {
+                            $Settings['new_episode_box_itunes_nst'] = 1;
+                            $SettingsNew['new_episode_box_itunes_nst'] = 1;
+                        }
+                        unset($Settings['ebinst']);
+                    }*/
+
+                    if (!isset($SettingsNew['new_episode_box_embed']))
+                        $Settings['new_episode_box_embed'] = 2;
+                    if (!isset($SettingsNew['new_embed_replace_player']))
+                        $Settings['new_embed_replace_player'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_no_player']))
+                        $Settings['new_episode_box_no_player'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_no_links']))
+                        $Settings['new_episode_box_no_links'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_no_player_and_links']))
+                        $Settings['new_episode_box_no_player_and_links'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_cover_image']))
+                        $Settings['new_episode_box_cover_image'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_player_size']))
+                        $Settings['new_episode_box_player_size'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_subtitle']))
+                        $Settings['new_episode_box_subtitle'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_summary']))
+                        $Settings['new_episode_box_summary'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_author']))
+                        $Settings['new_episode_box_author'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_explicit']))
+                        $Settings['new_episode_box_explicit'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_pci']))
+                        $Settings['new_episode_box_pci'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_block']))
+                        $Settings['new_episode_box_block'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_itunes_image']))
+                        $Settings['new_episode_box_itunes_image'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_order']))
+                        $Settings['new_episode_box_order'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_itunes_title']))
+                        $Settings['new_episode_box_itunes_title'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_itunes_nst']))
+                        $Settings['new_episode_box_itunes_nst'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_gp_explicit']))
+                        $Settings['new_episode_box_gp_explicit'] = 2;
+                    if (!isset($SettingsNew['new_episode_box_feature_in_itunes']))
+                        $Settings['new_episode_box_feature_in_itunes'] = 2;
+                } elseif(isset($SettingsNew['pp-gen-settings-tabs'])) {
+                    if (!isset($SettingsNew['skip_to_episode_settings']) || empty($SettingsNew['skip_to_episode_settings']))
+                        unset($Settings['skip_to_episode_settings']);
+                    if (!isset($SettingsNew['display_player_excerpt']) || empty($SettingsNew['display_player_excerpt']))
+                        unset($Settings['display_player_excerpt']);
+                    if (!isset($SettingsNew['hide_player_more']) || empty($SettingsNew['hide_player_more']))
+                        unset($Settings['hide_player_more']);
+                    if (!isset($SettingsNew['podcast_embed']) || empty($SettingsNew['podcast_embed']))
+                        unset($Settings['podcast_embed']);
+                    if (!isset($SettingsNew['subscribe_links']) || empty($SettingsNew['subscribe_links']))
+                        unset($Settings['subscribe_links']);
+                    if (!isset($SettingsNew['new_window_no_factor']) || empty($SettingsNew['new_window_no_factor']))
+                        unset($Settings['new_window_no_factor']);
+                } elseif( isset($SettingsNew['powerpress_bplayer_settings'])) {
+                    unset($Settings['powerpress_bplayer_settings']);
+                    if (!isset($SettingsNew['new_episode_box_itunes_image']) || empty($SettingsNew['new_episode_box_itunes_image']))
+                        $Settings['new_episode_box_itunes_image'] = 2;
+                    if (isset($SettingsNew['bp_episode_image']) && empty($SettingsNew['bp_episode_image']))
+                        unset($Settings['bp_episode_image']);
                 }
 
-                if (isset($SettingsNew['ebinst'])) {
-                    if ($SettingsNew['ebinst'] == 'false') {
-                        $Settings['new_episode_box_itunes_nst'] = 2;
-                    } else {
-                        $Settings['new_episode_box_itunes_nst'] = 1;
-                        $SettingsNew['new_episode_box_itunes_nst'] = 1;
-                    }
-                    unset($Settings['ebinst']);
-                }*/
 
-                if (!isset($SettingsNew['new_episode_box_embed']))
-                    $Settings['new_episode_box_embed'] = 2;
-                if (!isset($SettingsNew['new_embed_replace_player']))
-                    $Settings['new_embed_replace_player'] = 2;
-                if (!isset($SettingsNew['new_episode_box_no_player']))
-                    $Settings['new_episode_box_no_player'] = 2;
-                if (!isset($SettingsNew['new_episode_box_no_links']))
-                    $Settings['new_episode_box_no_links'] = 2;
-                if (!isset($SettingsNew['new_episode_box_no_player_and_links']))
-                    $Settings['new_episode_box_no_player_and_links'] = 2;
-                if (!isset($SettingsNew['new_episode_box_cover_image']))
-                    $Settings['new_episode_box_cover_image'] = 2;
-                if (!isset($SettingsNew['new_episode_box_player_size']))
-                    $Settings['new_episode_box_player_size'] = 2;
-                if (!isset($SettingsNew['new_episode_box_subtitle']))
-                    $Settings['new_episode_box_subtitle'] = 2;
-                if (!isset($SettingsNew['new_episode_box_summary']))
-                    $Settings['new_episode_box_summary'] = 2;
-                if (!isset($SettingsNew['new_episode_box_author']))
-                    $Settings['new_episode_box_author'] = 2;
-                if (!isset($SettingsNew['new_episode_box_explicit']))
-                    $Settings['new_episode_box_explicit'] = 2;
-                if (!isset($SettingsNew['new_episode_box_pci']))
-                    $Settings['new_episode_box_pci'] = 2;
-                if (!isset($SettingsNew['new_episode_box_block']))
-                    $Settings['new_episode_box_block'] = 2;
-                if (!isset($SettingsNew['new_episode_box_itunes_image']))
-                    $Settings['new_episode_box_itunes_image'] = 2;
-                if (!isset($SettingsNew['new_episode_box_order']))
-                    $Settings['new_episode_box_order'] = 2;
-                if (!isset($SettingsNew['new_episode_box_itunes_title']))
-                    $Settings['new_episode_box_itunes_title'] = 2;
-                if (!isset($SettingsNew['new_episode_box_itunes_nst']))
-                    $Settings['new_episode_box_itunes_nst'] = 2;
-                if (!isset($SettingsNew['new_episode_box_gp_explicit']))
-                    $Settings['new_episode_box_gp_explicit'] = 2;
-                if (!isset($SettingsNew['new_episode_box_feature_in_itunes']))
-                    $Settings['new_episode_box_feature_in_itunes'] = 2;
-            } elseif(isset($SettingsNew['pp-gen-settings-tabs'])) {
-                if (!isset($SettingsNew['skip_to_episode_settings']) || empty($SettingsNew['skip_to_episode_settings']))
-                    unset($Settings['skip_to_episode_settings']);
-                if (!isset($SettingsNew['display_player_excerpt']) || empty($SettingsNew['display_player_excerpt']))
-                    unset($Settings['display_player_excerpt']);
-                if (!isset($SettingsNew['hide_player_more']) || empty($SettingsNew['hide_player_more']))
-                    unset($Settings['hide_player_more']);
-                if (!isset($SettingsNew['podcast_embed']) || empty($SettingsNew['podcast_embed']))
-                    unset($Settings['podcast_embed']);
-                if (!isset($SettingsNew['subscribe_links']) || empty($SettingsNew['subscribe_links']))
-                    unset($Settings['subscribe_links']);
-                if (!isset($SettingsNew['new_window_no_factor']) || empty($SettingsNew['new_window_no_factor']))
-                    unset($Settings['new_window_no_factor']);
-            } elseif( isset($SettingsNew['powerpress_bplayer_settings'])) {
-		        unset($Settings['powerpress_bplayer_settings']);
-                if (!isset($SettingsNew['new_episode_box_itunes_image']) || empty($SettingsNew['new_episode_box_itunes_image']))
-                    $Settings['new_episode_box_itunes_image'] = 2;
-                if (isset($SettingsNew['bp_episode_image']) && empty($SettingsNew['bp_episode_image']))
-                    unset($Settings['bp_episode_image']);
+                if( isset($Settings['videojs_css_class']) && empty($Settings['videojs_css_class']) )
+                    unset($Settings['videojs_css_class']);
+                if( isset($Settings['cat_casting']) && empty($Settings['cat_casting']) )
+                    unset($Settings['cat_casting']);
+                if( isset($Settings['posttype_podcasting']) && empty($Settings['posttype_podcasting']) )
+                    unset($Settings['posttype_podcasting']);
+                if( isset($Settings['taxonomy_podcasting']) && empty($Settings['taxonomy_podcasting']) )
+                    unset($Settings['taxonomy_podcasting']);
+                if( isset($Settings['playlist_player']) && empty($Settings['playlist_player']) )
+                    unset($Settings['playlist_player']);
+                if( isset($Settings['seo_feed_title']) && empty($Settings['seo_feed_title']) )
+                    unset($Settings['seo_feed_title']);
+                if( isset($Settings['subscribe_feature_email']) && empty($Settings['subscribe_feature_email']) )
+                    unset($Settings['subscribe_feature_email']);
+                if( isset($Settings['poster_image_video']) && empty($Settings['poster_image_video']) )
+                    unset($Settings['poster_image_video']);
+                if( isset($Settings['poster_image_audio']) && empty($Settings['poster_image_audio']) )
+                    unset($Settings['poster_image_audio']);
+                if( isset($Settings['itunes_image_audio']) && empty($Settings['itunes_image_audio']) )
+                    unset($Settings['itunes_image_audio']);
+                if( isset($Settings['network_mode']) && empty($Settings['network_mode']) )
+                    unset($Settings['network_mode']);
+                if( isset($Settings['use_caps']) && empty($Settings['use_caps']) )
+                    unset($Settings['use_caps']);
+            }
+            else // Feed or player settings...
+            {
+                if( isset($Settings['itunes_block'] ) && $Settings['itunes_block'] == 0 )
+                    unset($Settings['itunes_block']);
+                if( isset($Settings['itunes_complete'] ) && $Settings['itunes_complete'] == 0 )
+                    unset($Settings['itunes_complete']);
+                if( isset($Settings['maximize_feed'] ) && $Settings['maximize_feed'] == 0 )
+                    unset($Settings['maximize_feed']);
+                if( isset($Settings['unlock_podcast'] ) && $Settings['unlock_podcast'] == 0 )
+                    unset($Settings['unlock_podcast']);
+                if( isset($Settings['donate_link'] ) && $Settings['donate_link'] == 0 )
+                    unset($Settings['donate_link']);
+                if( empty($Settings['donate_url']) )
+                    unset($Settings['donate_url']);
+                if( empty($Settings['donate_label']) )
+                    unset($Settings['donate_label']);
+                if( isset($Settings['allow_feed_comments'] ) && $Settings['allow_feed_comments'] == 0 )
+                    unset($Settings['allow_feed_comments']);
+                if( empty($Settings['episode_itunes_image']) )
+                    unset($Settings['episode_itunes_image']);
             }
 
-
-			if( isset($Settings['videojs_css_class']) && empty($Settings['videojs_css_class']) )
-				unset($Settings['videojs_css_class']);
-			if( isset($Settings['cat_casting']) && empty($Settings['cat_casting']) )
-                unset($Settings['cat_casting']);
-			if( isset($Settings['posttype_podcasting']) && empty($Settings['posttype_podcasting']) )
-				unset($Settings['posttype_podcasting']);
-			if( isset($Settings['taxonomy_podcasting']) && empty($Settings['taxonomy_podcasting']) )
-				unset($Settings['taxonomy_podcasting']);
-			if( isset($Settings['playlist_player']) && empty($Settings['playlist_player']) )
-				unset($Settings['playlist_player']);	
-			if( isset($Settings['seo_feed_title']) && empty($Settings['seo_feed_title']) )
-				unset($Settings['seo_feed_title']);
-			if( isset($Settings['subscribe_feature_email']) && empty($Settings['subscribe_feature_email']) )
-				unset($Settings['subscribe_feature_email']);
-			if( isset($Settings['poster_image_video']) && empty($Settings['poster_image_video']) )
-				unset($Settings['poster_image_video']);
-			if( isset($Settings['poster_image_audio']) && empty($Settings['poster_image_audio']) )
-				unset($Settings['poster_image_audio']);
-			if( isset($Settings['itunes_image_audio']) && empty($Settings['itunes_image_audio']) )
-				unset($Settings['itunes_image_audio']);
-            if( isset($Settings['network_mode']) && empty($Settings['network_mode']) )
-				unset($Settings['network_mode']);
-            if( isset($Settings['use_caps']) && empty($Settings['use_caps']) )
-				unset($Settings['use_caps']);
-		}
-		else // Feed or player settings...
-		{
-			if( isset($Settings['itunes_block'] ) && $Settings['itunes_block'] == 0 )
-				unset($Settings['itunes_block']);
-			if( isset($Settings['itunes_complete'] ) && $Settings['itunes_complete'] == 0 )
-				unset($Settings['itunes_complete']);
-			if( isset($Settings['maximize_feed'] ) && $Settings['maximize_feed'] == 0 )
-				unset($Settings['maximize_feed']);
-            if( isset($Settings['unlock_podcast'] ) && $Settings['unlock_podcast'] == 0 )
-                unset($Settings['unlock_podcast']);
-			if( isset($Settings['donate_link'] ) && $Settings['donate_link'] == 0 )
-				unset($Settings['donate_link']);
-			if( empty($Settings['donate_url']) )
-				unset($Settings['donate_url']);
-			if( empty($Settings['donate_label']) )
-				unset($Settings['donate_label']);
-			if( isset($Settings['allow_feed_comments'] ) && $Settings['allow_feed_comments'] == 0 )
-				unset($Settings['allow_feed_comments']);
-			if( empty($Settings['episode_itunes_image']) )
-				unset($Settings['episode_itunes_image']);
-		}
-
-        if(!empty($Settings)){
-            if(isset($Settings['player'])){
-                if($Settings['player'] == 'blubrrymodern'){
-                    if(!empty($_POST)){
-                        if(isset($_POST['ModernPlayer']['progress']) && isset($_POST['ModernPlayer']['border']) && isset($_POST['mode'])){
-                            if($_POST['mode'] == 'Light' || $_POST['mode'] == 'Dark'){
-                                if(preg_match('/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/i', $_POST['ModernPlayer']['progress']) && preg_match('/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/i', $_POST['ModernPlayer']['border'])){
-                                    $updatedPlayerSettings = array('mode' => $_POST['mode'], 'border' => $_POST['ModernPlayer']['border'], 'progress' => $_POST['ModernPlayer']['progress']);
-                                    update_option('powerpress_bplayer',  json_encode($updatedPlayerSettings));
+            if(!empty($Settings)){
+                if(isset($Settings['player'])){
+                    if($Settings['player'] == 'blubrrymodern'){
+                        if(!empty($_POST)){
+                            if(isset($_POST['ModernPlayer']['progress']) && isset($_POST['ModernPlayer']['border']) && isset($_POST['mode'])){
+                                if($_POST['mode'] == 'Light' || $_POST['mode'] == 'Dark'){
+                                    if(preg_match('/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/i', $_POST['ModernPlayer']['progress']) && preg_match('/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/i', $_POST['ModernPlayer']['border'])){
+                                        $updatedPlayerSettings = array('mode' => $_POST['mode'], 'border' => $_POST['ModernPlayer']['border'], 'progress' => $_POST['ModernPlayer']['progress']);
+                                        update_option('powerpress_bplayer',  json_encode($updatedPlayerSettings));
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
 
-		update_option($field,  $Settings);
-	}
+            update_option($field,  $Settings);
+        }
+    }
 }
 
 function powerpress_get_settings($field, $for_editing=true)
