@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.10.6
+Version: 11.10.7
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -132,7 +132,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.10.6' );
+define('POWERPRESS_VERSION', '11.10.7' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -596,11 +596,6 @@ function powerpress_rss2_ns()
     {
         echo 'xmlns:rawvoice="https://blubrry.com/developer/rawvoice-rss/"'.PHP_EOL;
     }
-    if( !defined('POWERPRESS_GOOGLEPLAY_RSS') || POWERPRESS_GOOGLEPLAY_RSS != false )
-    {
-        echo 'xmlns:googleplay="http://www.google.com/schemas/play-podcasts/1.0"'.PHP_EOL;
-        //echo 'xmlns:googleplay="http://www.google.com/schemas/play-podcasts/1.0/play-podcasts.xsd"'.PHP_EOL;
-    }
 }
 
 
@@ -610,19 +605,19 @@ function powerpress_check_for_chartable()
     $found_chartable = false;
     $General = get_option('powerpress_general');
     if (!empty($General['redirect1'])) {
-        if (strpos($General['redirect1'], 'chrt.fm') !== false || strpos($General['redirect1'], 'chtbl.com') !== false) {
+        if (is_chartable_url($General['redirect1'])) {
             update_option('powerpress_chartable_check', 'has_chartable');
             $found_chartable = true;
         }
     }
     if (!empty($General['redirect2'])) {
-        if (strpos($General['redirect2'], 'chrt.fm') !== false || strpos($General['redirect2'], 'chtbl.com') !== false) {
+        if (is_chartable_url($General['redirect2'])) {
             update_option('powerpress_chartable_check', 'has_chartable');
             $found_chartable = true;
         }
     }
     if (!empty($General['redirect3'])) {
-        if (strpos($General['redirect3'], 'chrt.fm') !== false || strpos($General['redirect3'], 'chtbl.com') !== false) {
+        if (is_chartable_url($General['redirect3'])) {
             update_option('powerpress_chartable_check', 'has_chartable');
             $found_chartable = true;
         }
@@ -658,6 +653,10 @@ if (!function_exists('buildRedirect')) {
             if (!empty($Redirects[$key])) {
                 if (preg_match('/^https?:\/\/(.*)$/', trim($Redirects[$key]), $matches) == 0)
                     continue;
+
+                if (is_chartable_url($Redirects[$key])) {
+                    continue;
+                }
 
                 $RedirectClean = $matches[1];
                 if (substr($RedirectClean, -1, 1) != '/') // Rediercts need to end with a slash /.
@@ -4485,6 +4484,11 @@ function powerpress_add_redirect_url($MediaURL, $EpisodeData = false) // $channe
             if( preg_match('/^https?:\/\/(.*)$/', trim($Redirects[ $key ]) , $matches ) == 0 )
                 continue;
 
+            // skip adding redirect to enclosure URL if its charable
+            if (is_chartable_url($Redirects[$key])) {
+                continue;
+            }
+
             $RedirectClean = $matches[1];
             if( substr($RedirectClean, -1, 1) != '/' ) // Rediercts need to end with a slash /.
                 $RedirectClean .= '/';
@@ -4501,6 +4505,17 @@ function powerpress_add_redirect_url($MediaURL, $EpisodeData = false) // $channe
     }
 
     return $NewURL;
+}
+
+if (!function_exists('is_chartable_url')) {
+    function is_chartable_url($redirectUrl)
+    {
+        if (strpos($redirectUrl, 'chrt.fm') !== false || strpos($redirectUrl, 'chtbl.com') !== false) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
 
 function powerpress_add_flag_to_redirect_url($MediaURL, $Flag)
@@ -4853,7 +4868,7 @@ function powerpress_get_enclosure_data_podpress($post_id, $mediaNum = 0, $includ
             {
                 $PodPressSettings = get_option('podPress_config');
                 if( $PodPressSettings && isset($PodPressSettings['mediaWebPath']) )
-                    $Data['url'] = rtrim($PodpressSettings['mediaWebPath'], '/') . '/' . ltrim($Data['url'], '/');
+                    $Data['url'] = rtrim($PodPressSettings['mediaWebPath'], '/') . '/' . ltrim($Data['url'], '/');
                 unset($PodPressSettings);
             }
 

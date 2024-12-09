@@ -3190,6 +3190,10 @@ if (!function_exists('buildRedirect')) {
                 if (preg_match('/^https?:\/\/(.*)$/', trim($Redirects[$key]), $matches) == 0)
                     continue;
 
+                if (is_chartable_url($Redirects[$key])) {
+                    continue;
+                }
+
                 $RedirectClean = $matches[1];
                 if (substr($RedirectClean, -1, 1) != '/') // Rediercts need to end with a slash /.
                     $RedirectClean .= '/';
@@ -3204,6 +3208,17 @@ if (!function_exists('buildRedirect')) {
             }
         }
         return 'https://' . $redirect_result;
+    }
+}
+
+if (!function_exists('is_chartable_url')) {
+    function is_chartable_url($redirectUrl)
+    {
+        if (strpos($redirectUrl, 'chrt.fm') !== false || strpos($redirectUrl, 'chtbl.com') !== false) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 

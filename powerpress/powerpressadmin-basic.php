@@ -1367,12 +1367,24 @@ function powerpressadmin_edit_blubrry_services($General, $action_url = false, $a
 
 function powerpressadmin_edit_media_statistics($General)
 {
-	if( !isset($General['redirect1']) )
-		$General['redirect1'] = '';
-	if( !isset($General['redirect2']) )
-		$General['redirect2'] = '';
-	if( !isset($General['redirect3']) )
-		$General['redirect3'] = '';
+
+	if( !isset($General['redirect1']) ) {
+        $General['redirect1'] = '';
+    } elseif (is_chartable_url($General['redirect1'])) {
+        $General['redirect1'] = '';
+    }
+
+	if( !isset($General['redirect2']) ) {
+        $General['redirect2'] = '';
+    } elseif (is_chartable_url($General['redirect2'])) {
+        $General['redirect2'] = '';
+    }
+
+	if( !isset($General['redirect3']) ) {
+        $General['redirect3'] = '';
+    } elseif (is_chartable_url($General['redirect3'])) {
+        $General['redirect3'] = '';
+    }
 
     $DisableStatsInDashboard = false;
     if( !empty($General['disable_dashboard_stats']) )
