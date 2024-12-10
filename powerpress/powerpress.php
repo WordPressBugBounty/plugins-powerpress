@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.10.7
+Version: 11.10.8
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -132,7 +132,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.10.7' );
+define('POWERPRESS_VERSION', '11.10.8' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -1413,11 +1413,6 @@ function powerpress_rss2_head()
         } else {
             echo '" />'.PHP_EOL;
         }
-
-
-        //Get the googleplay category and put it in the feed
-        $gplay_category = $googleplay_categories[$googleplay_category_mapping[$Cat1.'-00']];
-        echo "\t",'<googleplay:category text="'. esc_attr($gplay_category). '"/>'.PHP_EOL;
     }
 
     if( $Cat2 )
@@ -1502,7 +1497,6 @@ function powerpress_rss2_head()
             if (isset($Feed['block_all']) && $Feed['block_all'] != 0) {
                 echo "\t<podcast:block>yes</podcast:block>\n";
                 echo "\t<itunes:block>yes</itunes:block>\n";
-                echo "\t<googleplay:block>yes</googleplay:block>\n";
             } else {
                 // Block individuals
                 $blockList = explode(';', $Feed['block_list']);
@@ -1510,10 +1504,9 @@ function powerpress_rss2_head()
                 foreach ($blockList as $block) {
                     if ($block != '') {
                         echo "\t<podcast:block id=\"$block\">yes</podcast:block>\n";
-                        if ($block == 'apple')
+                        if ($block == 'apple') {
                             echo "\t<itunes:block>yes</itunes:block>\n";
-                        if ($block == 'google')
-                            echo "\t<googleplay:block>yes</googleplay:block>\n";
+                        }
                     }
                 }
             }
@@ -1974,23 +1967,10 @@ function powerpress_rss2_item()
         else
             echo "\t\t<podcast:socialInteract uri=\"" . esc_attr($EpisodeData['social_interact_uri']) . "\" protocol=\"".$EpisodeData['social_interact_protocol']."\" />".PHP_EOL;
     }
-    if( isset( $EpisodeData['copyright'] ) && strlen($EpisodeData['copyright']) > 1 )
+    if( isset( $EpisodeData['copyright'] ) && strlen($EpisodeData['copyright']) > 1 ) {
         echo "\t\t".'<podcast:license>'. esc_html($EpisodeData['copyright']) . '</podcast:license>'.PHP_EOL;
-
-    // Google Play tags:
-    if( empty($powerpress_feed['feed_maximizer_on']) ) { // These tags for the most part replicate what is in the itunes tags, so lets not include them when we want to maximize the feed
-        if( !empty( $EpisodeData['gp_desc'] ) ) {
-            echo "\t\t<googleplay:description>". powerpress_format_itunes_value($EpisodeData['gp_desc'], 'summary') ."</googleplay:description>".PHP_EOL;
-        }
-
-        if( !empty( $EpisodeData['gp_explicit'] ) ) {
-            echo "\t\t<googleplay:explicit>yes</googleplay:explicit>".PHP_EOL;
-        }
     }
 
-    if( !empty( $EpisodeData['gp_block'] ) ) {
-        echo "\t\t<googleplay:block>yes</googleplay:block>".PHP_EOL;
-    }
 
     if ( !empty($EpisodeData['person_names']) ) {
         $personNames = $EpisodeData['person_names'];
