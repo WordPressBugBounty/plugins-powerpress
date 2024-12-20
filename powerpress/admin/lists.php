@@ -20,46 +20,47 @@
     $map = get_option ('powerpress_network_map');
 	if( empty($props) )
 		$props = array(); // Empty array so it will not loop
-		
-    for ($i = 0; $i < count($props); ++$i) {
-        $key = 'l-'.$props[$i]['list_id'];
-        if (isset($map[$key])){
-            $link = get_permalink($map[$key]);
-        } else{
-            $link = null;
-        }
-        $props[$i]['link'] = $link;
+	if (!isset($props['danger'])) {
+        for ($i = 0; $i < count($props); ++$i) {
+            $key = 'l-'.$props[$i]['list_id'];
+            if (isset($map[$key])){
+                $link = get_permalink($map[$key]);
+            } else{
+                $link = null;
+            }
+            $props[$i]['link'] = $link;
 
-        $class = 'odd-row';
-        if ($i % 2 == 0) {
-            $class = 'even-row';
+            $class = 'odd-row';
+            if ($i % 2 == 0) {
+                $class = 'even-row';
+            }
+            ?>
+            <tr>
+                <td class="<?php echo $class; ?>">
+                    <span style="font-weight:bold;"><?php echo esc_html($props[$i]['list_title']); ?>            <br>
+                </td>
+                <td class="<?php echo $class; ?>">
+                        <?php
+                        if ($props[$i]['link'] == null){
+                            ?>
+                            <span style="font-weight:bold;">Not Linked</span>
+                            <?php
+                        } else {
+                            ?>
+                            <span style="font-weight:bold;"><a style="color: green;" target="_blank" href="<?php echo esc_url($props[$i]['link']);?>"><?php echo esc_html(__('View Page', 'powerpress-network'));?></a></span>
+                            <?php
+                        }
+                        ?>
+                </td>
+                <td class="<?php echo $class; ?>">
+                    <span style="font-weight:bold;" class="list-id"><?php echo esc_html($props[$i]['list_id']); ?></span>
+                </td>
+                <td class="<?php echo $class; ?>"><i onclick="confirmDelete(<?php echo esc_js($props[$i]['list_id']);?>)" class="material-icons" title="Delete List">delete</i></span>
+                    <span style="font-weight:bold;"><i class="material-icons" title="Edit List" onclick="manageList(<?php echo esc_js($props[$i]['list_id']);?>, '<?php echo esc_js($props[$i]['link'])?>');directStatus('Manage List', 'manageList');">edit</i></span>
+                </td>
+            </tr>
+            <?php
         }
-        ?>
-        <tr>
-            <td class="<?php echo $class; ?>">
-                <span style="font-weight:bold;"><?php echo esc_html($props[$i]['list_title']); ?>            <br>
-            </td>
-            <td class="<?php echo $class; ?>">
-                    <?php
-                    if ($props[$i]['link'] == null){
-                        ?>
-                        <span style="font-weight:bold;">Not Linked</span>
-                        <?php
-                    } else {
-                        ?>
-                        <span style="font-weight:bold;"><a style="color: green;" target="_blank" href="<?php echo esc_url($props[$i]['link']);?>"><?php echo esc_html(__('View Page', 'powerpress-network'));?></a></span>
-                        <?php
-                    }
-                    ?>
-            </td>
-            <td class="<?php echo $class; ?>">
-                <span style="font-weight:bold;" class="list-id"><?php echo esc_html($props[$i]['list_id']); ?></span>
-            </td>
-            <td class="<?php echo $class; ?>"><i onclick="confirmDelete(<?php echo esc_js($props[$i]['list_id']);?>)" class="material-icons" title="Delete List">delete</i></span>
-                <span style="font-weight:bold;"><i class="material-icons" title="Edit List" onclick="manageList(<?php echo esc_js($props[$i]['list_id']);?>, '<?php echo esc_js($props[$i]['link'])?>');directStatus('Manage List', 'manageList');">edit</i></span>
-            </td>
-        </tr>
-        <?php
     }
     ?>
 </table><br>
