@@ -1094,11 +1094,11 @@ function powerpressadmin_experimental_options($General, $link_account = false)
                 <p class="pp-sub">
                     <?php
                     echo __('The Value Tag is part of the Podcasting 2.0 initiative geared at helping podcasters receive contributions from their listeners.
-                    We highly recommend you review our dedicated documentation on the Value Tag as it is a complex topic.
-                    Blubrry has partnered with Alby to participate in the Value 4 Value podcast model.
+                We highly recommend you review our dedicated documentation on the Value Tag as it is a complex topic.
+                Blubrry has partnered with Alby to participate in the Value 4 Value podcast model. Signing up with Alby 
                     Signing up with ', 'powerpress');
                     echo '<a href="http://getalby.com/">'.__('Alby', 'powerpress').'</a> ';
-                    echo __('(free) will get you a user@getalby.com address you can enter in the configuration below.', 'powerpress');
+                    echo __('gives you the code snippet you need in the Value Tag box. There is a small monthly fee to have an Alby Hub/Wallet.', 'powerpress');
                     ?>
                 </p>
             </div>
