@@ -622,6 +622,8 @@ function powerpressadmin_edit_feed_settings($FeedSettings, $General, $FeedAttrib
 		$FeedSettings['posts_per_rss'] = '';
 	if( !isset($FeedSettings['copyright']) )
 		$FeedSettings['copyright'] = '';
+    if( !isset($FeedSettings['email']) )
+        $FeedSettings['email'] = '';
 	if( !isset($FeedSettings['title']) )
 		$FeedSettings['title'] = '';
 	if( !isset($FeedSettings['rss_language']) )

@@ -1398,8 +1398,10 @@ function powerpress_admin_init()
 						else
 						{
 							$NewSettings = array();
+                            $NewSettings[ $feed_slug ] = array();
 							$NewSettings[ $feed_slug ]['title'] = $feed_title;
 							powerpress_save_settings($NewSettings, 'powerpress_posttype_'. $post_type);
+                            powerpress_rebuild_posttype_podcasting();
 							
 							
 							add_feed($feed_slug, 'powerpress_do_podcast_feed'); // Before we flush the rewrite rules we need to add the new custom feed...
@@ -5643,7 +5645,7 @@ function powerpress_admin_episodes_per_feed($feed_slug, $post_type='post')
 	if( $feed_slug != 'podcast' )
 		$field = '_'. $feed_slug .':enclosure';
 	global $wpdb;
-	if ( $results = $wpdb->get_results("SELECT COUNT(pm.post_id) AS episodes_total FROM $wpdb->posts AS p INNER JOIN $wpdb->postmeta AS pm ON pm.post_id = p.ID WHERE pm.meta_key = '$field' AND p.post_status <> 'auto-draft' AND p.post_status <> 'trash' AND p.post_status <> 'inherit' ", ARRAY_A) ) {
+	if ( $results = $wpdb->get_results("SELECT COUNT(pm.post_id) AS episodes_total FROM $wpdb->posts AS p INNER JOIN $wpdb->postmeta AS pm ON pm.post_id = p.ID WHERE pm.meta_key = '$field' AND p.post_status <> 'draft' AND p.post_status <> 'auto-draft' AND p.post_status <> 'trash' AND p.post_status <> 'inherit' ", ARRAY_A) ) {
         if( count($results) )
 		{
 			foreach( $results as $key => $row ) {
