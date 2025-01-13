@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.10.11
+Version: 11.11.0
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -132,7 +132,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.10.11' );
+define('POWERPRESS_VERSION', '11.11.0' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -1966,6 +1966,9 @@ function powerpress_rss2_item()
             echo "\t\t<podcast:socialInteract uri=\"" . esc_attr($EpisodeData['social_interact_uri']) . "\" protocol=\"".$EpisodeData['social_interact_protocol']."\" accountId=\"".esc_attr($EpisodeData['social_interact_accountid'])."\" />".PHP_EOL;
         else
             echo "\t\t<podcast:socialInteract uri=\"" . esc_attr($EpisodeData['social_interact_uri']) . "\" protocol=\"".$EpisodeData['social_interact_protocol']."\" />".PHP_EOL;
+    }
+    if (!empty($EpisodeData['funding_url'])) {
+        echo "\t\t<podcast:funding url=\"".esc_attr($EpisodeData['funding_url'])."\">".esc_html($EpisodeData['funding_label'])."</podcast:funding>".PHP_EOL;
     }
     if( isset( $EpisodeData['copyright'] ) && strlen($EpisodeData['copyright']) > 1 ) {
         echo "\t\t".'<podcast:license>'. esc_html($EpisodeData['copyright']) . '</podcast:license>'.PHP_EOL;

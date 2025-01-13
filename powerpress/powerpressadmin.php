@@ -2748,6 +2748,11 @@ function powerpress_edit_post($post_ID, $post)
                         $ToSerialize['social_interact_accountid'] = $Powerpress['social_interact_accountid'];
                 }
 
+                if (!empty($Powerpress['funding_url'])) {
+                    $ToSerialize['funding_url'] = $Powerpress['funding_url'];
+                    $ToSerialize['funding_label'] = $Powerpress['funding_label'] == '' ? 'Support the show!' : $Powerpress['funding_label'];
+                }
+
                 if (!empty($Powerpress['copyright'])) {
                     $ToSerialize['copyright'] = $Powerpress['copyright'];
                 }

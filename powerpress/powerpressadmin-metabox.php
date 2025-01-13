@@ -2008,6 +2008,26 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
         <div class="pp-section-container container" style="margin-left: 0; padding-left: 0;">
             <div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center;">
                 <h4 class="pp-section-title-block" style="width: auto !important;">
+                    <?php echo esc_html(__('Donate Link', 'powerpress')); ?>
+                </h4>
+                <div class="pp-tooltip-right" style="margin: 0 0 0 1ch;">i
+                    <span class="text-pp-tooltip" style="top: -50%; min-width: 200px;"><?php echo esc_html(__('Syndicate a donate link with your podcast. Create your own crowdfunding page with PayPal donate buttons, or link to a service such as Patreon.', 'powerpress')); ?></span>
+                </div>
+            </div>
+            <div class="row ml-0 mr-0">
+                <label for="Powerpress[<?php echo $FeedSlug; ?>][funding_url]" class="pp-ep-box-label"><?php echo __('Donate URL', 'powerpress'); ?></label>
+                <input class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][funding_url]" value="<?php echo isset($ExtraData['funding_url']) ? esc_attr($ExtraData['funding_url']) : ""; ?>" />
+            </div>
+
+            <div class="row ml-0 mr-0">
+                <label for="Powerpress[<?php echo $FeedSlug; ?>][funding_label]" class="pp-ep-box-label"><?php echo __('Donate Label', 'powerpress'); ?></label>
+                <input class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][funding_label]" value="<?php echo isset($ExtraData['funding_label']) ? esc_attr($ExtraData['funding_label']) : ""; ?>" />
+            </div>
+        </div>
+
+        <div class="pp-section-container container" style="margin-left: 0; padding-left: 0;">
+            <div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center;">
+                <h4 class="pp-section-title-block" style="width: auto !important;">
                     <?php echo esc_html(__('Alternate Enclosure', 'powerpress')); ?>
                 </h4>
                 <div class="pp-tooltip-right" style="margin: 0 0 0 1ch;">i
