@@ -4,7 +4,7 @@ Tags: podcasting, podcast, podcaster, powerpress, itunes, apple, apple podcasts,
 Requires at least: 3.6
 Requires PHP: 5.2
 Tested up to: 6.7
-Stable tag: 11.11.1
+Stable tag: 11.12.0
 Donate link: https://blubrry.com/services/podcast-hosting/
 License: GPLv2 or later
 
@@ -162,6 +162,10 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 
 
 == Changelog ==
+= 11.12.0 =
+* Released on 01/27/2025
+* Disable destinations on feeds with 0 episodes
+
 = 11.11.1 =
 * Released on 01/20/2025
 * Add tabnab protection

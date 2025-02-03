@@ -141,8 +141,7 @@ function subscribeSetting($directory, $feed_url, $listing_url) {
                     <p class="pp-settings-text"><b><a href="https://blubrry.com/manual/podcast-promotion/submit-podcast-to-itunes/?podcast-feed=<?php echo urlencode($feed_url); ?>" target="_blank"><?php echo __('How to submit a podcast to Apple', 'powerpress'); ?></a></b></p>
                     <?php } ?>
                     <input class="pp-settings-text-input-less-wide" type="text" id="itunes_url<?php echo $id_tail; ?>" name="Feed[itunes_url]" placeholder="<?php echo __('Apple Subscription URL', 'powerpress'); ?>" value="<?php echo esc_attr($listing_url); ?>" maxlength="255" />
-                    <label for="itunes_url" class="pp-settings-label-under"><?php echo sprintf(__('e.g. %s', 'powerpress'), 'http://itunes.apple.com/podcast/title-of-podcast/id000000000'); ?></label>
-
+                    <label for="itunes_url" class="pp-settings-label-under"><?php echo sprintf(__('e.g. %s', 'powerpress'), 'https://itunes.apple.com/podcast/title-of-podcast/id000000000'); ?></label>
                 <?php
                 break;
             case 'tunein': ?>
@@ -180,22 +179,11 @@ function subscribeSetting($directory, $feed_url, $listing_url) {
                         <?php echo __('Blubrry Podcast Directory', 'powerpress'); ?>
                         <?php powerpress_settings_save_button(); ?>
                     </h2>
-                    <?php if ($link_at_top) { ?>
-                    <p class="pp-settings-text">
-                        <b><a href="https://blubrry.com/addpodcast.php?feed=<?php echo urlencode($feed_url); ?>" target="_blank"><?php echo  __('How to submit a podcast to Blubrry Directory', 'powerpress'); ?></a></b>
-                    </p>
-                    <?php }?>
                     <p class="pp-settings-text">
                         <b><?php echo __('Get listed on the largest podcast directory in the world! ', 'powerpress'); ?></b><?php echo sprintf(__('Once listed, %s to expand your podcast distribution to Blubrry\'s SmartTV Apps (e.g. Roku) and apply to be on Spotify.', 'powerpress'), '<a href="https://blubrry.com/services/blubrry-podcast-directory/" target="_blank">'. __('Get Featured', 'powerpress').'</a>' ); ?>
                     </p>
-                    <?php if(!$link_at_top) { ?>
-                    <p class="pp-settings-text">
-                        <b><a href="https://blubrry.com/addpodcast.php?feed=<?php echo urlencode($feed_url); ?>" target="_blank"><?php echo  __('How to submit a podcast to Blubrry Directory', 'powerpress'); ?></a></b>
-                    </p>
-                    <?php } ?>
                     <input class="pp-settings-text-input-less-wide" type="text" id="blubrry_url<?php echo $id_tail; ?>" name="Feed[blubrry_url]" placeholder="<?php echo __('Blubrry Listing URL', 'powerpress'); ?>" value="<?php echo esc_attr($listing_url); ?>" maxlength="255" />
                     <label for="blubrry_url" class="pp-settings-label-under"><?php echo sprintf(__('e.g. %s', 'powerpress'), 'https://blubrry.com/title_of_podcast/'); ?></label>
-
                 <?php
                 break;
             case 'android': ?>
@@ -367,307 +355,452 @@ function subscribeSetting($directory, $feed_url, $listing_url) {
         <div class="pp-sidenav-extra"><a href="https://wordpress.org/support/plugin/powerpress/" class="pp-sidenav-extra-text"><?php echo htmlspecialchars(__('BLUBRRY POWERPRESS FORUM', 'powerpress')); ?></a></div>
     </div>
 </div>
+<?php
 
+$atleastOneEpisode = $hasBlubrryHosting = false;
+$episodeCount = powerpress_admin_episodes_per_feed('podcast');
+if (!empty($episodeCount) && $episodeCount > 0) {
+    $atleastOneEpisode = true;
+}
+
+if (!empty($General['blubrry_hosting']) && $General['blubrry_hosting'] > 0) {
+    $hasBlubrryHosting = true;
+}
+
+?>
 <div style="max-width: 75%;">
-    <div class="destinations-icon-links d-flex flex-wrap justify-content-between">
-        <p class="mt-3 mb-4" style="width: 100%;">There are listeners everywhere, don’t miss out on a podcast platform. Submit and manage podcast listings here.</p>
-        <p style="width: 100%; margin-bottom: 2em;"><b>Select Destination Point</b></p>
-        <div id="destinations-apple-tab" onclick="sideNav(event, 'destinations-apple')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="<?php echo empty($FeedSettings['itunes_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger apple-podcast"></i>
-            <small>Apple Podcasts</small>
+    <?php if ($atleastOneEpisode): ?>
+        <div class="destinations-icon-links d-flex flex-wrap justify-content-between">
+            <p class="mt-3 mb-4" style="width: 100%;">There are listeners everywhere, don’t miss out on a podcast platform. Submit and manage podcast listings here.</p>
+            <p style="width: 100%; margin-bottom: 2em;"><b>Select Destination Point</b></p>
+            <div id="destinations-apple-tab" onclick="sideNav(event, 'destinations-apple')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['itunes_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger apple-podcast"></i>
+                <small>Apple Podcasts</small>
+            </div>
+            <div id="destinations-spotify-tab" onclick="sideNav(event, 'destinations-spotify')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['spotify_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger spotify"></i>
+                <small>Spotify</small>
+            </div>
+            <div id="destinations-amazon-tab" onclick="sideNav(event, 'destinations-amazon')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['amazon_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger amazon_music"></i>
+                <small>Amazon Music</small>
+            </div>
+            <div id="destinations-android-tab" onclick="sideNav(event, 'destinations-android')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="subscribe-icons-larger android"></i>
+                <small>Subscribe on Android</small>
+            </div>
+            <div id="destinations-pandora-tab" onclick="sideNav(event, 'destinations-pandora')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['pandora_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger pandora"></i>
+                <small>Pandora</small>
+            </div>
+            <div id="destinations-iheart-tab" onclick="sideNav(event, 'destinations-iheart')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['iheart_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger iheartradio"></i>
+                <small>iHeartRadio</small>
+            </div>
+            <div id="destinations-blubrry-tab" onclick="sideNav(event, 'destinations-blubrry')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['blubrry_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger blubrry"></i>
+                <small>Blubrry Podcast Directory</small>
+            </div>
+            <div id="destinations-jiosaavn-tab" onclick="sideNav(event, 'destinations-jiosaavn')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['jiosaavn_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger jiosaavn"></i>
+                <small>JioSaavn</small>
+            </div>
+            <div id="destinations-podchaser-tab" onclick="sideNav(event, 'destinations-podchaser')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['podchaser_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger podchaser"></i>
+                <small>Podchaser</small>
+            </div>
+            <div id="destinations-gaana-tab" onclick="sideNav(event, 'destinations-gaana')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['gaana_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger gaana"></i>
+                <small>Gaana</small>
+            </div>
+            <div id="destinations-pcindex-tab" onclick="sideNav(event, 'destinations-pcindex')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['pcindex_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger pcindex"></i>
+                <small>Podcast Index</small>
+            </div>
+            <div id="destinations-email-tab" onclick="sideNav(event, 'destinations-email')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="subscribe-icons-larger email"></i>
+                <small>Subscribe by Email</small>
+            </div>
+            <div id="destinations-tunein-tab" onclick="sideNav(event, 'destinations-tunein')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['tunein_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger tunein"></i>
+                <small>Tunein</small>
+            </div>
+            <div id="destinations-deezer-tab" onclick="sideNav(event, 'destinations-deezer')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['deezer_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger deezer"></i>
+                <small>Deezer</small>
+            </div>
+            <div  id="destinations-anghami-tab" onclick="sideNav(event, 'destinations-anghami')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['anghami_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger anghami"></i>
+                <small>Anghami</small>
+            </div>
+            <div  id="destinations-youtube-tab" onclick="sideNav(event, 'destinations-youtube')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['youtube_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger youtube"></i>
+                <small>Youtube Music</small>
+            </div>
+            <div id="destinations-default-open" onclick="sideNav(event, 'destinations-all')" class="active pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="subscribe-icons-larger rss"></i>
+                <small>RSS</small>
+            </div>
         </div>
-        <div id="destinations-spotify-tab" onclick="sideNav(event, 'destinations-spotify')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="<?php echo empty($FeedSettings['spotify_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger spotify"></i>
-            <small>Spotify</small>
-        </div>
-        <div id="destinations-amazon-tab" onclick="sideNav(event, 'destinations-amazon')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="<?php echo empty($FeedSettings['amazon_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger amazon_music"></i>
-            <small>Amazon Music</small>
-        </div>
-        <div id="destinations-android-tab" onclick="sideNav(event, 'destinations-android')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="subscribe-icons-larger android"></i>
-            <small>Subscribe on Android</small>
-        </div>
-        <div id="destinations-pandora-tab" onclick="sideNav(event, 'destinations-pandora')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="<?php echo empty($FeedSettings['pandora_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger pandora"></i>
-            <small>Pandora</small>
-        </div>
-        <div id="destinations-iheart-tab" onclick="sideNav(event, 'destinations-iheart')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="<?php echo empty($FeedSettings['iheart_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger iheartradio"></i>
-            <small>iHeartRadio</small>
-        </div>
-        <?php if (!empty($General['blubrry_hosting'])) { ?>
-        <div id="destinations-blubrry-tab" onclick="sideNav(event, 'destinations-blubrry')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-2 mb-3 text-center align-top" style="max-width: 100px;">
-            <i class="<?php echo empty($FeedSettings['blubrry_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger blubrry"></i>
-            <small>Blubrry Podcast Directory</small>
-        </div>
-        <?php } ?>
-        <div id="destinations-jiosaavn-tab" onclick="sideNav(event, 'destinations-jiosaavn')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="<?php echo empty($FeedSettings['jiosaavn_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger jiosaavn"></i>
-            <small>JioSaavn</small>
-        </div>
-        <div id="destinations-podchaser-tab" onclick="sideNav(event, 'destinations-podchaser')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="<?php echo empty($FeedSettings['podchaser_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger podchaser"></i>
-            <small>Podchaser</small>
-        </div>
-        <div id="destinations-gaana-tab" onclick="sideNav(event, 'destinations-gaana')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="<?php echo empty($FeedSettings['gaana_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger gaana"></i>
-            <small>Gaana</small>
-        </div>
-        <div id="destinations-pcindex-tab" onclick="sideNav(event, 'destinations-pcindex')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="<?php echo empty($FeedSettings['pcindex_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger pcindex"></i>
-            <small>Podcast Index</small>
-        </div>
-        <div id="destinations-email-tab" onclick="sideNav(event, 'destinations-email')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="subscribe-icons-larger email"></i>
-            <small>Subscribe by Email</small>
-        </div>
-        <div id="destinations-tunein-tab" onclick="sideNav(event, 'destinations-tunein')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="<?php echo empty($FeedSettings['tunein_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger tunein"></i>
-            <small>Tunein</small>
-        </div>
-        <div id="destinations-deezer-tab" onclick="sideNav(event, 'destinations-deezer')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="<?php echo empty($FeedSettings['deezer_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger deezer"></i>
-            <small>Deezer</small>
-        </div>
-        <div  id="destinations-anghami-tab" onclick="sideNav(event, 'destinations-anghami')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="<?php echo empty($FeedSettings['anghami_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger anghami"></i>
-            <small>Anghami</small>
-        </div>
-        <div  id="destinations-youtube-tab" onclick="sideNav(event, 'destinations-youtube')" class="pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="<?php echo empty($FeedSettings['youtube_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger youtube"></i>
-            <small>Youtube Music</small>
-        </div>
-        <div id="destinations-default-open" onclick="sideNav(event, 'destinations-all')" class="active pp-sidenav-tablinks destinations-link d-inline-block mr-4 mb-3 text-center align-top" style="max-width: 70px;">
-            <i class="subscribe-icons-larger rss"></i>
-            <small>RSS</small>
-        </div>
-    </div>
-    <div id="destinations-all" class="pp-sidenav-tab active">
+        <div id="destinations-all" class="pp-sidenav-tab active">
 
-        <h1 class="pp-heading">
-            <?php echo __('Destinations', 'powerpress'); ?>
-            <?php powerpress_settings_save_button(); ?>
-        </h1>
+            <h1 class="pp-heading">
+                <?php echo __('Destinations', 'powerpress'); ?>
+                <?php powerpress_settings_save_button(); ?>
+            </h1>
 
 
-        <div>
-            <p style="line-height: 36px;" class="pp-settings-text"><?php echo __('Your podcast RSS feed: ', 'powerpress'); ?>
-                <a href="<?php echo esc_attr($feed_url); ?>"> <?php echo esc_attr($feed_url); ?> </a>
-                <br />
-                <?php echo __('Use this URL to submit your podcast to various directories.', 'powerpress'); ?>
-                <br />
-                <?php echo __('Directory listing URLs are used by player subscribe links, subscribe sidebar widgets, and subscribe to podcast page shortcodes.', 'powerpress'); ?>
-                <?php echo __('Showing this link is always recommended.', 'powerpress'); ?>
-            </p>
-        </div>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_rss_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_rss_sidebar" name="General[subscribe_feature_rss_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_rss_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_rss_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_rss_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_rss_shortcode" name="General[subscribe_feature_rss_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_rss_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_rss_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_rss]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_rss" name="General[subscribe_feature_rss]" value="1" <?php if( !empty($Settings['subscribe_feature_rss']) ) echo 'checked '; ?>/> <label for="subscribe_feature_rss"><?php echo __('Show link under player', 'powerpress'); ?></label></p>
-            <?php } ?>
-        </div>
+            <div>
+                <p style="line-height: 36px;" class="pp-settings-text"><?php echo __('Your podcast RSS feed: ', 'powerpress'); ?>
+                    <a href="<?php echo esc_attr($feed_url); ?>"> <?php echo esc_attr($feed_url); ?> </a>
+                    <br />
+                    <?php echo __('Use this URL to submit your podcast to various directories.', 'powerpress'); ?>
+                    <br />
+                    <?php echo __('Directory listing URLs are used by player subscribe links, subscribe sidebar widgets, and subscribe to podcast page shortcodes.', 'powerpress'); ?>
+                    <?php echo __('Showing this link is always recommended.', 'powerpress'); ?>
+                </p>
+            </div>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_rss_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_rss_sidebar" name="General[subscribe_feature_rss_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_rss_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_rss_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_rss_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_rss_shortcode" name="General[subscribe_feature_rss_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_rss_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_rss_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_rss]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_rss" name="General[subscribe_feature_rss]" value="1" <?php if( !empty($Settings['subscribe_feature_rss']) ) echo 'checked '; ?>/> <label for="subscribe_feature_rss"><?php echo __('Show link under player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
-    </div>
-
-    <div id="destinations-apple" class="pp-sidenav-tab">
-        <?php subscribeSetting('apple', $feed_url, $FeedSettings['itunes_url']); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_apple_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_apple_sidebar" name="General[subscribe_feature_apple_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_apple_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_apple_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_apple_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_apple_shortcode" name="General[subscribe_feature_apple_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_apple_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_apple_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_apple]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_apple" name="General[subscribe_feature_apple]" value="1" <?php if( !empty($Settings['subscribe_feature_apple']) ) echo 'checked '; ?>/> <label for="subscribe_feature_apple"><?php echo __('Show link under player', 'powerpress'); ?></label></p>
-            <?php } ?>
         </div>
 
-    </div>
+        <div id="destinations-apple" class="pp-sidenav-tab">
+            <?php subscribeSetting('apple', $feed_url, $FeedSettings['itunes_url']); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_apple_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_apple_sidebar" name="General[subscribe_feature_apple_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_apple_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_apple_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_apple_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_apple_shortcode" name="General[subscribe_feature_apple_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_apple_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_apple_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_apple]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_apple" name="General[subscribe_feature_apple]" value="1" <?php if( !empty($Settings['subscribe_feature_apple']) ) echo 'checked '; ?>/> <label for="subscribe_feature_apple"><?php echo __('Show link under player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
-    <div id="destinations-spotify" class="pp-sidenav-tab">
-        <?php subscribeSetting('spotify', $feed_url, $FeedSettings['spotify_url']); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_spotify_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_spotify_sidebar" name="General[subscribe_feature_spotify_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_spotify_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_spotify_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_spotify_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_spotify_shortcode" name="General[subscribe_feature_spotify_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_spotify_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_spotify_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_spotify]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_spotify" name="General[subscribe_feature_spotify]" value="1" <?php if( !empty($Settings['subscribe_feature_spotify']) ) echo 'checked '; ?>/> <label for="subscribe_feature_spotify"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
         </div>
 
-    </div>
+        <div id="destinations-spotify" class="pp-sidenav-tab">
+            <?php subscribeSetting('spotify', $feed_url, $FeedSettings['spotify_url']); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_spotify_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_spotify_sidebar" name="General[subscribe_feature_spotify_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_spotify_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_spotify_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_spotify_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_spotify_shortcode" name="General[subscribe_feature_spotify_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_spotify_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_spotify_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_spotify]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_spotify" name="General[subscribe_feature_spotify]" value="1" <?php if( !empty($Settings['subscribe_feature_spotify']) ) echo 'checked '; ?>/> <label for="subscribe_feature_spotify"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
-    <div id="destinations-amazon" class="pp-sidenav-tab">
-        <?php subscribeSetting('amazon', $feed_url, $FeedSettings['amazon_url']); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_amazon_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_amazon_sidebar" name="General[subscribe_feature_amazon_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_amazon_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_amazon_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_amazon_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_amazon_shortcode" name="General[subscribe_feature_amazon_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_amazon_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_amazon_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_amazon]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_amazon" name="General[subscribe_feature_amazon]" value="1" <?php if( !empty($Settings['subscribe_feature_amazon']) ) echo 'checked '; ?>/> <label for="subscribe_feature_amazon"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
         </div>
 
-    </div>
+        <div id="destinations-amazon" class="pp-sidenav-tab">
+            <?php subscribeSetting('amazon', $feed_url, $FeedSettings['amazon_url']); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_amazon_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_amazon_sidebar" name="General[subscribe_feature_amazon_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_amazon_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_amazon_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_amazon_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_amazon_shortcode" name="General[subscribe_feature_amazon_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_amazon_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_amazon_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_amazon]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_amazon" name="General[subscribe_feature_amazon]" value="1" <?php if( !empty($Settings['subscribe_feature_amazon']) ) echo 'checked '; ?>/> <label for="subscribe_feature_amazon"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
-    <div id="destinations-android" class="pp-sidenav-tab">
-        <?php subscribeSetting('android', $feed_url, ''); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_android_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_android_sidebar" name="General[subscribe_feature_android_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_android_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_android_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_android_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_android_shortcode" name="General[subscribe_feature_android_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_android_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_android_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_android]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_android" name="General[subscribe_feature_android]" value="1" <?php if( !empty($Settings['subscribe_feature_android']) ) echo 'checked '; ?>/> <label for="subscribe_feature_android"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
         </div>
 
-    </div>
+        <div id="destinations-android" class="pp-sidenav-tab">
+            <?php subscribeSetting('android', $feed_url, ''); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_android_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_android_sidebar" name="General[subscribe_feature_android_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_android_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_android_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_android_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_android_shortcode" name="General[subscribe_feature_android_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_android_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_android_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_android]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_android" name="General[subscribe_feature_android]" value="1" <?php if( !empty($Settings['subscribe_feature_android']) ) echo 'checked '; ?>/> <label for="subscribe_feature_android"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
-    <div id="destinations-pandora" class="pp-sidenav-tab">
-        <?php subscribeSetting('pandora', $feed_url, $FeedSettings['pandora_url']); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_pandora_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_pandora_sidebar" name="General[subscribe_feature_pandora_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_pandora_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_pandora_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_pandora_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_pandora_shortcode" name="General[subscribe_feature_pandora_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_pandora_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_pandora_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_pandora]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_pandora" name="General[subscribe_feature_pandora]" value="1" <?php if( !empty($Settings['subscribe_feature_pandora']) ) echo 'checked '; ?>/> <label for="subscribe_feature_pandora"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
         </div>
 
-    </div>
+        <div id="destinations-pandora" class="pp-sidenav-tab">
+            <?php subscribeSetting('pandora', $feed_url, $FeedSettings['pandora_url']); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_pandora_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_pandora_sidebar" name="General[subscribe_feature_pandora_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_pandora_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_pandora_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_pandora_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_pandora_shortcode" name="General[subscribe_feature_pandora_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_pandora_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_pandora_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_pandora]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_pandora" name="General[subscribe_feature_pandora]" value="1" <?php if( !empty($Settings['subscribe_feature_pandora']) ) echo 'checked '; ?>/> <label for="subscribe_feature_pandora"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
-    <div id="destinations-iheart" class="pp-sidenav-tab">
-        <?php subscribeSetting('iheart', $feed_url, $FeedSettings['iheart_url']); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_iheart_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_iheart_sidebar" name="General[subscribe_feature_iheart_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_iheart_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_iheart_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_iheart_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_iheart_shortcode" name="General[subscribe_feature_iheart_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_iheart_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_iheart_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_iheart]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_iheart" name="General[subscribe_feature_iheart]" value="1" <?php if( !empty($Settings['subscribe_feature_iheart']) ) echo 'checked '; ?>/> <label for="subscribe_feature_iheart"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
         </div>
 
-    </div>
+        <div id="destinations-iheart" class="pp-sidenav-tab">
+            <?php subscribeSetting('iheart', $feed_url, $FeedSettings['iheart_url']); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_iheart_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_iheart_sidebar" name="General[subscribe_feature_iheart_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_iheart_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_iheart_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_iheart_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_iheart_shortcode" name="General[subscribe_feature_iheart_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_iheart_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_iheart_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_iheart]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_iheart" name="General[subscribe_feature_iheart]" value="1" <?php if( !empty($Settings['subscribe_feature_iheart']) ) echo 'checked '; ?>/> <label for="subscribe_feature_iheart"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
-    <?php if (!empty($General['blubrry_hosting'])) { ?>
-    <div id="destinations-blubrry" class="pp-sidenav-tab">
-        <?php subscribeSetting('blubrry', $feed_url, $FeedSettings['blubrry_url']); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_blubrry_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_blubrry_sidebar" name="General[subscribe_feature_blubrry_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_blubrry_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_blubrry_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_blubrry_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_blubrry_shortcode" name="General[subscribe_feature_blubrry_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_blubrry_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_blubrry_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_blubrry]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_blubrry" name="General[subscribe_feature_blubrry]" value="1" <?php if( !empty($Settings['subscribe_feature_blubrry']) ) echo 'checked '; ?>/> <label for="subscribe_feature_blubrry"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
-        </div>
-        <?php
-        marketing_footer();
-        powerpress_settings_tab_footer();
-        ?>
-    </div>
-    <?php } ?>
-
-    <div id="destinations-jiosaavn" class="pp-sidenav-tab">
-        <?php subscribeSetting('jiosaavn', $feed_url, $FeedSettings['jiosaavn_url']); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_jiosaavn_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_jiosaavn_sidebar" name="General[subscribe_feature_jiosaavn_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_jiosaavn_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_jiosaavn_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_jiosaavn_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_jiosaavn_shortcode" name="General[subscribe_feature_jiosaavn_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_jiosaavn_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_jiosaavn_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_jiosaavn]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_jiosaavn" name="General[subscribe_feature_jiosaavn]" value="1" <?php if( !empty($Settings['subscribe_feature_jiosaavn']) ) echo 'checked '; ?>/> <label for="subscribe_feature_jiosaavn"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
         </div>
 
-    </div>
+        <div id="destinations-blubrry" class="pp-sidenav-tab">
+            <?php if ($hasBlubrryHosting): ?>
+                <?php
+                $blubrryDirectoryListingUrl = '';
+                if (empty($FeedSettings['blubrry_url'])) {
+                    if ($hasBlubrryHosting && !empty($General['blubrry_program_keyword'])) {
+                        $blubrryDirectoryListingUrl = "https://blubrry.com/" . htmlspecialchars($General['blubrry_program_keyword']) . '/';
+                    }
+                } else {
+                    $blubrryDirectoryListingUrl = $FeedSettings['blubrry_url'];
+                }
 
-    <div id="destinations-podchaser" class="pp-sidenav-tab">
-        <?php subscribeSetting('podchaser', $feed_url, $FeedSettings['podchaser_url']); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_podchaser_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_podchaser_sidebar" name="General[subscribe_feature_podchaser_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_podchaser_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_podchaser_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_podchaser_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_podchaser_shortcode" name="General[subscribe_feature_podchaser_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_podchaser_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_podchaser_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_podchaser]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_podchaser" name="General[subscribe_feature_podchaser]" value="1" <?php if( !empty($Settings['subscribe_feature_podchaser']) ) echo 'checked '; ?>/> <label for="subscribe_feature_podchaser"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
+                subscribeSetting('blubrry', $feed_url, $blubrryDirectoryListingUrl);
+                ?>
+                <div class="pp-show-subscribe">
+                    <p class="pp-settings-text-smaller-margin">
+                        <input type="hidden" name="General[subscribe_feature_blubrry_sidebar]" value="0"/>
+                        <input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_blubrry_sidebar"
+                               name="General[subscribe_feature_blubrry_sidebar]"
+                               value="1" <?php if (!empty($Settings['subscribe_feature_blubrry_sidebar'])) echo 'checked '; ?>/>
+                        <label for="subscribe_feature_blubrry_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label>
+                    </p>
+                    <p class="pp-settings-text-smaller-margin">
+                        <input type="hidden" name="General[subscribe_feature_blubrry_shortcode]" value="0"/>
+                        <input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_blubrry_shortcode"
+                               name="General[subscribe_feature_blubrry_shortcode]"
+                               value="1" <?php if (!empty($Settings['subscribe_feature_blubrry_shortcode'])) echo 'checked '; ?>/>
+                        <label for="subscribe_feature_blubrry_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label>
+                    </p>
+                    <?php if (!empty($General['subscribe_links'])): ?>
+                        <p class="pp-settings-text-smaller-margin">
+                            <input type="hidden" name="General[subscribe_feature_blubrry]" value="0"/>
+                            <input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_blubrry"
+                                   name="General[subscribe_feature_blubrry]"
+                                   value="1" <?php if (!empty($Settings['subscribe_feature_blubrry'])) echo 'checked '; ?>/>
+                            <label for="subscribe_feature_blubrry"><?php echo __('Show link under media player', 'powerpress'); ?></label>
+                        </p>
+                    <?php endif; ?>
+                </div>
+            <?php else: ?>
+                <div class="pp-show-subscribe" style="margin-bottom: 3rem;">
+                    <p>Directory listings are only available for hosting customers.</p>
+                    <br>
+                    <a rel="noopener noreferrer" href="https://blubrry.com/services/plans-pricing/">Learn more about
+                        Blubrry Hosting Plans</a>
+                </div>
+            <?php endif; ?>
+            <?php marketing_footer(); ?>
+
         </div>
 
-    </div>
+        <div id="destinations-jiosaavn" class="pp-sidenav-tab">
+            <?php subscribeSetting('jiosaavn', $feed_url, $FeedSettings['jiosaavn_url']); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_jiosaavn_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_jiosaavn_sidebar" name="General[subscribe_feature_jiosaavn_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_jiosaavn_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_jiosaavn_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_jiosaavn_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_jiosaavn_shortcode" name="General[subscribe_feature_jiosaavn_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_jiosaavn_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_jiosaavn_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_jiosaavn]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_jiosaavn" name="General[subscribe_feature_jiosaavn]" value="1" <?php if( !empty($Settings['subscribe_feature_jiosaavn']) ) echo 'checked '; ?>/> <label for="subscribe_feature_jiosaavn"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
-    <div id="destinations-gaana" class="pp-sidenav-tab">
-        <?php subscribeSetting('gaana', $feed_url, $FeedSettings['gaana_url']); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_gaana_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_gaana_sidebar" name="General[subscribe_feature_gaana_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_gaana_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_gaana_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_gaana_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_gaana_shortcode" name="General[subscribe_feature_gaana_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_gaana_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_gaana_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_gaana]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_gaana" name="General[subscribe_feature_gaana]" value="1" <?php if( !empty($Settings['subscribe_feature_gaana']) ) echo 'checked '; ?>/> <label for="subscribe_feature_gaana"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
         </div>
 
-    </div>
+        <div id="destinations-podchaser" class="pp-sidenav-tab">
+            <?php subscribeSetting('podchaser', $feed_url, $FeedSettings['podchaser_url']); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_podchaser_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_podchaser_sidebar" name="General[subscribe_feature_podchaser_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_podchaser_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_podchaser_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_podchaser_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_podchaser_shortcode" name="General[subscribe_feature_podchaser_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_podchaser_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_podchaser_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_podchaser]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_podchaser" name="General[subscribe_feature_podchaser]" value="1" <?php if( !empty($Settings['subscribe_feature_podchaser']) ) echo 'checked '; ?>/> <label for="subscribe_feature_podchaser"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
-    <div id="destinations-pcindex" class="pp-sidenav-tab">
-        <?php subscribeSetting('pcindex', $feed_url, $FeedSettings['pcindex_url']); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_pcindex_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_pcindex_sidebar" name="General[subscribe_feature_pcindex_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_pcindex_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_pcindex_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_pcindex_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_pcindex_shortcode" name="General[subscribe_feature_pcindex_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_pcindex_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_pcindex_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_pcindex]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_pcindex" name="General[subscribe_feature_pcindex]" value="1" <?php if( !empty($Settings['subscribe_feature_pcindex']) ) echo 'checked '; ?>/> <label for="subscribe_feature_pcindex"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
         </div>
 
-    </div>
+        <div id="destinations-gaana" class="pp-sidenav-tab">
+            <?php subscribeSetting('gaana', $feed_url, $FeedSettings['gaana_url']); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_gaana_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_gaana_sidebar" name="General[subscribe_feature_gaana_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_gaana_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_gaana_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_gaana_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_gaana_shortcode" name="General[subscribe_feature_gaana_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_gaana_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_gaana_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_gaana]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_gaana" name="General[subscribe_feature_gaana]" value="1" <?php if( !empty($Settings['subscribe_feature_gaana']) ) echo 'checked '; ?>/> <label for="subscribe_feature_gaana"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
-
-    <div id="destinations-email" class="pp-sidenav-tab">
-        <?php subscribeSetting('email', $feed_url, ''); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_email_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_email_sidebar" name="General[subscribe_feature_email_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_email_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_email_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_email_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_email_shortcode" name="General[subscribe_feature_email_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_email_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_email_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_email]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_email" name="General[subscribe_feature_email]" value="1" <?php if( !empty($Settings['subscribe_feature_email']) ) echo 'checked '; ?>/> <label for="subscribe_feature_email"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
         </div>
 
-    </div>
+        <div id="destinations-pcindex" class="pp-sidenav-tab">
+            <?php subscribeSetting('pcindex', $feed_url, $FeedSettings['pcindex_url']); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_pcindex_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_pcindex_sidebar" name="General[subscribe_feature_pcindex_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_pcindex_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_pcindex_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_pcindex_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_pcindex_shortcode" name="General[subscribe_feature_pcindex_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_pcindex_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_pcindex_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_pcindex]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_pcindex" name="General[subscribe_feature_pcindex]" value="1" <?php if( !empty($Settings['subscribe_feature_pcindex']) ) echo 'checked '; ?>/> <label for="subscribe_feature_pcindex"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
-    <div id="destinations-tunein" class="pp-sidenav-tab">
-        <?php subscribeSetting('tunein', $feed_url, $FeedSettings['tunein_url']); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_tunein_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_tunein_sidebar" name="General[subscribe_feature_tunein_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_tunein_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_tunein_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_tunein_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_tunein_shortcode" name="General[subscribe_feature_tunein_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_tunein_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_tunein_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_tunein]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_tunein" name="General[subscribe_feature_tunein]" value="1" <?php if( !empty($Settings['subscribe_feature_tunein']) ) echo 'checked '; ?>/> <label for="subscribe_feature_tunein"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
         </div>
 
-    </div>
+        <div id="destinations-email" class="pp-sidenav-tab">
+            <?php subscribeSetting('email', $feed_url, ''); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_email_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_email_sidebar" name="General[subscribe_feature_email_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_email_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_email_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_email_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_email_shortcode" name="General[subscribe_feature_email_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_email_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_email_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_email]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_email" name="General[subscribe_feature_email]" value="1" <?php if( !empty($Settings['subscribe_feature_email']) ) echo 'checked '; ?>/> <label for="subscribe_feature_email"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
-    <div id="destinations-deezer" class="pp-sidenav-tab">
-        <?php subscribeSetting('deezer', $feed_url, $FeedSettings['deezer_url']); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_deezer_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_deezer_sidebar" name="General[subscribe_feature_deezer_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_deezer_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_deezer_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_deezer_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_deezer_shortcode" name="General[subscribe_feature_deezer_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_deezer_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_deezer_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_deezer]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_deezer" name="General[subscribe_feature_deezer]" value="1" <?php if( !empty($Settings['subscribe_feature_deezer']) ) echo 'checked '; ?>/> <label for="subscribe_feature_deezer"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
         </div>
 
-    </div>
+        <div id="destinations-tunein" class="pp-sidenav-tab">
+            <?php subscribeSetting('tunein', $feed_url, $FeedSettings['tunein_url']); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_tunein_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_tunein_sidebar" name="General[subscribe_feature_tunein_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_tunein_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_tunein_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_tunein_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_tunein_shortcode" name="General[subscribe_feature_tunein_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_tunein_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_tunein_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_tunein]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_tunein" name="General[subscribe_feature_tunein]" value="1" <?php if( !empty($Settings['subscribe_feature_tunein']) ) echo 'checked '; ?>/> <label for="subscribe_feature_tunein"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
-    <div id="destinations-anghami" class="pp-sidenav-tab">
-        <?php subscribeSetting('anghami', $feed_url, $FeedSettings['anghami_url']); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_anghami_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_anghami_sidebar" name="General[subscribe_feature_anghami_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_anghami_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_anghami_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_anghami_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_anghami_shortcode" name="General[subscribe_feature_anghami_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_anghami_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_anghami_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_anghami]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_anghami" name="General[subscribe_feature_anghami]" value="1" <?php if( !empty($Settings['subscribe_feature_anghami']) ) echo 'checked '; ?>/> <label for="subscribe_feature_anghami"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
         </div>
 
-    </div>
+        <div id="destinations-deezer" class="pp-sidenav-tab">
+            <?php subscribeSetting('deezer', $feed_url, $FeedSettings['deezer_url']); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_deezer_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_deezer_sidebar" name="General[subscribe_feature_deezer_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_deezer_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_deezer_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_deezer_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_deezer_shortcode" name="General[subscribe_feature_deezer_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_deezer_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_deezer_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_deezer]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_deezer" name="General[subscribe_feature_deezer]" value="1" <?php if( !empty($Settings['subscribe_feature_deezer']) ) echo 'checked '; ?>/> <label for="subscribe_feature_deezer"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
-    <div id="destinations-youtube" class="pp-sidenav-tab">
-        <?php subscribeSetting('youtube', $feed_url, $FeedSettings['youtube_url']); ?>
-        <div class="pp-show-subscribe">
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_youtube_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_youtube_sidebar" name="General[subscribe_feature_youtube_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_youtube_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_youtube_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_youtube_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_youtube_shortcode" name="General[subscribe_feature_youtube_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_youtube_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_youtube_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
-            <?php if( !empty($General['subscribe_links']) ) { ?>
-            <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_youtube]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_youtube" name="General[subscribe_feature_youtube]" value="1" <?php if( !empty($Settings['subscribe_feature_youtube']) ) echo 'checked '; ?>/> <label for="subscribe_feature_youtube"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
-            <?php } ?>
         </div>
 
-    </div>
+        <div id="destinations-anghami" class="pp-sidenav-tab">
+            <?php subscribeSetting('anghami', $feed_url, $FeedSettings['anghami_url']); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_anghami_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_anghami_sidebar" name="General[subscribe_feature_anghami_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_anghami_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_anghami_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_anghami_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_anghami_shortcode" name="General[subscribe_feature_anghami_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_anghami_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_anghami_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_anghami]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_anghami" name="General[subscribe_feature_anghami]" value="1" <?php if( !empty($Settings['subscribe_feature_anghami']) ) echo 'checked '; ?>/> <label for="subscribe_feature_anghami"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
 
+        </div>
+
+        <div id="destinations-youtube" class="pp-sidenav-tab">
+            <?php subscribeSetting('youtube', $feed_url, $FeedSettings['youtube_url']); ?>
+            <div class="pp-show-subscribe">
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_youtube_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_youtube_sidebar" name="General[subscribe_feature_youtube_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_youtube_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_youtube_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_youtube_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_youtube_shortcode" name="General[subscribe_feature_youtube_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_youtube_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_youtube_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
+                <?php if( !empty($General['subscribe_links']) ) { ?>
+                <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_youtube]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_youtube" name="General[subscribe_feature_youtube]" value="1" <?php if( !empty($Settings['subscribe_feature_youtube']) ) echo 'checked '; ?>/> <label for="subscribe_feature_youtube"><?php echo __('Show link under media player', 'powerpress'); ?></label></p>
+                <?php } ?>
+            </div>
+
+        </div>
+    <?php else: ?>
+        <div class="destinations-icon-links d-flex flex-wrap justify-content-between">
+            <div class="mb-4" style="border-bottom: 1px solid #444444; padding-bottom: 1.5rem;">
+                <h1 class="mt-3">You haven’t published your first episode yet.</h1>
+                <p class="mt-2">Before you can submit
+                    your
+                    podcast to
+                    directories (examples below), you need to have published at least one episode (this can be a
+                    trailer or pilot episode).</p>
+                <ul style="clear: unset; list-style: unset; padding-inline-start: 40px;">
+                    <li>Apple</li>
+                    <li>Spotify</li>
+                    <li>Amazon Music</li>
+                    <li>Plus others!</li>
+                </ul>
+                <div style="text-align: center;">
+                    <p><strong>All platforms require a single published episode</strong> in your RSS feed
+                        in order to submit your show to a directory.</p>
+                    <p>Your next step is to record and publish your first episode. Once it's live, you'll
+                        be ready to start submitting to your chosen directories!</p>
+                    <?php if ($hasBlubrryHosting): ?>
+                        <p>With our partner <a href="https://publish.blubrry.com/resources/adobe/" target="_blank"
+                                                        rel="noopener noreferrer">Adobe Podcasts</a> you can record your
+                            first ever episode in minutes.</p>
+                    <?php endif; ?>
+                    <div id="destinations-all" class="pp-save-button-container" style="display: block; margin-top: 15px;">
+                        <a class="powerpress_save_button mt-4 mb-4" href="/wp-admin/post-new.php" target="_blank"
+                           rel="noopener noreferrer" style="text-decoration: none;">Publish An Episode Here</a>
+                    </div>
+                </div>
+            </div>
+            <div id="destinations-apple-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger apple-podcast"></i>
+                <small>Apple Podcasts</small>
+            </div>
+            <div id="destinations-spotify-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger spotify"></i>
+                <small>Spotify</small>
+            </div>
+            <div id="destinations-amazon-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger amazon_music"></i>
+                <small>Amazon Music</small>
+            </div>
+            <div id="destinations-android-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger android"></i>
+                <small>Subscribe on Android</small>
+            </div>
+            <div id="destinations-pandora-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger pandora"></i>
+                <small>Pandora</small>
+            </div>
+            <div id="destinations-iheart-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger iheartradio"></i>
+                <small>iHeartRadio</small>
+            </div>
+            <div id="destinations-blubrry-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger blubrry"></i>
+                <small>Blubrry Podcast Directory</small>
+            </div>
+            <div id="destinations-jiosaavn-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger jiosaavn"></i>
+                <small>JioSaavn</small>
+            </div>
+            <div id="destinations-podchaser-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger podchaser"></i>
+                <small>Podchaser</small>
+            </div>
+            <div id="destinations-gaana-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger gaana"></i>
+                <small>Gaana</small>
+            </div>
+            <div id="destinations-pcindex-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger pcindex"></i>
+                <small>Podcast Index</small>
+            </div>
+            <div id="destinations-email-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger email"></i>
+                <small>Subscribe by Email</small>
+            </div>
+            <div id="destinations-tunein-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger tunein"></i>
+                <small>Tunein</small>
+            </div>
+            <div id="destinations-deezer-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger deezer"></i>
+                <small>Deezer</small>
+            </div>
+            <div  id="destinations-anghami-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger anghami"></i>
+                <small>Anghami</small>
+            </div>
+            <div  id="destinations-youtube-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger youtube"></i>
+                <small>Youtube Music</small>
+            </div>
+            <div id="destinations-default-open" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger rss"></i>
+                <small>RSS</small>
+            </div>
+        </div>
+
+    <?php endif; ?>
 </div>
 <br />

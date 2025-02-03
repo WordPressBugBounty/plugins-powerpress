@@ -242,12 +242,21 @@
 }
 .destinations-link {
     cursor: pointer;
+    flex: 0 0 calc(100% / 8 - 10px); /* Ensure 8 items per row */
+    max-width: calc(100% / 8 - 10px); /* Matches flex rule */
+    margin-bottom: 1rem; /* Spacing between rows */
+    text-align: center; /* Center-align text and icons */
+    box-sizing: border-box; /* Ensure padding and borders don’t affect width */
+    display: flex; /* Flex layout for vertical alignment */
+    flex-direction: column; /* Stack icon and text vertically */
+    align-items: center; /* Horizontally center children */
+    justify-content: center; /* Vertically center children */
 }
 .destinations-icon-links {
     border-bottom: 1px solid #ddd;
-    border-left: 1px solid #ddd;
-    max-width: 930px;
-    padding-left: 3em;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between; /* Adjust if needed */
 }
 .destinations-icon-links .active {
     background-color: #E8F4FF;
