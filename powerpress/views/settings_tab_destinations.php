@@ -59,6 +59,8 @@
         $FeedSettings['anghami_url'] = '';
     if(empty($FeedSettings['youtube_url']) )
         $FeedSettings['youtube_url'] = '';
+    if( empty($FeedSettings['apple_claim_token']) )
+        $FeedSettings['apple_claim_token'] = '';
 
     $Settings['subscribe_feature_rss'] = (isset($General['subscribe_feature_rss']) ? $General['subscribe_feature_rss'] : true );
     $Settings['subscribe_feature_email'] = (isset($General['subscribe_feature_email']) ? $General['subscribe_feature_email'] : false );
@@ -113,7 +115,7 @@
     $Settings['subscribe_feature_youtube_sidebar'] = (isset($General['subscribe_feature_youtube_sidebar']) ? $General['subscribe_feature_youtube_sidebar'] : false );
 
 
-function subscribeSetting($directory, $feed_url, $listing_url) {
+function subscribeSetting($directory, $feed_url, $listing_url, $apple_claim_token = '') {
         $style = " style=\"height: 32px;\" ";
 	    $link_at_top = true;
 	    $id_tail = "-subsection";
@@ -142,6 +144,17 @@ function subscribeSetting($directory, $feed_url, $listing_url) {
                     <?php } ?>
                     <input class="pp-settings-text-input-less-wide" type="text" id="itunes_url<?php echo $id_tail; ?>" name="Feed[itunes_url]" placeholder="<?php echo __('Apple Subscription URL', 'powerpress'); ?>" value="<?php echo esc_attr($listing_url); ?>" maxlength="255" />
                     <label for="itunes_url" class="pp-settings-label-under"><?php echo sprintf(__('e.g. %s', 'powerpress'), 'https://itunes.apple.com/podcast/title-of-podcast/id000000000'); ?></label>
+
+                    <br>
+                    <hr/>
+                    <br>
+                    <input class="pp-settings-text-input-less-wide" type="text"
+                           id="apple_claim_token<?php echo $id_tail; ?>" name="Feed[apple_claim_token]"
+                           placeholder="<?php echo __('Apple Claim Token', 'powerpress'); ?>"
+                           value="<?php echo esc_attr($apple_claim_token); ?>" maxlength="255"/>
+                    <label for="apple_claim_token"
+                           class="pp-settings-label-under"><?php echo sprintf(__('%s', 'powerpress'), 'For claiming a show from within your Apple Podcast Connect account.'); ?></label>
+
                 <?php
                 break;
             case 'tunein': ?>
@@ -471,7 +484,7 @@ if (!empty($General['blubrry_hosting']) && $General['blubrry_hosting'] > 0) {
         </div>
 
         <div id="destinations-apple" class="pp-sidenav-tab">
-            <?php subscribeSetting('apple', $feed_url, $FeedSettings['itunes_url']); ?>
+            <?php subscribeSetting('apple', $feed_url, $FeedSettings['itunes_url'], $FeedSettings['apple_claim_token']); ?>
             <div class="pp-show-subscribe">
                 <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_apple_sidebar]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_apple_sidebar" name="General[subscribe_feature_apple_sidebar]" value="1" <?php if( !empty($Settings['subscribe_feature_apple_sidebar']) ) echo 'checked '; ?>/> <label for="subscribe_feature_apple_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label></p>
                 <p class="pp-settings-text-smaller-margin"><input type="hidden" name="General[subscribe_feature_apple_shortcode]" value="0" /><input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_apple_shortcode" name="General[subscribe_feature_apple_shortcode]" value="1" <?php if( !empty($Settings['subscribe_feature_apple_shortcode']) ) echo 'checked '; ?>/> <label for="subscribe_feature_apple_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label></p>
