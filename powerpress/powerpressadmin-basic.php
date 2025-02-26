@@ -1351,6 +1351,7 @@ function powerpressadmin_edit_blubrry_services($General, $action_url = false, $a
                         <?php echo __('LET\'S CONNECT', 'powerpress'); ?></button></strong>
 
             </p>
+            <p style="margin-top: 1ch;" class="pp-settings-text-no-margin"><?php echo __('If you are not Hosting with Blubrry or using Blubrry Statistics, there is no need to connect to Blubrry here.', 'powerpress'); ?></p>
         </div>
 <?php
 	} // end not signed up for hosting
