@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.12.2
+Version: 11.12.4
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -132,7 +132,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.12.2' );
+define('POWERPRESS_VERSION', '11.12.4' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -1657,11 +1657,11 @@ function powerpress_rss2_head()
             $endDate = new DateTime($endArr[0] . ' ' . $endArr[1], new DateTimeZone($tzName));
             $end = $endDate->format('c');
             echo "\t<podcast:liveItem status=\"$status\" start=\"$start\" end=\"$end\">" . PHP_EOL;
-            echo "\t\t<title>".$liveItem['title']."</title>" . PHP_EOL;
+            echo "\t\t<title>".esc_html($liveItem['title'])."</title>" . PHP_EOL;
             echo "\t\t<guid isPermalink=\"false\">".$liveItem['guid']."</guid>" . PHP_EOL;
 
             if ($liveItem['description'] != "")
-                echo "\t\t<description>".$liveItem['description']."</description>" . PHP_EOL;
+                echo "\t\t<description>".esc_html($liveItem['description'])."</description>" . PHP_EOL;
 
             if ($liveItem['coverart_link'] != "")
                 echo "\t\t<podcast:images srcset=\"".$liveItem['cover_art']." 1400w\" />" . PHP_EOL;

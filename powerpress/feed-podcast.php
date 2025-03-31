@@ -158,7 +158,7 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'."\n"; 
         if ($trailerAttrs) {
             $trailerCount += 1;
             ?>
-        <podcast:trailer url="<?php echo $trailerAttrs['url']; ?>" pubdate="<?php echo mysql2date('D, d M Y H:i:s +0000', get_post_time('Y-m-d H:i:s', true), false); ?>" length="<?php echo $trailerAttrs['length']; ?>" type="<?php echo $trailerAttrs['type']; ?>" <?php echo isset($trailerAttrs['season']) ? 'season="' . $trailerAttrs['season'] . '"'  : '' ?>><?php echo $trailerAttrs['title'] ?></podcast:trailer>
+        <podcast:trailer url="<?php echo $trailerAttrs['url']; ?>" pubdate="<?php echo mysql2date('D, d M Y H:i:s +0000', get_post_time('Y-m-d H:i:s', true), false); ?>" length="<?php echo $trailerAttrs['length']; ?>" type="<?php echo $trailerAttrs['type']; ?>" <?php echo isset($trailerAttrs['season']) ? 'season="' . $trailerAttrs['season'] . '"'  : '' ?>><?php echo esc_html($trailerAttrs['title']); ?></podcast:trailer>
             <?php
         }
 

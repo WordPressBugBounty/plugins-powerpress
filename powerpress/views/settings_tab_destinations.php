@@ -386,6 +386,10 @@ if (!empty($General['blubrry_hosting']) && $General['blubrry_hosting'] > 0) {
         <div class="destinations-icon-links d-flex flex-wrap justify-content-between">
             <p class="mt-3 mb-4" style="width: 100%;">There are listeners everywhere, don’t miss out on a podcast platform. Submit and manage podcast listings here.</p>
             <p style="width: 100%; margin-bottom: 2em;"><b>Select Destination Point</b></p>
+            <div id="destinations-default-open" onclick="sideNav(event, 'destinations-all')" class="active pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="subscribe-icons-larger rss"></i>
+                <small>RSS</small>
+            </div>
             <div id="destinations-apple-tab" onclick="sideNav(event, 'destinations-apple')" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="<?php echo empty($FeedSettings['itunes_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger apple-podcast"></i>
                 <small>Apple Podcasts</small>
@@ -394,65 +398,62 @@ if (!empty($General['blubrry_hosting']) && $General['blubrry_hosting'] > 0) {
                 <i class="<?php echo empty($FeedSettings['spotify_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger spotify"></i>
                 <small>Spotify</small>
             </div>
-            <div id="destinations-amazon-tab" onclick="sideNav(event, 'destinations-amazon')" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="<?php echo empty($FeedSettings['amazon_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger amazon_music"></i>
-                <small>Amazon Music</small>
-            </div>
-            <div id="destinations-android-tab" onclick="sideNav(event, 'destinations-android')" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="subscribe-icons-larger android"></i>
-                <small>Subscribe on Android</small>
-            </div>
-            <div id="destinations-pandora-tab" onclick="sideNav(event, 'destinations-pandora')" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="<?php echo empty($FeedSettings['pandora_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger pandora"></i>
-                <small>Pandora</small>
-            </div>
-            <div id="destinations-iheart-tab" onclick="sideNav(event, 'destinations-iheart')" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="<?php echo empty($FeedSettings['iheart_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger iheartradio"></i>
-                <small>iHeartRadio</small>
+            <div id="destinations-pcindex-tab" onclick="sideNav(event, 'destinations-pcindex')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['pcindex_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger pcindex"></i>
+                <small>Podcast Index</small>
             </div>
             <div id="destinations-blubrry-tab" onclick="sideNav(event, 'destinations-blubrry')" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="<?php echo empty($FeedSettings['blubrry_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger blubrry"></i>
                 <small>Blubrry Podcast Directory</small>
             </div>
-            <div id="destinations-jiosaavn-tab" onclick="sideNav(event, 'destinations-jiosaavn')" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="<?php echo empty($FeedSettings['jiosaavn_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger jiosaavn"></i>
-                <small>JioSaavn</small>
+            <div id="destinations-android-tab" onclick="sideNav(event, 'destinations-android')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="subscribe-icons-larger android"></i>
+                <small>Subscribe on Android</small>
+            </div>
+            <div id="destinations-iheart-tab" onclick="sideNav(event, 'destinations-iheart')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['iheart_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger iheartradio"></i>
+                <small>iHeartRadio</small>
+            </div>
+            <div id="destinations-pandora-tab" onclick="sideNav(event, 'destinations-pandora')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['pandora_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger pandora"></i>
+                <small>Pandora</small>
             </div>
             <div id="destinations-podchaser-tab" onclick="sideNav(event, 'destinations-podchaser')" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="<?php echo empty($FeedSettings['podchaser_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger podchaser"></i>
                 <small>Podchaser</small>
             </div>
-            <div id="destinations-gaana-tab" onclick="sideNav(event, 'destinations-gaana')" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="<?php echo empty($FeedSettings['gaana_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger gaana"></i>
-                <small>Gaana</small>
-            </div>
-            <div id="destinations-pcindex-tab" onclick="sideNav(event, 'destinations-pcindex')" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="<?php echo empty($FeedSettings['pcindex_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger pcindex"></i>
-                <small>Podcast Index</small>
-            </div>
-            <div id="destinations-email-tab" onclick="sideNav(event, 'destinations-email')" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="subscribe-icons-larger email"></i>
-                <small>Subscribe by Email</small>
-            </div>
-            <div id="destinations-tunein-tab" onclick="sideNav(event, 'destinations-tunein')" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="<?php echo empty($FeedSettings['tunein_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger tunein"></i>
-                <small>Tunein</small>
+            <div id="destinations-amazon-tab" onclick="sideNav(event, 'destinations-amazon')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['amazon_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger amazon_music"></i>
+                <small>Amazon Music</small>
             </div>
             <div id="destinations-deezer-tab" onclick="sideNav(event, 'destinations-deezer')" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="<?php echo empty($FeedSettings['deezer_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger deezer"></i>
                 <small>Deezer</small>
             </div>
+            <div id="destinations-tunein-tab" onclick="sideNav(event, 'destinations-tunein')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['tunein_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger tunein"></i>
+                <small>TuneIn</small>
+            </div>
+            <div id="destinations-gaana-tab" onclick="sideNav(event, 'destinations-gaana')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['gaana_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger gaana"></i>
+                <small>Gaana</small>
+            </div>
+            <div id="destinations-jiosaavn-tab" onclick="sideNav(event, 'destinations-jiosaavn')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="<?php echo empty($FeedSettings['jiosaavn_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger jiosaavn"></i>
+                <small>JioSaavn</small>
+            </div>
             <div  id="destinations-anghami-tab" onclick="sideNav(event, 'destinations-anghami')" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="<?php echo empty($FeedSettings['anghami_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger anghami"></i>
                 <small>Anghami</small>
             </div>
-            <div  id="destinations-youtube-tab" onclick="sideNav(event, 'destinations-youtube')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+            <div id="destinations-email-tab" onclick="sideNav(event, 'destinations-email')" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="subscribe-icons-larger email"></i>
+                <small>Subscribe by Email</small>
+            </div>
+
+            <div id="destinations-youtube-tab" onclick="sideNav(event, 'destinations-youtube')" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="<?php echo empty($FeedSettings['youtube_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger youtube"></i>
                 <small>Youtube Music</small>
-            </div>
-            <div id="destinations-default-open" onclick="sideNav(event, 'destinations-all')" class="active pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="subscribe-icons-larger rss"></i>
-                <small>RSS</small>
             </div>
         </div>
         <div id="destinations-all" class="pp-sidenav-tab active">
@@ -744,6 +745,10 @@ if (!empty($General['blubrry_hosting']) && $General['blubrry_hosting'] > 0) {
                     </div>
                 </div>
             </div>
+            <div id="destinations-default-open" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger rss"></i>
+                <small>RSS</small>
+            </div>
             <div id="destinations-apple-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="grey-icon subscribe-icons-larger apple-podcast"></i>
                 <small>Apple Podcasts</small>
@@ -752,65 +757,61 @@ if (!empty($General['blubrry_hosting']) && $General['blubrry_hosting'] > 0) {
                 <i class="grey-icon subscribe-icons-larger spotify"></i>
                 <small>Spotify</small>
             </div>
-            <div id="destinations-amazon-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="grey-icon subscribe-icons-larger amazon_music"></i>
-                <small>Amazon Music</small>
-            </div>
-            <div id="destinations-android-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="grey-icon subscribe-icons-larger android"></i>
-                <small>Subscribe on Android</small>
-            </div>
-            <div id="destinations-pandora-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="grey-icon subscribe-icons-larger pandora"></i>
-                <small>Pandora</small>
-            </div>
-            <div id="destinations-iheart-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="grey-icon subscribe-icons-larger iheartradio"></i>
-                <small>iHeartRadio</small>
+            <div id="destinations-pcindex-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger pcindex"></i>
+                <small>Podcast Index</small>
             </div>
             <div id="destinations-blubrry-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="grey-icon subscribe-icons-larger blubrry"></i>
                 <small>Blubrry Podcast Directory</small>
             </div>
-            <div id="destinations-jiosaavn-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="grey-icon subscribe-icons-larger jiosaavn"></i>
-                <small>JioSaavn</small>
+            <div id="destinations-android-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger android"></i>
+                <small>Subscribe on Android</small>
+            </div>
+            <div id="destinations-iheart-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger iheartradio"></i>
+                <small>iHeartRadio</small>
+            </div>
+            <div id="destinations-pandora-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger pandora"></i>
+                <small>Pandora</small>
             </div>
             <div id="destinations-podchaser-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="grey-icon subscribe-icons-larger podchaser"></i>
                 <small>Podchaser</small>
             </div>
-            <div id="destinations-gaana-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="grey-icon subscribe-icons-larger gaana"></i>
-                <small>Gaana</small>
-            </div>
-            <div id="destinations-pcindex-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="grey-icon subscribe-icons-larger pcindex"></i>
-                <small>Podcast Index</small>
-            </div>
-            <div id="destinations-email-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="grey-icon subscribe-icons-larger email"></i>
-                <small>Subscribe by Email</small>
-            </div>
-            <div id="destinations-tunein-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="grey-icon subscribe-icons-larger tunein"></i>
-                <small>Tunein</small>
+            <div id="destinations-amazon-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger amazon_music"></i>
+                <small>Amazon Music</small>
             </div>
             <div id="destinations-deezer-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="grey-icon subscribe-icons-larger deezer"></i>
                 <small>Deezer</small>
             </div>
-            <div  id="destinations-anghami-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+            <div id="destinations-tunein-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger tunein"></i>
+                <small>TuneIn</small>
+            </div>
+            <div id="destinations-gaana-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger gaana"></i>
+                <small>Gaana</small>
+            </div>
+            <div id="destinations-jiosaavn-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger jiosaavn"></i>
+                <small>JioSaavn</small>
+            </div>
+            <div id="destinations-anghami-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="grey-icon subscribe-icons-larger anghami"></i>
                 <small>Anghami</small>
             </div>
-            <div  id="destinations-youtube-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+            <div id="destinations-email-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
+                <i class="grey-icon subscribe-icons-larger email"></i>
+                <small>Subscribe by Email</small>
+            </div>
+            <div id="destinations-youtube-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="grey-icon subscribe-icons-larger youtube"></i>
                 <small>Youtube Music</small>
-            </div>
-            <div id="destinations-default-open" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="grey-icon subscribe-icons-larger rss"></i>
-                <small>RSS</small>
             </div>
         </div>
 
