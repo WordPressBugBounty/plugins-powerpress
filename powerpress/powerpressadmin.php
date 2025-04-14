@@ -79,6 +79,25 @@ function powerpress_revai_languages(){
     return $languages;
 }
 
+function IPAddressIsPublic($ip) {
+
+    // check IP for hostname is not in LAN
+    $longip = ip2long($ip);
+    if ($longip >= ip2long('192.168.0.0') && $longip <= ip2long('192.168.255.255')) {
+        return false;
+    }
+    if ($longip >= ip2long('172.16.0.0') && $longip <= ip2long('172.31.255.255')) {
+        return false;
+    }
+    if ($longip >= ip2long('169.254.0.0') && $longip <= ip2long('169.254.255.255')) {
+        return false;
+    }
+    if ($longip >= ip2long('10.0.0.0') && $longip <= ip2long('10.255.255.255')) {
+        return false;
+    }
+    return true;
+}
+
 function powerpress_languages()
 {
     // List copied from PodPress:
@@ -2410,7 +2429,12 @@ function powerpress_edit_post($post_ID, $post)
                         if (!empty($Powerpress['url']) ) {
                             $media_hostname = $UrlParts['host'];
                             $ip = gethostbyname($media_hostname);
-                            if (in_array($media_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) || filter_var($media_hostname, FILTER_VALIDATE_IP) || !preg_match('/^[a-zA-Z.\-\d]+$/i', $media_hostname) || in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
+                            if (in_array($media_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) ||
+                                filter_var($media_hostname, FILTER_VALIDATE_IP) ||
+                                !preg_match('/^[a-zA-Z.\-\d]+$/i', $media_hostname) ||
+                                in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) ||
+                                !IPAddressIsPublic($ip)
+                            ) {
                                 // they have already seen the invalid url message on verify--no media check!
                             } else {
                                 if (empty($Powerpress['set_duration']))
@@ -2931,6 +2955,11 @@ function powerpress_edit_post($post_ID, $post)
                             // check IP for hostname is not localhost
                             $ip = gethostbyname($media_hostname);
                             if (in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
+                                $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
+                                powerpress_add_error($error);
+                            }
+                            // check IP for hostname is not in LAN
+                            if (!IPAddressIsPublic($ip)) {
                                 $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
                                 powerpress_add_error($error);
                             }
@@ -4026,16 +4055,22 @@ function powerpress_media_info_ajax()
 	}
 
     if (!$hosting) {
+        $ssrf_valid = true;
         $media_hostname = $UrlParts['host'];
         if (in_array($media_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) || filter_var($media_hostname, FILTER_VALIDATE_IP) || !preg_match('/^[a-zA-Z.\-\d]+$/i', $media_hostname)) {
-            $error = __('Invalid url. Please ensure that your url is formatted correctly, e.g https://example.com/filename.mp3. You can still publish this episode, but will need to enter filesize and duration manually.', 'powerpress');
-            echo "$feed_slug\n";
-            echo $error;
-            exit;
+            $ssrf_valid = false;
         }
         // check IP for hostname is not localhost
         $ip = gethostbyname($media_hostname);
         if (in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
+            $ssrf_valid = false;
+        }
+        // check IP for hostname is not in LAN
+        if (!IPAddressIsPublic($ip)) {
+            $ssrf_valid = false;
+        }
+
+        if (!$ssrf_valid) {
             $error = __('Invalid url. Please ensure that your url is formatted correctly, e.g https://example.com/filename.mp3. You can still publish this episode, but will need to enter filesize and duration manually.', 'powerpress');
             echo "$feed_slug\n";
             echo $error;
