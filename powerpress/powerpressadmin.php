@@ -2409,7 +2409,8 @@ function powerpress_edit_post($post_ID, $post)
 					{
                         if (!empty($Powerpress['url']) ) {
                             $media_hostname = $UrlParts['host'];
-                            if (in_array($media_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) || filter_var($media_hostname, FILTER_VALIDATE_IP) || !preg_match('/^[a-zA-Z.\-\d]+$/i', $media_hostname)) {
+                            $ip = gethostbyname($media_hostname);
+                            if (in_array($media_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) || filter_var($media_hostname, FILTER_VALIDATE_IP) || !preg_match('/^[a-zA-Z.\-\d]+$/i', $media_hostname) || in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
                                 // they have already seen the invalid url message on verify--no media check!
                             } else {
                                 if (empty($Powerpress['set_duration']))
@@ -2914,7 +2915,25 @@ function powerpress_edit_post($post_ID, $post)
                             $title = $chapterTitles[$i];
                             $url = $chapterURLs[$i];
                             $fileName = basename($chapterIms[$i] ?? '');
+                            $ext = substr($fileName, strrpos($fileName, '.') + 1);
+                            $acceptable_extensions = ['jpg', 'jpeg', 'png'];
+                            if (!in_array(strtolower($ext), $acceptable_extensions)) {
+                                $error = __('Error: invalid chapter image filetype', 'powerpress');
+                                powerpress_add_error($error);
+                            }
                             $fileURL = $chapterIms[$i] ?? '';
+                            $UrlParts = parse_url($fileURL);
+                            $img_hostname = $UrlParts['host'];
+                            if (in_array($media_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) || filter_var($media_hostname, FILTER_VALIDATE_IP) || !preg_match('/^[a-zA-Z.\-\d]+$/i', $media_hostname)) {
+                                $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
+                                powerpress_add_error($error);
+                            }
+                            // check IP for hostname is not localhost
+                            $ip = gethostbyname($media_hostname);
+                            if (in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
+                                $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
+                                powerpress_add_error($error);
+                            }
                             $existingIm = $existingIms[$i];
                             $removeIm = $removeIms[$i];
 
@@ -4013,6 +4032,14 @@ function powerpress_media_info_ajax()
             echo "$feed_slug\n";
             echo $error;
             exit;
+        }
+        // check IP for hostname is not localhost
+        $ip = gethostbyname($media_hostname);
+        if (in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
+            $error = __('Invalid url. Please ensure that your url is formatted correctly, e.g https://example.com/filename.mp3. You can still publish this episode, but will need to enter filesize and duration manually.', 'powerpress');
+            echo "$feed_slug\n";
+            echo $error;
+            return false;
         }
     } else {
         // hosting flag means unpublished--use filename only!

@@ -119,7 +119,8 @@ function powerpress_shortcode_handler( $attributes, $content = null )
 
 	if (is_array($attributes)) {
         $attributes = array_filter($attributes, function ($var) {
-            if (strpos($var, 'javascript:') === 0) {
+            $var_without_whitespace = preg_replace("/\s+/", "", $var);
+            if (strpos($var_without_whitespace, 'javascript:') === 0) {
                 return '';
             } else {
                 return $var;
