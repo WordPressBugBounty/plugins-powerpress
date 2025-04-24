@@ -3,11 +3,11 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.12.7
+Version: 11.12.8
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
-Tested up to: 6.7
+Tested up to: 6.8
 Text Domain: powerpress
 Change Log:
 	Please see readme.txt for detailed change log.
@@ -132,7 +132,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.12.7' );
+define('POWERPRESS_VERSION', '11.12.8' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
