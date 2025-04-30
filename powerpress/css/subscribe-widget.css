@@ -1,12 +1,16 @@
 .pp-ssb-widget {
     width: 100%;
     margin: 0 auto;
-    padding-top: 4rem;
+    padding-top: 1ch;
 }
 
 .pp-ssb-widget-modern {
     font: Roboto;
     color: #707070;
+}
+
+.pp-ssb-widget.no-pad-top {
+    padding-top: 0;
 }
 
 /*Styling for round buttons*/

@@ -4,7 +4,7 @@ Tags: podcasting, podcast, podcaster, powerpress, itunes, apple, apple podcasts,
 Requires at least: 3.6
 Requires PHP: 5.2
 Tested up to: 6.8
-Stable tag: 11.12.8
+Stable tag: 11.12.9
 Donate link: https://blubrry.com/services/podcast-hosting/
 License: GPLv2 or later
 
@@ -162,6 +162,11 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 
 
 == Changelog ==
+= 11.12.9 =
+* Released on 04/30/2025
+* Removed excess padding in subscribe sidebar widget
+* Updates to stay compatible with newer versions of PHP
+
 = 11.12.8 =
 * Released on 04/24/2025
 * Tested for compatibility with WP 6.8

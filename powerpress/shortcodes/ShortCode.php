@@ -2,6 +2,7 @@
 
 class PowerPressNetworkShortCode
 {
+    var $tag;
     function __construct($tag)
     {
         $this->tag = $tag;

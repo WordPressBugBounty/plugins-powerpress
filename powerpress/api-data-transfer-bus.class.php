@@ -21,18 +21,22 @@ class PowerpressNetworkDataBus{
 		if( preg_match('/^https?:\/\/([^\/]*)(.*)$/', $requestUrl, $matches) ) {
 			$requestUrl = $matches[2];
 		}
+
+        if (!$creds) {
+            $creds = array();
+        }
 		
 		if( empty($creds['post']) )
 			$creds['post'] = false;
 		
-        $cache = get_option($cacheName);
+        $cache = get_option($cacheName, array());
         //Need direct API: will not use cache but directly call an API
         if ($needDirectAPI === false && !empty($cache)) {
-            if (isset($cache['data']) && isset($cache['insert_timestamp']) && $cache['insert_timestamp'] > (time() - 4*60*60)) {
+            if (!empty($cache['data']) && isset($cache['insert_timestamp']) && $cache['insert_timestamp'] > (time() - 4*60*60)) {
                 //mail ('use cache 1', 'use cache 1 ', print_r('use cache 1', true));
                 //case 1: there is still cache in database and it is created from less than 1 day
                 return $cache['data'];
-            } else if (isset($cache['last_error_timestamp']) && $cache['last_error_timestamp'] > time() - 60*60 && isset($cache['data'])) {
+            } else if (isset($cache['last_error_timestamp']) && $cache['last_error_timestamp'] > time() - 60*60 && !empty($cache['data'])) {
                 //mail ('use cache 2', 'use cache 2 ', print_r('use cache 2', true));
                 //case 2: if the cache is created from more than 1 days, but the last error is less than 1 hour
                 return $cache['data'];

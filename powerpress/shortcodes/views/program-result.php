@@ -92,6 +92,7 @@ if($props['style'] == 'older-full') {?>
                         'modern_direction'=>'horizontal',
                         'itunes_url'=>esc_url($props['subscribe_itunes'] ? $props['subscribe_itunes'] : $props['program_itunesurl']),
                         'subscribe_feature_email_sidebar'=>true,
+                        'subscribe_feature_apple_sidebar'=>true,
                         'subscribe_feature_android_sidebar'=>true,
                         'subscribe_feature_gp_sidebar'=>true,
                         'subscribe_feature_tunein_sidebar'=>true,

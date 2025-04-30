@@ -195,7 +195,7 @@ class PowerPressNetwork
     static function createPage()
     {
         $originalMap = get_option('powerpress_network_map');
-        $map = $originalMap;
+        $map = $originalMap ?: array();
         $pageCreated = false;
         $target = null;
         $postID = null;
@@ -444,7 +444,7 @@ class PowerPressNetwork
         $needDirectAPI = false;
 
 
-        $networkInfo = get_option('powerpress_network');
+        $networkInfo = get_option('powerpress_network', array());
 		$networkId  = get_option('powerpress_network_id');
         $networkTitle = get_option('powerpress_network_title');
         $networkInfo['network_id'] = $networkId;
@@ -594,7 +594,7 @@ class PowerPressNetwork
                     $list_props = $this->apiBus->getListsInNetwork($apiUrl, $creds, $networkInfo, $needDirectAPI );
                     $application_props = $this->apiBus->getApplicantsInNetwork($apiUrl, $creds, $networkInfo, true );
                     $props = $this->apiBus->getSpecificNetworkInAccount($apiUrl, $creds, $networkInfo, $needDirectAPI );
-                    $networkInfo = get_option('powerpress_network');
+                    $networkInfo = get_option('powerpress_network', array());
 					$networkInfo['network_id'] = $networkId;
                     $networkInfo['network_title'] = $networkTitle;
                     break;
