@@ -30,6 +30,11 @@
 			$feed_url = get_feed_link('podcast');
 		}
 	}
+
+    $feed_slug = 'podcast';
+    if (!empty($FeedAttribs['feed_slug'])) {
+        $feed_slug = $FeedAttribs['feed_slug'];
+    }
 	
 	if( empty($FeedSettings['itunes_url']) )
 		$FeedSettings['itunes_url'] = '';
@@ -371,7 +376,7 @@ function subscribeSetting($directory, $feed_url, $listing_url, $apple_claim_toke
 <?php
 
 $atleastOneEpisode = $hasBlubrryHosting = false;
-$episodeCount = powerpress_admin_episodes_per_feed('podcast');
+$episodeCount = powerpress_admin_episodes_per_feed($feed_slug);
 if (!empty($episodeCount) && $episodeCount > 0) {
     $atleastOneEpisode = true;
 }
