@@ -4,7 +4,7 @@ Tags: podcasting, podcast, podcaster, powerpress, itunes, apple, apple podcasts,
 Requires at least: 3.6
 Requires PHP: 5.2
 Tested up to: 6.8
-Stable tag: 11.12.10
+Stable tag: 11.12.11
 Donate link: https://blubrry.com/services/podcast-hosting/
 License: GPLv2 or later
 
@@ -162,6 +162,10 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 
 
 == Changelog ==
+= 11.12.11 =
+* Released on 06/02/2025
+* Add api call to update publisher destinations
+
 = 11.12.10 =
 * Released on 05/21/2025
 * Fixed a bug that was causing issues in the destinations tab for channel feeds

@@ -1185,11 +1185,62 @@ function powerpress_admin_init()
 				}
 				else // otherwise treat as a podcast channel
 				{
-					if( $FeedSlug == false && get_option('powerpress_feed_podcast') ) // If the settings were moved to the podcast channels feature...
-						powerpress_save_settings($Feed, 'powerpress_feed_podcast' ); // save a copy here if that is the case.
-					
-					powerpress_save_settings($Feed, 'powerpress_feed'.($FeedSlug?'_'.$FeedSlug:'') );
+                    // If the settings were moved to the podcast channels feature...
+					if( $FeedSlug == false && get_option('powerpress_feed_podcast') ) {
+                        powerpress_save_settings($Feed, 'powerpress_feed_podcast' ); // save a copy here if that is the case.
+                    }
+
+                    $field = 'powerpress_feed'.($FeedSlug?'_'.$FeedSlug:'');
+                    powerpress_save_settings($Feed,  $field);
 				}
+
+                // make api call to update destinations in generator
+                $GeneralSettingsTemp = powerpress_get_settings('powerpress_general', false);
+                if (!empty($GeneralSettingsTemp['blubrry_hosting']) && $GeneralSettingsTemp['blubrry_hosting'] !== 'false') {
+                    $creds = get_option('powerpress_creds');
+                    require_once(POWERPRESS_ABSPATH .'/powerpressadmin-auth.class.php');
+                    $auth = new PowerPressAuth();
+
+                    $api_url_array = powerpress_get_api_array();
+                    $creds = get_option('powerpress_creds');
+
+                    $json_data = [
+                        'itunes' => $Feed['itunes_url'] ?? '',
+                        'spotify' => $Feed['spotify_url'] ?? '',
+                        'amazon' => $Feed['amazon_url'] ?? '',
+                        'pandora' => $Feed['pandora_url'] ?? '',
+                        'iheart' => $Feed['iheart_url'] ?? '',
+                        'jiosaavn' => $Feed['jiosaavn_url'] ?? '',
+                        'podchaser' => $Feed['podchaser_url'] ?? '',
+                        'gaana' => $Feed['gaana_url'] ?? '',
+                        'pcindex' => $Feed['pcindex_url'] ?? '',
+                        'tunein' => $Feed['tunein_url'] ?? '',
+                        'deezer' => $Feed['deezer_url'] ?? '',
+                        'anghami' => $Feed['anghami_url'] ?? '',
+                        'youtube' => $Feed['youtube'] ?? '',
+                    ];
+                    if ($creds) {
+                        $accessToken = powerpress_getAccessToken();
+                        $req_url = sprintf('/2/program/%s/update/destinations', $GeneralSettingsTemp['blubrry_program_keyword']);
+                        $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA')?'?'. POWERPRESS_BLUBRRY_API_QSA:'');
+                        $results = $auth->api($accessToken, $req_url, $json_data);
+                    } else {
+                        foreach ($api_url_array as $index => $api_url) {
+                            $req_url = sprintf('%s/program/%s/update/destinations', rtrim($api_url, '/'), $GeneralSettingsTemp['blubrry_program_keyword']);
+                            $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '&' . POWERPRESS_BLUBRRY_API_QSA : '');
+                            if (!$json_data && $api_url == 'https://api.blubrry.com/') { // Lets force cURL and see if that helps...
+                                $json_data = powerpress_remote_fopen($req_url, $GeneralSettingsTemp['blubrry_auth'], $json_data, 15, false, true);
+                            }
+                            if ($json_data != false) {
+                                break;
+                            }
+                        }
+                        $results = powerpress_json_decode($json_data);
+                    }
+                }
+
+                // clear variables
+                unset($GeneralSettingsTemp, $results);
 			}
 			
 			if( isset($_POST['EpisodeBoxBGColor']) )
