@@ -673,6 +673,8 @@ function powerpress_admin_init()
                         $General['powerpress_accept_json'] = 0;
                     if(!isset($General['pp_show_block_errors']))
                         $General['pp_show_block_errors'] = 0;
+                    if(!isset($General['powerpress_self_hosted_media']))
+                        $General['powerpress_self_hosted_media'] = 0;
 
                     // Media Presentation Settings
 					$PlayerSettings = array();
@@ -768,6 +770,8 @@ function powerpress_admin_init()
                         $General['powerpress_accept_json'] = 0;
                     if(!isset($General['pp_show_block_errors']))
                         $General['pp_show_block_errors'] = 0;
+                    if(!isset($General['powerpress_self_hosted_media']))
+                        $General['powerpress_self_hosted_media'] = 0;
 				}
 
 				// seo settings
@@ -2483,8 +2487,8 @@ function powerpress_edit_post($post_ID, $post)
                             if (in_array($media_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) ||
                                 filter_var($media_hostname, FILTER_VALIDATE_IP) ||
                                 !preg_match('/^[a-zA-Z.\-\d]+$/i', $media_hostname) ||
-                                in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) ||
-                                !IPAddressIsPublic($ip)
+                                ( empty($GeneralSettings['powerpress_self_hosted_media']) && in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) ) ||
+                                ( empty($GeneralSettings['powerpress_self_hosted_media']) && !IPAddressIsPublic($ip) )
                             ) {
                                 // they have already seen the invalid url message on verify--no media check!
                             } else {
@@ -3005,12 +3009,12 @@ function powerpress_edit_post($post_ID, $post)
                             }
                             // check IP for hostname is not localhost
                             $ip = gethostbyname($media_hostname);
-                            if (in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
+                            if (empty($GeneralSettings['powerpress_self_hosted_media']) && in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
                                 $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
                                 powerpress_add_error($error);
                             }
                             // check IP for hostname is not in LAN
-                            if (!IPAddressIsPublic($ip)) {
+                            if (empty($GeneralSettings['powerpress_self_hosted_media']) && !IPAddressIsPublic($ip)) {
                                 $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
                                 powerpress_add_error($error);
                             }
@@ -4113,11 +4117,11 @@ function powerpress_media_info_ajax()
         }
         // check IP for hostname is not localhost
         $ip = gethostbyname($media_hostname);
-        if (in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
+        if (empty($GeneralSettings['powerpress_self_hosted_media']) && in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
             $ssrf_valid = false;
         }
         // check IP for hostname is not in LAN
-        if (!IPAddressIsPublic($ip)) {
+        if (empty($GeneralSettings['powerpress_self_hosted_media']) && !IPAddressIsPublic($ip)) {
             $ssrf_valid = false;
         }
 

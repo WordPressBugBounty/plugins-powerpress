@@ -871,6 +871,14 @@ function goToPodcastSEO() {
                 </p>
             </div>
         </div>
+        <div>
+            <input class="pp-settings-checkbox" style="margin-top: 3em;" type="checkbox" name="General[powerpress_self_hosted_media]" value="1" <?php echo ( !empty($General['powerpress_self_hosted_media']) ?' checked':''); ?> />
+            <div class="pp-settings-subsection" style="border-bottom: none; margin-top: 2em;">
+                <p class="pp-main"><?php echo __('Disable server-side request forgery check', 'powerpress'); ?></p>
+                <p class="pp-sub"><?php echo __('Check this box if you host your podcast media on your WordPress site or somewhere in your local network, so that we can validate your media.', 'powerpress'); ?>
+                </p>
+            </div>
+        </div>
         <?php
         powerpressadmin_edit_media_statistics($General);
         powerpress_settings_tab_footer(); ?>

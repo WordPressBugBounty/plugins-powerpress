@@ -4,7 +4,7 @@ Tags: podcasting, podcast, podcaster, powerpress, itunes, apple, apple podcasts,
 Requires at least: 3.6
 Requires PHP: 5.2
 Tested up to: 6.8
-Stable tag: 11.12.11
+Stable tag: 11.12.12
 Donate link: https://blubrry.com/services/podcast-hosting/
 License: GPLv2 or later
 
@@ -162,6 +162,10 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 
 
 == Changelog ==
+= 11.12.12 =
+* Released on 06/04/2025
+* New 'self-hosted media' option fixes media verification for users hosting podcast media on their WP site
+
 = 11.12.11 =
 * Released on 06/02/2025
 * Add api call to update publisher destinations
