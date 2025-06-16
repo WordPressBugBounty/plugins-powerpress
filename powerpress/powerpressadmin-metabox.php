@@ -1660,21 +1660,51 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                     <span class="text-pp-tooltip">This tag is intended to describe the location of editorial focus for a podcast's content (i.e. what place is this podcast about?). When setting the location, this field is required.</span>
                 </div>
              </div>
-            <div class="powerpress_row_content">
-                <label for="Powerpress[<?php echo $FeedSlug; ?>][location]" class="pp-ep-box-label"><?php echo __('Optional', 'powerpress'); ?></label>
-                <input class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][location]" oninput="<?php echo str_replace('-', '_', $FeedSlug); ?>_powerpress_locationInput(event)" value="<?php echo isset($ExtraData['location']) ? esc_attr($ExtraData['location']) : ""; ?>" maxlength="50" />
-                <label for="Powerpress[<?php echo $FeedSlug; ?>][location]" class="ep-box-caption"><?php echo __('e.g. Cleveland, Ohio', 'powerpress'); ?></label>
-                <div id="<?php echo $FeedSlug; ?>-pp-location-details" class="pp-settings-subsection" <?php if (empty($ExtraData['location'])) { echo "style=\"display: none;\""; } ?>>
-                    <!-- Two text inputs for geo and osm, even listener on input for location so that pp-location-details appears when there is an input -->
-                    <label for="Powerpress[<?php echo $FeedSlug; ?>][pci_geo]" class="pp-ep-box-label"><?php echo __('Geo', 'powerpress'); ?></label>
-                    <input class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][pci_geo]" value="<?php echo isset($ExtraData['pci_geo']) ? esc_attr($ExtraData['pci_geo']) : ""; ?>" maxlength="50" />
-                    <label for="Powerpress[<?php echo $FeedSlug; ?>][pci_geo]" class="ep-box-caption"><?php echo __('e.g. geo:-27.86159,153.3169', 'powerpress'); ?></label>
-                    <br />
-                    <label for="Powerpress[<?php echo $FeedSlug; ?>][pci_osm]" class="pp-ep-box-label"><?php echo __('OSM', 'powerpress'); ?></label>
-                    <input class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][pci_osm]" value="<?php echo isset($ExtraData['pci_geo']) ? esc_attr($ExtraData['pci_osm']) : ""; ?>" maxlength="50" />
-                    <label for="Powerpress[<?php echo $FeedSlug; ?>][pci_osm]" class="ep-box-caption"><?php echo __('e.g. W43678282', 'powerpress'); ?></label>
+            <?php
+            if (!isset($ExtraData['location']) || !is_array($ExtraData['location'])) {
+                $ExtraData['location'] = [$ExtraData['location'] ?? ''];
+                $ExtraData['pci_geo'] = [$ExtraData['pci_geo'] ?? ''];
+                $ExtraData['pci_osm'] = [$ExtraData['pci_osm'] ?? ''];
+                $ExtraData['pci_rel'] = [1];
+            }
+            ?>
+
+            <?php for ($i = 0; $i < count($ExtraData['location']); $i++) { ?>
+                <div class="powerpress_row_content mb-2">
+                    <div class="row ml-0 mr-0">
+                        <div class="col-8">
+                            <div class="row">
+                                <input required class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][location][]" oninput="powerpress_locationInput(event)" value="<?php echo esc_attr($ExtraData['location'][$i]); ?>" maxlength="50" />
+                            </div>
+                        </div>
+                        <div class="col-1">
+                            <div class="row" style="height: 100%; display: flex; align-items: center; justify-content: center;">
+                                <button class="float-left pl-0 remove-location" type="button" style="border: none; background: inherit; color: red; font-size: 25px;">×</button>
+                            </div>
+                        </div>
+
+                    </div>
+                    <label for="Powerpress[<?php echo $FeedSlug; ?>][location]" class="ep-box-caption"><?php echo __('e.g. Cleveland, Ohio', 'powerpress'); ?></label>
+                    <div id="pp-location-details" class="pp-settings-subsection" <?php if (empty($ExtraData['location'])) { echo "style=\"display: none;\""; } ?>>
+                        <!-- Two text inputs for geo and osm, even listener on input for location so that pp-location-details appears when there is an input -->
+                        <label for="Powerpress[<?php echo $FeedSlug; ?>][pci_geo]" class="pp-ep-box-label"><?php echo __('Geo', 'powerpress'); ?></label>
+                        <input class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][pci_geo][]" value="<?php echo esc_attr($ExtraData['pci_geo'][$i]); ?>" maxlength="50" />
+                        <label for="Powerpress[<?php echo $FeedSlug; ?>][pci_geo]" class="ep-box-caption"><?php echo __('e.g. geo:-27.86159,153.3169', 'powerpress'); ?></label>
+                        <br />
+                        <label for="Powerpress[<?php echo $FeedSlug; ?>][pci_osm]" class="pp-ep-box-label"><?php echo __('OSM', 'powerpress'); ?></label>
+                        <input class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][pci_osm][]" value="<?php echo esc_attr($ExtraData['pci_osm'][$i]); ?>" maxlength="50" />
+                        <label for="Powerpress[<?php echo $FeedSlug; ?>][pci_osm]" class="ep-box-caption"><?php echo __('e.g. W43678282', 'powerpress'); ?></label>
+                        <br />
+                        <label for="Powerpress[<?php echo $FeedSlug; ?>][pci_rel]" class="pp-ep-box-label"><?php echo __('Rel', 'powerpress'); ?></label>
+                        <select class="pp-ep-box-input" name="Powerpress[<?php echo $FeedSlug; ?>][pci_rel][]">
+                            <option value="1" <?php echo !isset($ExtraData['pci_rel'][$i]) || $ExtraData['pci_rel'][$i] == 1 ? 'selected' : ''; ?>>Subject</option>
+                            <option value="2" <?php echo isset($ExtraData['pci_rel'][$i]) && $ExtraData['pci_rel'][$i] == 2 ? 'selected' : ''; ?>>Creator</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
+            <?php } ?>
+            <div id="<?php echo $FeedSlug; ?>_location-end"></div>
+            <button type="button" style="border: none; background: inherit; color: #1976D2;" id="<?php echo $FeedSlug; ?>_newlocation" name="newlocation">+ Add Location</button>
         </div>
          <div class="pp-section-container container" style="margin-left: 0; padding-left: 0;">
              <div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center;">
@@ -2186,13 +2216,56 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
 
             let <?php echo str_replace('-', '_', $FeedSlug); ?>_currentRoleCount = <?php echo $currentRoleCount; ?>;
             let <?php echo str_replace('-', '_', $FeedSlug); ?>_currentSoundBiteCount = <?php echo $currentSoundbiteCount; ?>;
-            let currentContentlinkCount = <?php echo ($currentContentlinkCount ?? 0); ?>;
-            let currentAltEnclosureCount = <?php echo ($currentAltEnclosureCount ?? 0); ?>;
-            let hasHosting = <?php echo ($GeneralSettings['blubrry_hosting'] ?: 0); ?>;
-            let powerpressRootUrl = '<?php echo powerpress_get_root_url(); ?>';
-            let adminUrl = '<?php echo admin_url(); ?>';
+            let <?php echo str_replace('-', '_', $FeedSlug); ?>_currentContentlinkCount = <?php echo ($currentContentlinkCount ?? 0); ?>;
+            let <?php echo str_replace('-', '_', $FeedSlug); ?>_currentAltEnclosureCount = <?php echo ($currentAltEnclosureCount ?? 0); ?>;
+            if (typeof hasHosting === 'undefined') {
+                let hasHosting = <?php echo ($GeneralSettings['blubrry_hosting'] ?: 0); ?>;
+                let powerpressRootUrl = '<?php echo powerpress_get_root_url(); ?>';
+                let adminUrl = '<?php echo admin_url(); ?>';
+            }
 
             jQuery(document).ready(function() {
+                jQuery(document).on('click', '.remove-location', function(e) {
+                    jQuery(this).parent().parent().parent().parent().remove();
+                });
+
+                jQuery(document).on('click', '#<?php echo $FeedSlug; ?>_newlocation', function(e) { // TODO: Update this...
+                    let newHTMl = `<div class="mb-2 mt-3">
+                    <div class="row ml-0 mr-0">
+                        <div class="col-8">
+                            <div class="row">
+                                <input required class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][location][]" oninput="powerpress_locationInput(event)" value="" maxlength="50" />
+                            </div>
+                        </div>
+                        <div class="col-1">
+                            <div class="row" style="height: 100%; display: flex; align-items: center; justify-content: center;">
+                                <button class="float-left pl-0 remove-location" type="button" style="border: none; background: inherit; color: red; font-size: 25px;">×</button>
+                            </div>
+                        </div>
+
+                    </div>
+                    <label for="Powerpress[<?php echo $FeedSlug; ?>][location]" class="ep-box-caption"><?php echo __('e.g. Cleveland, Ohio', 'powerpress'); ?></label>
+                    <div id="pp-location-details" class="pp-settings-subsection">
+                        <!-- Two text inputs for geo and osm, even listener on input for location so that pp-location-details appears when there is an input -->
+                        <label for="Powerpress[<?php echo $FeedSlug; ?>][pci_geo]" class="pp-ep-box-label"><?php echo __('Geo', 'powerpress'); ?></label>
+                        <input class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][pci_geo][]" value="" maxlength="50" />
+                        <label for="Powerpress[<?php echo $FeedSlug; ?>][pci_geo]" class="ep-box-caption"><?php echo __('e.g. geo:-27.86159,153.3169', 'powerpress'); ?></label>
+                        <br />
+                        <label for="Powerpress[<?php echo $FeedSlug; ?>][pci_osm]" class="pp-ep-box-label"><?php echo __('OSM', 'powerpress'); ?></label>
+                        <input class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][pci_osm][]" value="" maxlength="50" />
+                        <label for="Powerpress[<?php echo $FeedSlug; ?>][pci_osm]" class="ep-box-caption"><?php echo __('e.g. W43678282', 'powerpress'); ?></label>
+                        <br />
+                        <label for="Powerpress[<?php echo $FeedSlug; ?>][pci_rel]" class="pp-ep-box-label"><?php echo __('Rel', 'powerpress'); ?></label>
+                        <select class="pp-ep-box-input" name="Powerpress[<?php echo $FeedSlug; ?>][pci_rel][]">
+                            <option value="1" selected>Subject</option>
+                            <option value="2">Creator</option>
+                        </select>
+                    </div>
+                    </div>`;
+
+                    jQuery(newHTMl).insertBefore('#<?php echo $FeedSlug; ?>_location-end');
+                });
+
                 jQuery(document).on('click',"[name*='<?php echo $FeedSlug; ?>-remove-role-']",function (e) {
                     <?php echo str_replace('-', '_', $FeedSlug); ?>_currentRoleCount -= 1;
                     let roleNum = this.id[this.id.length - 1];
@@ -2301,12 +2374,12 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                     }
                 });
                 jQuery("[name='newcontentlink']").click(function (e) {
-                    currentContentlinkCount += 1;
+                    <?php echo str_replace('-', '_', $FeedSlug); ?>_currentContentlinkCount += 1;
 
                     // get open spot in case we deleted links
                     let linkNum = findOpenId('content-link');
 
-                    if (currentContentlinkCount >= 10 || linkNum === false) {
+                    if (<?php echo str_replace('-', '_', $FeedSlug); ?>_currentContentlinkCount >= 10 || linkNum === false) {
                         jQuery('#newcontentlink').hide();
                     } else {
                         jQuery('#newcontentlink').show();
@@ -2345,12 +2418,12 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                 });
 
                 jQuery(document).on('click', "[name*='remove-content-link-']", function (e) {
-                    currentContentlinkCount -= 1;
-                    if (currentContentlinkCount < 0) {
-                        currentContentlinkCount = 0;
+                    <?php echo str_replace('-', '_', $FeedSlug); ?>_currentContentlinkCount -= 1;
+                    if (<?php echo str_replace('-', '_', $FeedSlug); ?>_currentContentlinkCount < 0) {
+                        <?php echo str_replace('-', '_', $FeedSlug); ?>_currentContentlinkCount = 0;
                     }
 
-                    if (currentContentlinkCount >= 10) {
+                    if (<?php echo str_replace('-', '_', $FeedSlug); ?>_currentContentlinkCount >= 10) {
                         jQuery('#newcontentlink').hide();
                     } else {
                         jQuery('#newcontentlink').show();
@@ -2361,12 +2434,12 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                 });
 
                 jQuery("[name='newaltenclosure']").click(function (e) {
-                    currentAltEnclosureCount += 1;
+                    <?php echo str_replace('-', '_', $FeedSlug); ?>_currentAltEnclosureCount += 1;
 
                     // get open spot in case we deleted links
                     let linkNum = findOpenId('alternate-enclosure');
 
-                    if (currentAltEnclosureCount >= 10 || linkNum === false) {
+                    if (<?php echo str_replace('-', '_', $FeedSlug); ?>_currentAltEnclosureCount >= 10 || linkNum === false) {
                         jQuery('#newaltenclosure').hide();
                     } else {
                         jQuery('#newaltenclosure').show();
@@ -2423,12 +2496,12 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                 });
 
                 jQuery(document).on('click', "[name*='remove-alt-enc-']", function (e) {
-                    currentAltEnclosureCount -= 1;
-                    if (currentAltEnclosureCount < 0) {
-                        currentAltEnclosureCount = 0;
+                    <?php echo str_replace('-', '_', $FeedSlug); ?>_currentAltEnclosureCount -= 1;
+                    if (<?php echo str_replace('-', '_', $FeedSlug); ?>_currentAltEnclosureCount < 0) {
+                        <?php echo str_replace('-', '_', $FeedSlug); ?>_currentAltEnclosureCount = 0;
                     }
 
-                    if (currentAltEnclosureCount >= 10) {
+                    if (<?php echo str_replace('-', '_', $FeedSlug); ?>_currentAltEnclosureCount >= 10) {
                         jQuery('#newaltenclosure').hide();
                     } else {
                         jQuery('#newaltenclosure').show();

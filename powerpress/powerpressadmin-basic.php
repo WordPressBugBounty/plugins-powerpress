@@ -1692,11 +1692,13 @@ function powerpressadmin_edit_funding($FeedSettings = false, $feed_slug='podcast
 		$FeedSettings['donate_label'] = '';
 
     if( !isset($FeedSettings['location']) )
-        $FeedSettings['location'] = '';
+        $FeedSettings['location'] = [''];
     if( !isset($FeedSettings['pci_geo']) )
-        $FeedSettings['pci_geo'] = '';
+        $FeedSettings['pci_geo'] = [''];
     if( !isset($FeedSettings['pci_osm']) )
-        $FeedSettings['pci_osm'] = '';
+        $FeedSettings['pci_osm'] = [''];
+    if( !isset($FeedSettings['pci_rel']) )
+        $FeedSettings['pci_rel'] = [''];
     if( !isset($FeedSettings['frequency']) )
         $FeedSettings['frequency'] = '';
     ?>
@@ -1745,19 +1747,51 @@ function powerpressadmin_edit_funding($FeedSettings = false, $feed_slug='podcast
     <h1 class="pp-heading"><?php echo __('Basic Show Information', 'powerpress'); ?></h1>
     <div class="pp-settings-section">
         <h2><?php echo __('Location', 'powerpress'); ?></h2>
-        <label for="Feed[location]" class="pp-settings-label"><?php echo __('Optional', 'powerpress'); ?></label>
-        <input class="pp-settings-text-input" type="text" name="Feed[location]" oninput="powerpress_locationInput(event)" value="<?php echo esc_attr($FeedSettings['location']); ?>" maxlength="50" />
+        <?php
+        if (!is_array($FeedSettings['location'])) {
+            $FeedSettings['location'] = [$FeedSettings['location']];
+            $FeedSettings['pci_geo'] = [$FeedSettings['pci_geo']];
+            $FeedSettings['pci_osm'] = [$FeedSettings['pci_osm']];
+            $FeedSettings['pci_rel'] = [1];
+        }
+        ?>
+
+        <?php for ($i = 0; $i < count($FeedSettings['location']); $i++) { ?>
+        <div class="mb-2">
+        <div class="row ml-0 mr-0">
+            <div class="col-11">
+                <div class="row">
+                    <input required class="pp-settings-text-input" type="text" name="Feed[location][]" oninput="powerpress_locationInput(event)" value="<?php echo esc_attr($FeedSettings['location'][$i]); ?>" maxlength="50" />
+                </div>
+            </div>
+            <div class="col-1">
+                <div class="row" style="height: 100%; display: flex; align-items: center; justify-content: center;">
+                    <button class="float-left pl-0 remove-location" type="button" style="border: none; background: inherit; color: red; font-size: 25px;">×</button>
+                </div>
+            </div>
+
+        </div>
         <label for="Feed[location]" class="pp-settings-label-under"><?php echo __('e.g. Cleveland, Ohio', 'powerpress'); ?></label>
         <div id="pp-location-details" class="pp-settings-subsection" <?php if (empty($FeedSettings['location'])) { echo "style=\"display: none;\""; } ?>>
             <!-- Two text inputs for geo and osm, even listener on input for location so that pp-location-details appears when there is an input -->
             <label for="Feed[pci_geo]" class="pp-settings-label"><?php echo __('Geo', 'powerpress'); ?></label>
-            <input class="pp-settings-text-input" type="text" name="Feed[pci_geo]" value="<?php echo esc_attr($FeedSettings['pci_geo']); ?>" maxlength="50" />
+            <input class="pp-settings-text-input" type="text" name="Feed[pci_geo][]" value="<?php echo esc_attr($FeedSettings['pci_geo'][$i]); ?>" maxlength="50" />
             <label for="Feed[pci_geo]" class="pp-settings-label-under"><?php echo __('e.g. geo:-27.86159,153.3169', 'powerpress'); ?></label>
             <br />
             <label for="Feed[pci_osm]" class="pp-settings-label"><?php echo __('OSM', 'powerpress'); ?></label>
-            <input class="pp-settings-text-input" type="text" name="Feed[pci_osm]" value="<?php echo esc_attr($FeedSettings['pci_osm']); ?>" maxlength="50" />
+            <input class="pp-settings-text-input" type="text" name="Feed[pci_osm][]" value="<?php echo esc_attr($FeedSettings['pci_osm'][$i]); ?>" maxlength="50" />
             <label for="Feed[pci_osm]" class="pp-settings-label-under"><?php echo __('e.g. W43678282', 'powerpress'); ?></label>
+            <br />
+            <label for="Feed[pci_rel]" class="pp-settings-label"><?php echo __('Rel', 'powerpress'); ?></label>
+            <select class="pp-settings-select" name="Feed[pci_rel][]">
+                <option value="1" <?php echo !isset($FeedSettings['pci_rel'][$i]) || $FeedSettings['pci_rel'][$i] == 1 ? 'selected' : ''; ?>>Subject</option>
+                <option value="2" <?php echo isset($FeedSettings['pci_rel'][$i]) && $FeedSettings['pci_rel'][$i] == 2 ? 'selected' : ''; ?>>Creator</option>
+            </select>
         </div>
+        </div>
+        <?php } ?>
+        <div id="location-end"></div>
+        <button type="button" style="border: none; background: inherit; color: #1976D2;" id="newlocation" name="newlocation">+ Add Location</button>
     </div>
     <div class="pp-settings-section">
         <h2><?php echo __('Episode Frequency', 'powerpress'); ?></h2>
@@ -2108,6 +2142,47 @@ function powerpressadmin_edit_funding($FeedSettings = false, $feed_slug='podcast
                 let roleNum = this.id[this.id.length - 1];
                 jQuery("#role-" + roleNum + "-container").css({"visibility": "hidden", "position": "absolute"});
                 jQuery("[name='role-" + roleNum + "-name']").val("");
+            });
+
+            jQuery(document).on('click', '.remove-location', function(e) {
+                jQuery(this).parent().parent().parent().parent().remove();
+            });
+
+            jQuery(document).on('click', '#newlocation', function(e) {
+                let newHTMl = `<div class="mb-2 mt-3">
+                    <div class="row ml-0 mr-0">
+                        <div class="col-11">
+                            <div class="row">
+                                <input required class="pp-settings-text-input" type="text" name="Feed[location][]" oninput="powerpress_locationInput(event)" value="" maxlength="50" />
+                            </div>
+                        </div>
+                        <div class="col-1">
+                            <div class="row" style="height: 100%; display: flex; align-items: center; justify-content: center;">
+                                <button class="float-left pl-0 remove-location" type="button" style="border: none; background: inherit; color: red; font-size: 25px;">×</button>
+                            </div>
+                        </div>
+
+                    </div>
+                    <label for="Feed[location]" class="pp-settings-label-under"><?php echo __('e.g. Cleveland, Ohio', 'powerpress'); ?></label>
+                    <div id="pp-location-details" class="pp-settings-subsection">
+                        <!-- Two text inputs for geo and osm, even listener on input for location so that pp-location-details appears when there is an input -->
+                        <label for="Feed[pci_geo]" class="pp-settings-label"><?php echo __('Geo', 'powerpress'); ?></label>
+                        <input class="pp-settings-text-input" type="text" name="Feed[pci_geo][]" value="" maxlength="50" />
+                        <label for="Feed[pci_geo]" class="pp-settings-label-under"><?php echo __('e.g. geo:-27.86159,153.3169', 'powerpress'); ?></label>
+                        <br />
+                        <label for="Feed[pci_osm]" class="pp-settings-label"><?php echo __('OSM', 'powerpress'); ?></label>
+                        <input class="pp-settings-text-input" type="text" name="Feed[pci_osm][]" value="" maxlength="50" />
+                        <label for="Feed[pci_osm]" class="pp-settings-label-under"><?php echo __('e.g. W43678282', 'powerpress'); ?></label>
+                        <br />
+                        <label for="Feed[pci_rel]" class="pp-settings-label"><?php echo __('Rel', 'powerpress'); ?></label>
+                        <select class="pp-settings-select" name="Feed[pci_rel][]">
+                            <option value="1" selected>Subject</option>
+                            <option value="2">Creator</option>
+                        </select>
+                    </div>
+                    </div>`;
+
+                jQuery(newHTMl).insertBefore('#location-end');
             });
 
             jQuery("[name='newrole']").click(function (e) {

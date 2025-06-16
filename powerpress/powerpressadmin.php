@@ -2758,6 +2758,9 @@ function powerpress_edit_post($post_ID, $post)
 
                     if (!empty($Powerpress['pci_osm']))
                         $ToSerialize['pci_osm'] = $Powerpress['pci_osm'];
+
+                    if (!empty($Powerpress['pci_rel']))
+                        $ToSerialize['pci_rel'] = $Powerpress['pci_rel'];
                 }
 
                 if (isset($Powerpress['vts'])) {
