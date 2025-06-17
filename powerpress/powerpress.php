@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.13.1
+Version: 11.13.2
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -132,7 +132,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.13.1' );
+define('POWERPRESS_VERSION', '11.13.2' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -1491,10 +1491,11 @@ function powerpress_rss2_head()
             } else {
                 echo "\t<rawvoice:location>" . htmlspecialchars($Feed['location']) . "</rawvoice:location>" . PHP_EOL;
                 echo "\t<podcast:location";
-                if( !empty($Feed['pci_geo']) ) {
+
+                if( !is_array($Feed['pci_geo']) && !empty($Feed['pci_geo']) ) {
                     echo " geo=\"" . htmlspecialchars($Feed['pci_geo']) . "\"";
                 }
-                if( !empty($Feed['pci_osm']) ) {
+                if( !is_array($Feed['pci_osm']) && !empty($Feed['pci_osm']) ) {
                     echo " osm=\"" . htmlspecialchars($Feed['pci_osm']) . "\"";
                 }
                 echo ">" . htmlspecialchars($Feed['location']) . "</podcast:location>" . PHP_EOL;
