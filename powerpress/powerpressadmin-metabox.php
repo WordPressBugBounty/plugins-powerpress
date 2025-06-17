@@ -1674,7 +1674,7 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                     <div class="row ml-0 mr-0">
                         <div class="col-8">
                             <div class="row">
-                                <input required class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][location][]" oninput="powerpress_locationInput(event)" value="<?php echo esc_attr($ExtraData['location'][$i]); ?>" maxlength="50" />
+                                <input class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][location][]" oninput="powerpress_locationInput(event)" value="<?php echo esc_attr($ExtraData['location'][$i]); ?>" maxlength="50" />
                             </div>
                         </div>
                         <div class="col-1">
@@ -2234,7 +2234,7 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                     <div class="row ml-0 mr-0">
                         <div class="col-8">
                             <div class="row">
-                                <input required class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][location][]" oninput="powerpress_locationInput(event)" value="" maxlength="50" />
+                                <input class="pp-ep-box-input" type="text" name="Powerpress[<?php echo $FeedSlug; ?>][location][]" oninput="powerpress_locationInput(event)" value="" maxlength="50" />
                             </div>
                         </div>
                         <div class="col-1">

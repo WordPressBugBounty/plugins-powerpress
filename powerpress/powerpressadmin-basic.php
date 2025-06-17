@@ -1761,7 +1761,7 @@ function powerpressadmin_edit_funding($FeedSettings = false, $feed_slug='podcast
         <div class="row ml-0 mr-0">
             <div class="col-11">
                 <div class="row">
-                    <input required class="pp-settings-text-input" type="text" name="Feed[location][]" oninput="powerpress_locationInput(event)" value="<?php echo esc_attr($FeedSettings['location'][$i]); ?>" maxlength="50" />
+                    <input class="pp-settings-text-input" type="text" name="Feed[location][]" oninput="powerpress_locationInput(event)" value="<?php echo esc_attr($FeedSettings['location'][$i]); ?>" maxlength="50" />
                 </div>
             </div>
             <div class="col-1">
@@ -2153,7 +2153,7 @@ function powerpressadmin_edit_funding($FeedSettings = false, $feed_slug='podcast
                     <div class="row ml-0 mr-0">
                         <div class="col-11">
                             <div class="row">
-                                <input required class="pp-settings-text-input" type="text" name="Feed[location][]" oninput="powerpress_locationInput(event)" value="" maxlength="50" />
+                                <input class="pp-settings-text-input" type="text" name="Feed[location][]" oninput="powerpress_locationInput(event)" value="" maxlength="50" />
                             </div>
                         </div>
                         <div class="col-1">
