@@ -176,9 +176,10 @@ function powerpress_admin_jquery_init()
             $alt_enclosure_id_suffix = '';
             $alt_enclosure_query_string = '';
             $alt_enclosure_link_num = false;
+			$FeedSlug = sanitize_title($_GET['podcast-feed']);
             if (isset($_GET['alternate_enclosure_idx'])) {
                 $alt_enclosure_link_num = intval($_GET['alternate_enclosure_idx']);
-                $alt_enclosure_id_suffix = '_alternate_' . intval($_GET['alternate_enclosure_idx']);
+                $alt_enclosure_id_suffix = "_{$FeedSlug}_alternate_" . intval($_GET['alternate_enclosure_idx']);
                 $alt_enclosure_query_string = '&altEnclosure=true';
             }
             if( !empty($_GET['blubrryProgramKeyword']) && !empty($_GET['remSel']) &&  $_GET['remSel'] == 'true' ) {
@@ -298,7 +299,6 @@ function powerpress_admin_jquery_init()
                 powerpress_page_message_add_notice($Error, 'inline', false);
 				powerpress_page_message_print();
             } else {
-			$FeedSlug = sanitize_title($_GET['podcast-feed']);
 ?>
 <style>
 .error {
@@ -392,8 +392,8 @@ function SelectMedia(File)
         }
     <?php } else { ?>
         // handle alt enclosure frontend logic
-        let altEnclosureId = `powerpress_url_podcast_alternate_enclosure_${alternateEnclosureLinkNum}`;
-        let uploadContainerId = `alt-enc-upload-${alternateEnclosureLinkNum}-container`;
+        let altEnclosureId = `powerpress_url_<?php echo $FeedSlug; ?>_alternate_enclosure_${alternateEnclosureLinkNum}`;
+        let uploadContainerId = `alt-enc-upload-<?php echo $FeedSlug; ?>-${alternateEnclosureLinkNum}-container`;
 
         // set input to filename, make readonly
         self.parent.document.getElementById(altEnclosureId).value = File;
@@ -428,8 +428,8 @@ function SelectURL(url)
     <?php } else { ?>
         // handle alt enclosure frontend logic
         let alternateEnclosureLinkNum = '<?php echo $alt_enclosure_link_num; ?>';
-        let altEnclosureId = `powerpress_url_podcast_alternate_enclosure_${alternateEnclosureLinkNum}`;
-        let uploadContainerId = `alt-enc-upload-${alternateEnclosureLinkNum}-container`;
+        let altEnclosureId = `powerpress_url_<?php echo $FeedSlug; ?>_alternate_enclosure_${alternateEnclosureLinkNum}`;
+        let uploadContainerId = `alt-enc-upload-<?php echo $FeedSlug; ?>-${alternateEnclosureLinkNum}-container`;
 
         // set input to filename, make readonly
         self.parent.document.getElementById(altEnclosureId).value = url;

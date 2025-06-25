@@ -2377,6 +2377,7 @@ function powerpress_edit_post($post_ID, $post)
 	    $success_array = array();
 		foreach( $Episodes as $feed_slug => $Powerpress )
 		{
+            $feed_slug = sanitize_title($feed_slug);
 		    $error = '';
 			$field = 'enclosure';
             if (!preg_match('/^[a-z0-9]+(?:(?:-|_)+[a-z0-9]+)*$/', $feed_slug)) {
@@ -2554,6 +2555,32 @@ function powerpress_edit_post($post_ID, $post)
                         }
 
                         if (!empty($MediaURL)) {
+                            if ($alt_enclosure_data['hosting'] == 0) { // entered a full URL, ssrf check
+                                $UrlParts = parse_url($MediaURL);
+                                $media_hostname = $UrlParts['host'];
+                                $ssrf_valid = true;
+                                if (in_array($media_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) || filter_var($media_hostname, FILTER_VALIDATE_IP) || !preg_match('/^[a-zA-Z.\-\d]+$/i', $media_hostname)) {
+                                    $error = __('Invalid alternate enclosure url. Please ensure that your url is formatted correctly, e.g https://example.com/file.mp3.', 'powerpress');
+                                    powerpress_add_error($error);
+                                    $ssrf_valid = false;
+                                }
+                                // check IP for hostname is not localhost
+                                $ip = gethostbyname($media_hostname);
+                                if (empty($GeneralSettings['powerpress_self_hosted_media']) && in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
+                                    $error = __('Invalid alternate enclosure url. Please ensure that your url is formatted correctly, e.g https://example.com/file.mp3.', 'powerpress');
+                                    powerpress_add_error($error);
+                                    $ssrf_valid = false;
+                                }
+                                // check IP for hostname is not in LAN
+                                if (empty($GeneralSettings['powerpress_self_hosted_media']) && !IPAddressIsPublic($ip)) {
+                                    $error = __('Invalid alternate enclosure url. Please ensure that your url is formatted correctly, e.g https://example.com/file.mp3.', 'powerpress');
+                                    powerpress_add_error($error);
+                                    $ssrf_valid = false;
+                                }
+                                if (!$ssrf_valid) {
+                                    continue;
+                                }
+                            }
                             // if hosting == 1, we have an unpublished media filename, otherwise well have a URL to validate
                             if ($alt_enclosure_data['hosting'] == 1 || filter_var($MediaURL, FILTER_VALIDATE_URL)) {
                                 if (!isYoutubeURL($MediaURL)) {
@@ -3004,23 +3031,6 @@ function powerpress_edit_post($post_ID, $post)
                                 powerpress_add_error($error);
                             }
                             $fileURL = $chapterIms[$i] ?? '';
-                            $UrlParts = parse_url($fileURL);
-                            $img_hostname = $UrlParts['host'];
-                            if (in_array($media_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) || filter_var($media_hostname, FILTER_VALIDATE_IP) || !preg_match('/^[a-zA-Z.\-\d]+$/i', $media_hostname)) {
-                                $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
-                                powerpress_add_error($error);
-                            }
-                            // check IP for hostname is not localhost
-                            $ip = gethostbyname($media_hostname);
-                            if (empty($GeneralSettings['powerpress_self_hosted_media']) && in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
-                                $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
-                                powerpress_add_error($error);
-                            }
-                            // check IP for hostname is not in LAN
-                            if (empty($GeneralSettings['powerpress_self_hosted_media']) && !IPAddressIsPublic($ip)) {
-                                $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
-                                powerpress_add_error($error);
-                            }
                             $existingIm = $existingIms[$i];
                             $removeIm = $removeIms[$i];
 
@@ -3067,6 +3077,31 @@ function powerpress_edit_post($post_ID, $post)
                                     $image_req_url = str_replace(wp_upload_dir()['baseurl'], wp_upload_dir()['basedir'], $img['new_file']);
                                 } else {
                                     $image_req_url = $img['new_file'];
+                                    // we should never land in here as our UI requires them to use the WP uploader, but SSRF check in case they enter something malicious into the hidden input...
+                                    $UrlParts = parse_url($image_req_url);
+                                    $img_hostname = $UrlParts['host'];
+                                    $ssrf_valid = true;
+                                    if (in_array($img_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) || filter_var($img_hostname, FILTER_VALIDATE_IP) || !preg_match('/^[a-zA-Z.\-\d]+$/i', $img_hostname)) {
+                                        $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
+                                        powerpress_add_error($error);
+                                        $ssrf_valid = false;
+                                    }
+                                    // check IP for hostname is not localhost
+                                    $ip = gethostbyname($img_hostname);
+                                    if (empty($GeneralSettings['powerpress_self_hosted_media']) && in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
+                                        $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
+                                        powerpress_add_error($error);
+                                        $ssrf_valid = false;
+                                    }
+                                    // check IP for hostname is not in LAN
+                                    if (empty($GeneralSettings['powerpress_self_hosted_media']) && !IPAddressIsPublic($ip)) {
+                                        $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
+                                        powerpress_add_error($error);
+                                        $ssrf_valid = false;
+                                    }
+                                    if (!$ssrf_valid) {
+                                        continue;
+                                    }
                                 }
                                 file_put_contents($uploadPath . "/images/" . $img['new_file_name'], file_get_contents($image_req_url));
                                 $chapter['img'] = $uploadURL . "/images/" . $img['new_file_name'];

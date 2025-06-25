@@ -2106,7 +2106,7 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
             }
             ?>
 
-            <div id="alternate-enclosure-container">
+            <div id="alternate-enclosure-container-<?php echo $FeedSlug; ?>">
                 <button type="button" style="border: none; background: inherit; color: #1976D2;"
                         id="<?php echo $FeedSlug; ?>-newaltenclosure" name="newaltenclosure">+ Add Alternate enclosure
                 </button>
@@ -2194,7 +2194,7 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
             }
 
             ?>
-            <div id="content-link-container">
+            <div id="content-link-container-<?php echo $FeedSlug; ?>">
                 <button type="button" style="border: none; background: inherit; color: #1976D2;"
                         id="<?php echo $FeedSlug; ?>-newcontentlink" name="newcontentlink">+ Add Content Link
                 </button>
@@ -2218,10 +2218,11 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
             let <?php echo str_replace('-', '_', $FeedSlug); ?>_currentSoundBiteCount = <?php echo $currentSoundbiteCount; ?>;
             let <?php echo str_replace('-', '_', $FeedSlug); ?>_currentContentlinkCount = <?php echo ($currentContentlinkCount ?? 0); ?>;
             let <?php echo str_replace('-', '_', $FeedSlug); ?>_currentAltEnclosureCount = <?php echo ($currentAltEnclosureCount ?? 0); ?>;
+            var hasHosting, powerpressRootUrl, adminUrl;
             if (typeof hasHosting === 'undefined') {
-                let hasHosting = <?php echo ($GeneralSettings['blubrry_hosting'] ?: 0); ?>;
-                let powerpressRootUrl = '<?php echo powerpress_get_root_url(); ?>';
-                let adminUrl = '<?php echo admin_url(); ?>';
+                hasHosting = <?php echo ($GeneralSettings['blubrry_hosting'] ?: 0); ?>;
+                powerpressRootUrl = '<?php echo powerpress_get_root_url(); ?>';
+                adminUrl = '<?php echo admin_url(); ?>';
             }
 
             jQuery(document).ready(function() {
@@ -2373,23 +2374,23 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                         jQuery(newHTML).insertAfter(prevId)
                     }
                 });
-                jQuery("[name='newcontentlink']").click(function (e) {
+                jQuery("#<?php echo $FeedSlug; ?>-newcontentlink").click(function (e) {
                     <?php echo str_replace('-', '_', $FeedSlug); ?>_currentContentlinkCount += 1;
 
                     // get open spot in case we deleted links
-                    let linkNum = findOpenId('content-link');
+                    let linkNum = findOpenId('content-link', '<?php echo $FeedSlug; ?>');
 
                     if (<?php echo str_replace('-', '_', $FeedSlug); ?>_currentContentlinkCount >= 10 || linkNum === false) {
-                        jQuery('#newcontentlink').hide();
+                        jQuery('#<?php echo $FeedSlug; ?>-newcontentlink').hide();
                     } else {
-                        jQuery('#newcontentlink').show();
+                        jQuery('#<?php echo $FeedSlug; ?>-newcontentlink').show();
                     }
 
                     if (linkNum !== false) {
                         let feedSlug = '<?php echo $FeedSlug; ?>';
 
                         let remove = `remove-content-link-${linkNum}`;
-                        let containerId = `content-link-${linkNum}-container`;
+                        let containerId = `content-link-${feedSlug}-${linkNum}-container`;
                         let id = `powerpress_url_${feedSlug}_content_link_${linkNum}`;
                         let labelId = `powerpress_label_${feedSlug}-content_link_${linkNum}`;
 
@@ -2413,7 +2414,7 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                             '<hr/>' +
                             '</div>';
 
-                        jQuery(newHTML).insertBefore('#content-link-container');
+                        jQuery(newHTML).insertBefore('#content-link-container-<?php echo $FeedSlug; ?>');
                     }
                 });
 
@@ -2424,25 +2425,25 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                     }
 
                     if (<?php echo str_replace('-', '_', $FeedSlug); ?>_currentContentlinkCount >= 10) {
-                        jQuery('#newcontentlink').hide();
+                        jQuery('#<?php echo $FeedSlug; ?>-newcontentlink').hide();
                     } else {
-                        jQuery('#newcontentlink').show();
+                        jQuery('#<?php echo $FeedSlug; ?>-newcontentlink').show();
                     }
 
                     let linkNum = e.currentTarget.id.match(/\d+/)[0];
                     jQuery(`#content-link-${linkNum}-container`).remove();
                 });
 
-                jQuery("[name='newaltenclosure']").click(function (e) {
+                jQuery("#<?php echo $FeedSlug; ?>-newaltenclosure").click(function (e) {
                     <?php echo str_replace('-', '_', $FeedSlug); ?>_currentAltEnclosureCount += 1;
 
                     // get open spot in case we deleted links
-                    let linkNum = findOpenId('alternate-enclosure');
+                    let linkNum = findOpenId('alternate-enclosure', '<?php echo $FeedSlug; ?>')
 
                     if (<?php echo str_replace('-', '_', $FeedSlug); ?>_currentAltEnclosureCount >= 10 || linkNum === false) {
-                        jQuery('#newaltenclosure').hide();
+                        jQuery('#<?php echo $FeedSlug; ?>-newaltenclosure').hide();
                     } else {
-                        jQuery('#newaltenclosure').show();
+                        jQuery('#<?php echo $FeedSlug; ?>-newaltenclosure').show();
                     }
 
                     if (linkNum !== false) {
@@ -2450,8 +2451,8 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                         let programKeyword = '<?php echo !empty($ExtraData['program_keyword']) ? $ExtraData['program_keyword'] : ''; ?>';
                         let id = `powerpress_url_${feedSlug}_alternate_enclosure_${linkNum}`;
                         let remove = `remove-alt-enc-${linkNum}`
-                        let containerId = `alternate-enclosure-${linkNum}-container`;
-                        let uploadContainerId = `alt-enc-upload-${linkNum}-container`;
+                        let containerId = `alternate-enclosure-${feedSlug}-${linkNum}-container`;
+                        let uploadContainerId = `alt-enc-upload-${feedSlug}-${linkNum}-container`;
 
                         let newHTML =
                             `<div class="mt-2 mb-3" id="${containerId}">` +
@@ -2491,7 +2492,7 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                         // close container
                         newHTML += '</div>';
 
-                        jQuery(newHTML).insertBefore('#alternate-enclosure-container');
+                        jQuery(newHTML).insertBefore('#alternate-enclosure-container-<?php echo $FeedSlug; ?>');
                     }
                 });
 
@@ -2502,9 +2503,9 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
                     }
 
                     if (<?php echo str_replace('-', '_', $FeedSlug); ?>_currentAltEnclosureCount >= 10) {
-                        jQuery('#newaltenclosure').hide();
+                        jQuery('#<?php echo $FeedSlug; ?>-newaltenclosure').hide();
                     } else {
-                        jQuery('#newaltenclosure').show();
+                        jQuery('#<?php echo $FeedSlug; ?>-newaltenclosure').show();
                     }
 
                     let linkNum = e.currentTarget.id.match(/\d+/)[0];
@@ -2514,15 +2515,15 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITra
 
             });
 
-            function findOpenId(type) {
+            function findOpenId(type, feed_slug = 'podcast') {
                 // we have no existing content link inputs, so return one
-                let inputClass = `.${type}-input`;
+                let inputClass = `.${type}-${feed_slug}-input`;
                 if (jQuery(inputClass).length == 0) {
                     return 1;
                 } else {
                     // we have some content links, lets find which one is open
                     for (let i = 1; i < 11; i++) {
-                        let containerId = `#${type}-${i}-container`;
+                        let containerId = `#${type}-${feed_slug}-${i}-container`;
                         let element = jQuery(containerId);
                         if (element.length == 0) {
                             return i;
