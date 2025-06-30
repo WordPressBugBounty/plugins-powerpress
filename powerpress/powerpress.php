@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.13.3
+Version: 11.13.4
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -132,7 +132,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.13.3' );
+define('POWERPRESS_VERSION', '11.13.4' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -1610,7 +1610,7 @@ function powerpress_rss2_head()
                 "name" =>  "blubrry@getalby.com",
                 "type" => "node",
                 "split" => 3,
-                "address" => "030a58b8653d32b99200a2334cfe913e51dc7d155aa0116c176657a4f1722677a3",
+                "address" => "03b8a595e4d8e19efa8faa3fbe2524b0d39f7c812415ff831d38a466a4a1bc888a",
                 "customKey" => "696969",
                 "customValue" => "qAHJuqKLmMhTNFualcIj",
                 "fee" => "true"
@@ -2131,7 +2131,7 @@ function powerpress_rss2_item()
             "name" =>  "blubrry@getalby.com",
             "type" => "node",
             "split" => 3,
-            "address" => "030a58b8653d32b99200a2334cfe913e51dc7d155aa0116c176657a4f1722677a3",
+            "address" => "03b8a595e4d8e19efa8faa3fbe2524b0d39f7c812415ff831d38a466a4a1bc888a",
             "customKey" => "696969",
             "customValue" => "qAHJuqKLmMhTNFualcIj",
             "fee" => "true"
