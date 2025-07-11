@@ -5533,7 +5533,13 @@ function powerpress_process_hosting($post_ID, $post_title)
 
 function powerpress_json_decode($value)
 {
-	return json_decode($value, true);
+    if (empty($value)) {
+        return [];
+    } elseif (is_array($value)) {
+        return $value;
+    } else {
+        return json_decode($value, true);
+    }
 }
 
 // Import podpress settings
