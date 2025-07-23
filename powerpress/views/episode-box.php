@@ -234,6 +234,10 @@ function powerpress_meta_box($object, $box)
         $style = "display: none";
     }
 
+    if (empty($ExtraData)) {
+        $ExtraData = array();
+    }
+
     echo "<div id=\"powerpress_podcast_box_$FeedSlug\" class=\"$editor\">";
     // if no enclosure url AND no other podcast metadata, this is a branch new post
     if (!$EnclosureURL && empty($ExtraData['itunes_image']) && empty($ExtraData['category']) && empty($ExtraData['episode_title']) && empty($ExtraData['feed_title']) && empty($ExtraData['summary']) && empty($ExtraData['subtitle'])) {

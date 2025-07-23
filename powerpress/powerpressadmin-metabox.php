@@ -32,6 +32,9 @@ function episode_box_top($EnclosureURL, $FeedSlug, $ExtraData, $GeneralSettings,
     if (!$DurationSS) {
         $DurationSS = '00';
     }
+    if (empty($ExtraData)) {
+        $ExtraData = array();
+    }
     $FeedSettings = get_option('powerpress_feed_'.$FeedSlug);
     $language = isset($ExtraData['pci_transcript_language']) ? $ExtraData['pci_transcript_language'] : '';
     if (empty($language) && !empty($FeedSettings['rss_language'])) {
@@ -442,6 +445,9 @@ function seo_tab($FeedSlug, $ExtraData, $iTunesExplicit, $seo_feed_title, $Gener
     <div id="seo-<?php echo $FeedSlug; ?>" class="pp-tabcontent active">
         <?php //Apple Podcasts Settings
         // //Apple Podcasts Title
+        if (empty($ExtraData)) {
+            $ExtraData = array();
+        }
         if (empty($ExtraData['episode_title'])) {
             $ExtraData['episode_title'] = '';
         }
@@ -701,6 +707,9 @@ function artwork_tab($FeedSlug, $ExtraData, $object, $CoverImage, $GeneralSettin
         <?php
         $form_action_url = admin_url("media-upload.php?type=powerpress_image&tab=type&post_id={$object->ID}&powerpress_feed={$FeedSlug}&TB_iframe=true&width=450&height=200");
 
+        if (empty($ExtraData)) {
+            $ExtraData = array();
+        }
         //Setting for itunes artwork
         if (!isset($ExtraData['itunes_image']) || !$ExtraData['itunes_image']) {
             $itunes_image = '';
@@ -895,6 +904,9 @@ function chapters_tab($EnclosureURL, $FeedSlug, $object, $GeneralSettings, $PCIT
 {
     $chaptersParsedJson = array();
 
+    if (empty($ExtraData)) {
+        $ExtraData = array();
+    }
     if ($PCIChapters == 1) {
         // first, check if the chapters are hosted on this site. if so, access them directly rather than over http
         if (strpos($PCIChaptersURL, wp_upload_dir()['baseurl']) !== false) {
@@ -1172,6 +1184,9 @@ function print_table_body_vts($timeSplit, $FeedSlug, $vts_id, $post_id) {
 
 function vts_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITranscriptURL, $PCIChapters, $PCIChaptersManual, $PCIChaptersURL, $PCISoundbites, $ExtraData)
 {
+    if (empty($ExtraData)) {
+        $ExtraData = array();
+    }
     $existingTimeSplits = get_option('vts_'.$FeedSlug.'_'.$object->ID, array());
     $existingVTSOrder = $ExtraData['vts_order'] ?? array();
 
@@ -1399,6 +1414,9 @@ function display_tab($FeedSlug, $IsVideo, $NoPlayer, $NoLinks, $Width, $Height, 
 
 function notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITranscriptURL, $PCIChapters, $PCIChaptersURL, $PCISoundbites, $ExtraData)
 {
+    if (empty($ExtraData)) {
+        $ExtraData = array();
+    }
     $lightning = isset($ExtraData['value_lightning']) ? $ExtraData['value_lightning'] : array("");
     $splits = isset($ExtraData['value_split']) ? $ExtraData['value_split'] : array("");
     $pubKeys =  isset($ExtraData['value_pubkey']) ? $ExtraData['value_pubkey'] : array("");
