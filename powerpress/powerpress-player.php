@@ -1715,14 +1715,15 @@ function powerpress_shortcode_skipto($attributes, $content = null)
 		$pos = $attributes['ts'];
 	}
 
-    // only allow digits and colons to prevent XSS
-    if (!preg_match('/^[\d:]+$/', $pos)) {
+    // only allow digits, periods (for floats) and colons to prevent XSS
+    if (!preg_match('/^[\d:.]+$/', $pos)) {
         $pos = '';
     }
-	
-	if( empty($pos) )
-		return $content;
-		
+
+	if( empty($pos) ) {
+        return $content;
+    }
+
 	// Prepare data
 	$timeInSeconds = powerpress_raw_duration($pos);
 	$readableTime = $pos;

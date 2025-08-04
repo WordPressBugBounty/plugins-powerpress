@@ -6173,7 +6173,7 @@ function powerpress_get_media_info_local($media_file, $content_type='', $file_si
 		if( $Mp3Info->GetError() != '' )
 			return array('error'=>$Mp3Info->GetError() );
 		else
-			return array('error'=>__('Error occurred obtaining media information.', 'powerpress') );
+			return array('error'=>__('Error occurred obtaining local media information.', 'powerpress') );
 	}
 
 	if( $file_size == 0 )

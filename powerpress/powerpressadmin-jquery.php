@@ -2193,7 +2193,9 @@ if( $jquery )
 do_action('admin_print_scripts');
 if (!is_plugin_active('woocommerce/woocommerce.php')) {
     // comment out line below to silence deprecated warning when clicking "Blubrry Hosting Settings":
-    do_action('admin_head');
+    if (!(defined('POWERPRESS_LOCAL_DEV') && POWERPRESS_LOCAL_DEV == true)) {
+        do_action('admin_head');
+    }
 }
 
 echo '<!-- done adding extra stuff -->';
@@ -2260,7 +2262,9 @@ if( $jquery )
 do_action('admin_print_scripts');
 if (!is_plugin_active('woocommerce/woocommerce.php')) {
     // comment out to silence deprecated warning when selecting media on episode page
-    do_action('admin_head');
+    if (!(defined('POWERPRESS_LOCAL_DEV') && POWERPRESS_LOCAL_DEV == true)) {
+        do_action('admin_head');
+    }
 }
 
 

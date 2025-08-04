@@ -461,37 +461,41 @@
 				// Next get the first chunk of the file...
 				
 			$curl = curl_init();
-				curl_setopt($curl, CURLOPT_URL, $FinalURL);
-				curl_setopt($curl, CURLOPT_RETURNTRANSFER, false); // Don't set this as it is knwon to cause errors with the function callback.
-				curl_setopt($curl, CURLOPT_BINARYTRANSFER, true);
-				curl_setopt($curl, CURLOPT_USERAGENT, $this->m_UserAgent);
-				curl_setopt($curl, CURLOPT_FILE, $fp);
-				curl_setopt($curl, CURLOPT_HEADER, false); // header will be at output
-				curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'GET'); // HTTP request 
-				curl_setopt($curl, CURLOPT_NOBODY, false );
-				if( preg_match('/^https:\/\//', $url) !== false )
-				{
-					curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2 );
-					curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true );
-					if( defined('ABSPATH') && defined('WPINC') )
-						curl_setopt($curl, CURLOPT_CAINFO, ABSPATH . WPINC . '/certificates/ca-bundle.crt');
-				}
-				
-				if ( !$this->ini_get('safe_mode') && !$this->ini_get('open_basedir') )
-				{
-					curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-					curl_setopt($curl, CURLOPT_MAXREDIRS, $this->m_RedirectLimit);
-				}
-				else
-				{
-					curl_setopt($curl, CURLOPT_FOLLOWLOCATION, false);
-					curl_setopt($curl, CURLOPT_MAXREDIRS, 0 ); // We will attempt to handle redirects ourself
-				}
-				curl_setopt($curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-				
-				// First lets try a range request
-				curl_setopt($curl, CURLOPT_RANGE, '0-'.($this->m_DownloadBytesLimit - 1) );
-				// curl_setopt($curl, CURLOPT_HTTPHEADER, array('Range: bytes=0-'.($this->m_DownloadBytesLimit - 1) ));
+            curl_setopt($curl, CURLOPT_URL, $FinalURL);
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, false); // Don't set this as it is knwon to cause errors with the function callback.
+
+            // only use this constant in versions lower than 8.4
+            if (version_compare(PHP_VERSION, '8.4', '<')) {
+                curl_setopt($curl, CURLOPT_BINARYTRANSFER, true);
+            }
+            curl_setopt($curl, CURLOPT_USERAGENT, $this->m_UserAgent);
+            curl_setopt($curl, CURLOPT_FILE, $fp);
+            curl_setopt($curl, CURLOPT_HEADER, false); // header will be at output
+            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'GET'); // HTTP request
+            curl_setopt($curl, CURLOPT_NOBODY, false );
+            if( preg_match('/^https:\/\//', $url) !== false )
+            {
+                curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2 );
+                curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true );
+                if( defined('ABSPATH') && defined('WPINC') )
+                    curl_setopt($curl, CURLOPT_CAINFO, ABSPATH . WPINC . '/certificates/ca-bundle.crt');
+            }
+
+            if ( !$this->ini_get('safe_mode') && !$this->ini_get('open_basedir') )
+            {
+                curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($curl, CURLOPT_MAXREDIRS, $this->m_RedirectLimit);
+            }
+            else
+            {
+                curl_setopt($curl, CURLOPT_FOLLOWLOCATION, false);
+                curl_setopt($curl, CURLOPT_MAXREDIRS, 0 ); // We will attempt to handle redirects ourself
+            }
+            curl_setopt($curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+
+            // First lets try a range request
+            curl_setopt($curl, CURLOPT_RANGE, '0-'.($this->m_DownloadBytesLimit - 1) );
+            // curl_setopt($curl, CURLOPT_HTTPHEADER, array('Range: bytes=0-'.($this->m_DownloadBytesLimit - 1) ));
 			$success = curl_exec($curl);
 				
 			if( !$success && curl_getinfo($curl, CURLINFO_HTTP_CODE) == 406 )
