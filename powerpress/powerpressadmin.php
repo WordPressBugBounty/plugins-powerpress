@@ -2483,16 +2483,7 @@ function powerpress_edit_post($post_ID, $post)
 					else
 					{
                         if (!empty($Powerpress['url']) ) {
-                            $media_hostname = $UrlParts['host'];
-                            $ip = gethostbyname($media_hostname);
-                            if (in_array($media_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) ||
-                                filter_var($media_hostname, FILTER_VALIDATE_IP) ||
-                                !preg_match('/^[a-zA-Z.\-\d]+$/i', $media_hostname) ||
-                                ( empty($GeneralSettings['powerpress_self_hosted_media']) && in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) ) ||
-                                ( empty($GeneralSettings['powerpress_self_hosted_media']) && !IPAddressIsPublic($ip) )
-                            ) {
-                                // they have already seen the invalid url message on verify--no media check!
-                            } else {
+                            if (SSRFCheck($Powerpress['url'], $feed_slug)) {
                                 if (empty($Powerpress['set_duration']))
                                     $MediaInfo = powerpress_get_media_info_local($MediaURL, $ContentType, 0, '');
                                 else
@@ -2556,28 +2547,7 @@ function powerpress_edit_post($post_ID, $post)
 
                         if (!empty($MediaURL)) {
                             if ($alt_enclosure_data['hosting'] == 0) { // entered a full URL, ssrf check
-                                $UrlParts = parse_url($MediaURL);
-                                $media_hostname = $UrlParts['host'];
-                                $ssrf_valid = true;
-                                if (in_array($media_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) || filter_var($media_hostname, FILTER_VALIDATE_IP) || !preg_match('/^[a-zA-Z.\-\d]+$/i', $media_hostname)) {
-                                    $error = __('Invalid alternate enclosure url. Please ensure that your url is formatted correctly, e.g https://example.com/file.mp3.', 'powerpress');
-                                    powerpress_add_error($error);
-                                    $ssrf_valid = false;
-                                }
-                                // check IP for hostname is not localhost
-                                $ip = gethostbyname($media_hostname);
-                                if (empty($GeneralSettings['powerpress_self_hosted_media']) && in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
-                                    $error = __('Invalid alternate enclosure url. Please ensure that your url is formatted correctly, e.g https://example.com/file.mp3.', 'powerpress');
-                                    powerpress_add_error($error);
-                                    $ssrf_valid = false;
-                                }
-                                // check IP for hostname is not in LAN
-                                if (empty($GeneralSettings['powerpress_self_hosted_media']) && !IPAddressIsPublic($ip)) {
-                                    $error = __('Invalid alternate enclosure url. Please ensure that your url is formatted correctly, e.g https://example.com/file.mp3.', 'powerpress');
-                                    powerpress_add_error($error);
-                                    $ssrf_valid = false;
-                                }
-                                if (!$ssrf_valid) {
+                                if (!SSRFCheck($MediaURL, $feed_slug, false, "alternate enclosure url")) {
                                     continue;
                                 }
                             }
@@ -3027,7 +2997,7 @@ function powerpress_edit_post($post_ID, $post)
                             $ext = substr($fileName, strrpos($fileName, '.') + 1);
                             $acceptable_extensions = ['jpg', 'jpeg', 'png'];
                             if (!in_array(strtolower($ext), $acceptable_extensions)) {
-                                $error = __('Error: invalid chapter image filetype', 'powerpress');
+                                $error = __('Error: invalid chapter image filetype ' . $ext . ' ' . $fileName . ' ' . print_r($existingIms, true), 'powerpress');
                                 powerpress_add_error($error);
                             }
                             $fileURL = $chapterIms[$i] ?? '';
@@ -3077,29 +3047,7 @@ function powerpress_edit_post($post_ID, $post)
                                     $image_req_url = str_replace(wp_upload_dir()['baseurl'], wp_upload_dir()['basedir'], $img['new_file']);
                                 } else {
                                     $image_req_url = $img['new_file'];
-                                    // we should never land in here as our UI requires them to use the WP uploader, but SSRF check in case they enter something malicious into the hidden input...
-                                    $UrlParts = parse_url($image_req_url);
-                                    $img_hostname = $UrlParts['host'];
-                                    $ssrf_valid = true;
-                                    if (in_array($img_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) || filter_var($img_hostname, FILTER_VALIDATE_IP) || !preg_match('/^[a-zA-Z.\-\d]+$/i', $img_hostname)) {
-                                        $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
-                                        powerpress_add_error($error);
-                                        $ssrf_valid = false;
-                                    }
-                                    // check IP for hostname is not localhost
-                                    $ip = gethostbyname($img_hostname);
-                                    if (empty($GeneralSettings['powerpress_self_hosted_media']) && in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
-                                        $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
-                                        powerpress_add_error($error);
-                                        $ssrf_valid = false;
-                                    }
-                                    // check IP for hostname is not in LAN
-                                    if (empty($GeneralSettings['powerpress_self_hosted_media']) && !IPAddressIsPublic($ip)) {
-                                        $error = __('Invalid chapter image url. Please ensure that your url is formatted correctly, e.g https://example.com/image.jpg.', 'powerpress');
-                                        powerpress_add_error($error);
-                                        $ssrf_valid = false;
-                                    }
-                                    if (!$ssrf_valid) {
+                                    if (!SSRFCheck($image_req_url, $feed_slug, false, "chapter image url")) {
                                         continue;
                                     }
                                 }
@@ -4092,6 +4040,68 @@ function powerpress_check_credentials($creds) {
     }
 }
 
+function SSRFCheck($url, $feed_slug, $echo_error = false, $media_label = "media url") {
+    $GeneralSettings = powerpress_get_settings('powerpress_general');
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, true); // look for location header
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+    $redirect_count = 0;
+    do {
+        $UrlParts = parse_url($url);
+        $ssrf_valid = true;
+        $media_hostname = $UrlParts['host'];
+        if (in_array($media_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) || filter_var($media_hostname, FILTER_VALIDATE_IP) || !preg_match('/^[a-zA-Z.\-\d]+$/i', $media_hostname)) {
+            $ssrf_valid = false;
+        }
+        // check IP for hostname is not localhost
+        $ip = gethostbyname($media_hostname);
+        if (empty($GeneralSettings['powerpress_self_hosted_media']) && in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
+            $ssrf_valid = false;
+        }
+        // check IP for hostname is not in LAN
+        if (empty($GeneralSettings['powerpress_self_hosted_media']) && !IPAddressIsPublic($ip)) {
+            $ssrf_valid = false;
+        }
+        // check location header
+        curl_setopt($ch, CURLOPT_URL, $url);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+
+        // Split the full response into headers and body
+        $headers = substr($response, 0, $headerSize);
+        $body = substr($response, $headerSize);
+        $url = false;
+        if ($httpCode >= 300 && $httpCode < 400) {
+            $headerLines = explode("\n", $headers);
+            foreach ($headerLines as $line) {
+                $line = trim($line);
+                if (str_starts_with(strtolower($line), 'location:')) {
+                    $url = trim(substr($line, strlen('location:')));
+                }
+            }
+        }
+        $redirect_count++;
+    } while ($url != false && $redirect_count <= 12);
+
+    if (!$ssrf_valid) {
+        $error = __("Invalid {$media_label}. Please ensure that your url is formatted correctly, e.g https://example.com/filename.mp3.", "powerpress");
+        if ($media_label == "media url") {
+            $error .= " " . __("You can still publish this episode, but will need to enter filesize and duration manually.", 'powerpress');
+        }
+        if ($echo_error) {
+            echo "$feed_slug\n";
+            echo $error;
+        } else {
+            powerpress_add_error($error);
+        }
+        return false;
+    }
+    return true;
+}
+
 function powerpress_media_info_ajax()
 {
     // Check for nonce security
@@ -4148,25 +4158,7 @@ function powerpress_media_info_ajax()
 	}
 
     if (!$hosting) {
-        $ssrf_valid = true;
-        $media_hostname = $UrlParts['host'];
-        if (in_array($media_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) || filter_var($media_hostname, FILTER_VALIDATE_IP) || !preg_match('/^[a-zA-Z.\-\d]+$/i', $media_hostname)) {
-            $ssrf_valid = false;
-        }
-        // check IP for hostname is not localhost
-        $ip = gethostbyname($media_hostname);
-        if (empty($GeneralSettings['powerpress_self_hosted_media']) && in_array(strtolower($ip), array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/'))) {
-            $ssrf_valid = false;
-        }
-        // check IP for hostname is not in LAN
-        if (empty($GeneralSettings['powerpress_self_hosted_media']) && !IPAddressIsPublic($ip)) {
-            $ssrf_valid = false;
-        }
-
-        if (!$ssrf_valid) {
-            $error = __('Invalid url. Please ensure that your url is formatted correctly, e.g https://example.com/filename.mp3. You can still publish this episode, but will need to enter filesize and duration manually.', 'powerpress');
-            echo "$feed_slug\n";
-            echo $error;
+        if (!SSRFCheck($media_url, $feed_slug, true)) {
             return false;
         }
     } else {

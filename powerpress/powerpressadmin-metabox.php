@@ -1054,7 +1054,7 @@ function chapters_tab($EnclosureURL, $FeedSlug, $object, $GeneralSettings, $PCIT
                     <p><?php echo esc_html(__("Don't worry about putting your chapters in order, we will take care of that for you!", 'powerpress')) ?></p>
 
                     <div class="table table-heading"  id="<?php echo $FeedSlug; ?>-chapter-builder">
-                        <div style="padding-left: 25px; padding-right: 15px; width: 80%;" class="row">
+                        <div style="padding-left: 25px; padding-right: 15px;" class="row">
                             <div class="col" style="font-weight: bold; font-size: 115%; width: 100px;"><?php echo esc_html(__('Start Time', 'powerpress')); ?></div>
                             <div class="col-sm-3" style="font-weight: bold; font-size: 115%;"><?php echo esc_html(__('Title', 'powerpress')); ?></div>
                             <div class="col-sm-3" style="font-weight: bold; font-size: 115%;"><?php echo esc_html(__('URL', 'powerpress')); ?></div>
