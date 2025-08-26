@@ -4042,11 +4042,11 @@ function powerpress_check_credentials($creds) {
 
 function SSRFCheck($url, $feed_slug, $echo_error = false, $media_label = "media url") {
     $GeneralSettings = powerpress_get_settings('powerpress_general');
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HEADER, true); // look for location header
-    curl_setopt($ch, CURLOPT_NOBODY, true);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+    // Set the arguments for a HEAD request
+    $args = array(
+        'method' => 'HEAD',
+        'redirection' => 0 // Do not follow redirects
+        );
     $redirect_count = 0;
     do {
         $UrlParts = parse_url($url);
@@ -4064,23 +4064,22 @@ function SSRFCheck($url, $feed_slug, $echo_error = false, $media_label = "media 
         if (empty($GeneralSettings['powerpress_self_hosted_media']) && !IPAddressIsPublic($ip)) {
             $ssrf_valid = false;
         }
-        // check location header
-        curl_setopt($ch, CURLOPT_URL, $url);
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-
-        // Split the full response into headers and body
-        $headers = substr($response, 0, $headerSize);
-        $body = substr($response, $headerSize);
+        $response = wp_remote_head($url, $args);
+        if (is_wp_error($response)) {
+            $error_message = $response->get_error_message();
+            if ($error_message) {
+                powerpress_add_error($error_message);
+            }
+            $httpCode = 500;
+            $headers = array();
+        } else {
+            $headers = wp_remote_retrieve_headers($response);
+            $httpCode = wp_remote_retrieve_response_code($response);
+        }
         $url = false;
         if ($httpCode >= 300 && $httpCode < 400) {
-            $headerLines = explode("\n", $headers);
-            foreach ($headerLines as $line) {
-                $line = trim($line);
-                if (str_starts_with(strtolower($line), 'location:')) {
-                    $url = trim(substr($line, strlen('location:')));
-                }
+            if (isset($headers['location'])) {
+                $url = $headers['location'];
             }
         }
         $redirect_count++;
