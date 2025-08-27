@@ -4048,9 +4048,9 @@ function SSRFCheck($url, $feed_slug, $echo_error = false, $media_label = "media 
         'redirection' => 0 // Do not follow redirects
         );
     $redirect_count = 0;
+    $ssrf_valid = true;
     do {
         $UrlParts = parse_url($url);
-        $ssrf_valid = true;
         $media_hostname = $UrlParts['host'];
         if (in_array($media_hostname, array('0.0.0.0', '127.0.0.1', 'localhost', '[::]', '0x7f000001/', '0xc0a80014/')) || filter_var($media_hostname, FILTER_VALIDATE_IP) || !preg_match('/^[a-zA-Z.\-\d]+$/i', $media_hostname)) {
             $ssrf_valid = false;
@@ -4083,7 +4083,7 @@ function SSRFCheck($url, $feed_slug, $echo_error = false, $media_label = "media 
             }
         }
         $redirect_count++;
-    } while ($url != false && $redirect_count <= 12);
+    } while ($ssrf_valid && $url != false && $redirect_count <= 12);
 
     if (!$ssrf_valid) {
         $error = __("Invalid {$media_label}. Please ensure that your url is formatted correctly, e.g https://example.com/filename.mp3.", "powerpress");
