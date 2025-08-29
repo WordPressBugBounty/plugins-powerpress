@@ -4064,26 +4064,30 @@ function SSRFCheck($url, $feed_slug, $echo_error = false, $media_label = "media 
         if (empty($GeneralSettings['powerpress_self_hosted_media']) && !IPAddressIsPublic($ip)) {
             $ssrf_valid = false;
         }
-        $response = wp_remote_head($url, $args);
-        if (is_wp_error($response)) {
-            $error_message = $response->get_error_message();
-            if ($error_message) {
-                powerpress_add_error($error_message);
+        if ($ssrf_valid) {
+            $response = wp_remote_head($url, $args);
+            if (is_wp_error($response)) {
+                $error_message = $response->get_error_message();
+                if ($error_message) {
+                    powerpress_add_error($error_message);
+                }
+                $httpCode = 500;
+                $headers = array();
+            } else {
+                $headers = wp_remote_retrieve_headers($response);
+                $httpCode = wp_remote_retrieve_response_code($response);
             }
-            $httpCode = 500;
-            $headers = array();
+            $url = false;
+            if ($httpCode >= 300 && $httpCode < 400) {
+                if (isset($headers['location'])) {
+                    $url = $headers['location'];
+                }
+            }
         } else {
-            $headers = wp_remote_retrieve_headers($response);
-            $httpCode = wp_remote_retrieve_response_code($response);
-        }
-        $url = false;
-        if ($httpCode >= 300 && $httpCode < 400) {
-            if (isset($headers['location'])) {
-                $url = $headers['location'];
-            }
+            $url = false;
         }
         $redirect_count++;
-    } while ($ssrf_valid && $url != false && $redirect_count <= 12);
+    } while ($url != false && $redirect_count <= 12);
 
     if (!$ssrf_valid) {
         $error = __("Invalid {$media_label}. Please ensure that your url is formatted correctly, e.g https://example.com/filename.mp3.", "powerpress");
