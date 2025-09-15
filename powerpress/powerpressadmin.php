@@ -4045,8 +4045,11 @@ function SSRFCheck($url, $feed_slug, $echo_error = false, $media_label = "media 
     // Set the arguments for a HEAD request
     $args = array(
         'method' => 'HEAD',
-        'redirection' => 0 // Do not follow redirects
-        );
+        'redirection' => 0, // Do not follow redirects
+        'headers' => array(
+            'User-Agent' => 'WordPress/PowerPress ' . POWERPRESS_VERSION, // Custom User-Agent header
+        ),
+    );
     $redirect_count = 0;
     $ssrf_valid = true;
     do {
@@ -4065,7 +4068,7 @@ function SSRFCheck($url, $feed_slug, $echo_error = false, $media_label = "media 
             $ssrf_valid = false;
         }
         if ($ssrf_valid) {
-            $response = wp_remote_head($url, $args);
+            $response = wp_safe_remote_head($url, $args);
             if (is_wp_error($response)) {
                 $error_message = $response->get_error_message();
                 if ($error_message) {
@@ -4102,6 +4105,7 @@ function SSRFCheck($url, $feed_slug, $echo_error = false, $media_label = "media 
         }
         return false;
     }
+
     return true;
 }
 

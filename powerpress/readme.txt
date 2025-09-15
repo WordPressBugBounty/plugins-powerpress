@@ -4,7 +4,7 @@ Tags: podcast, apple podcasts, podcast rss feed, spotify, podcast publishing
 Requires at least: 3.6
 Requires PHP: 5.2
 Tested up to: 6.8
-Stable tag: 11.13.11
+Stable tag: 11.13.12
 Donate link: https://blubrry.com/services/podcast-hosting/
 License: GPLv2 or later
 
@@ -136,6 +136,8 @@ Alternatively, you can sign up for a Blubrry [hosting plan](https://blubrry.com/
 = The Media Player does not appear on my site (or the RSS feed is invalid) =
 This can happen when there is a theme or plugin conflict. Please visit our [Diagnosing Feed and/or Player Issues](https://blubrry.com/support/powerpress-documentation/diagnosing-feed-andor-player-issues-with-powerpress/) for instructions how to resolve such issues.
 
+= Where do I report security bugs found in this plugin? =
+Please report security bugs found in the source code of the PowerPress Podcasting plugin through the [Patchstack Vulnerability Disclosure  Program](https://patchstack.com/database/vdp/72c889f3-9c46-4d16-a9fc-51a60b36894d). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
 
 == Installation ==
  = Point and Click Installation =
@@ -162,6 +164,10 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 
 
 == Changelog ==
+= 11.13.12 =
+* Released on 09/03/2025
+* Security update
+
 = 11.13.11 =
 * Released on 08/28/2025
 * Security update
