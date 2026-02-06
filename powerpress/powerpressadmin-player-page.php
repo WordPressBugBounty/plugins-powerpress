@@ -147,10 +147,8 @@ function powerpress_admin_players($type = 'audio'){
 	}
 
     // This makes it so when the modern player is activated, the POST leads to the select page rather than the customize page
-    if(isset($_POST['Player'])){
-        if($_POST['Player']['player'] == 'blubrrymodern'){
-            $select_player = true;
-        }
+    if(!empty($_POST['Player']['player']) && $_POST['Player']['player'] == 'blubrrymodern'){
+        $select_player = true;
     }
 
     // If player is not set, then assign the Modern player as the default

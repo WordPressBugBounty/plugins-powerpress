@@ -7,10 +7,10 @@ if( !function_exists('add_action') )
 	function powerpress_get_mt_episodes()
 	{
 		global $wpdb;
-		
+
 		$return = array();
-		$return['feeds_required'] = 0;
-		
+		$feeds_required = 0;
+
 		$query = "SELECT p.ID, p.post_title, p.post_date, p.post_content ";
 		$query .= "FROM {$wpdb->posts} AS p ";
 		$query .= "WHERE 1 ";
@@ -25,9 +25,9 @@ if( !function_exists('add_action') )
 				$Media = powerpressadmin_mt_media_from_content($row['post_content']);
 				if( count($Media) == 0 )
 					continue;
-				
-				if( $return['feeds_required'] < count( $Media ) )
-					$return['feeds_required'] = count( $Media );
+
+				if( $feeds_required < count( $Media ) )
+					$feeds_required = count( $Media );
 				$return[ $row['ID'] ] = array();
 				$return[ $row['ID'] ]['post_title'] = $row['post_title'];
 				$return[ $row['ID'] ]['post_date'] = $row['post_date'];
@@ -35,6 +35,7 @@ if( !function_exists('add_action') )
 					$return[ $row['ID'] ]['enclosures'][$index]['url'] = $url;
 			}
 		}
+		$return['feeds_required'] = $feeds_required;
 		return $return;
 	}
 	
@@ -573,11 +574,11 @@ else
 					echo '<td '.$class.'><strong>';
 					if ( current_user_can( 'edit_post', $post_id ) )
 					{
-					?><a class="row-title" href="<?php echo $edit_link; ?>" title="<?php echo esc_attr(sprintf(__('Edit "%s"', 'powerpress'), $import_data['post_title'])); ?>"><?php echo esc_attr($import_data['post_title']); ?></a><?php
+					?><a class="row-title" href="<?php echo $edit_link; ?>" title="<?php echo esc_attr(sprintf(__('Edit "%s"', 'powerpress'), $import_data['post_title'])); ?>"><?php echo esc_html($import_data['post_title']); ?></a><?php
 					}
 					else
 					{
-						echo $import_data['post_title'];
+						echo esc_html($import_data['post_title']);
 					}
 					
 					

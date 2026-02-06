@@ -1,28 +1,28 @@
 <?php
-    //Plan--put function powerpress_meta_box here.
-    //In this function, set all settings then call methods from powerpressadmin-metabox.php for each tab/section
-    //Functions in powerpressadmin-metabox should take the same two parameters as powerpress_meta_box
-    //Plus maybe general settings and whatever other variables are initialized in powerpress_meta_box
+//Plan--put function powerpress_meta_box here.
+//In this function, set all settings then call methods from powerpressadmin-metabox.php for each tab/section
+//Functions in powerpressadmin-metabox should take the same two parameters as powerpress_meta_box
+//Plus maybe general settings and whatever other variables are initialized in powerpress_meta_box
 
-require_once(POWERPRESS_ABSPATH .'/powerpress-metamarks.php');
+require_once(POWERPRESS_ABSPATH . '/powerpress-metamarks.php');
 
-function powerpress_admin_enqueue_scripts($hook) {
-    if ( 'post-new.php' === $hook || 'post.php' === $hook) {
-        if (defined('WP_DEBUG')) {
-            if (WP_DEBUG) {
-                wp_register_style('powerpress-episode-box', powerpress_get_root_url() . 'css/episode-box.css', array(), POWERPRESS_VERSION);
-                wp_register_style('powerpress-grid', powerpress_get_root_url() . 'css/bootstrap-grid.css', array(), POWERPRESS_VERSION);
-            } else {
-                wp_register_style('powerpress-episode-box', powerpress_get_root_url() . 'css/episode-box.min.css', array(), POWERPRESS_VERSION);
-                wp_register_style('powerpress-grid', powerpress_get_root_url() . 'css/bootstrap-grid.min.css', array(), POWERPRESS_VERSION);
-            }
-        } else {
-            wp_register_style('powerpress-episode-box', powerpress_get_root_url() . 'css/episode-box.min.css', array(), POWERPRESS_VERSION);
-            wp_register_style('powerpress-grid', powerpress_get_root_url() . 'css/bootstrap-grid.min.css', array(), POWERPRESS_VERSION);
-        }
-        wp_enqueue_style( 'powerpress-episode-box' );
-        wp_enqueue_script('powerpress-admin', powerpress_get_root_url() . 'js/admin.js', array(), POWERPRESS_VERSION );
-        wp_enqueue_style( 'powerpress-grid' );
+function powerpress_admin_enqueue_scripts($hook)
+{
+    if ('post-new.php' === $hook || 'post.php' === $hook) {
+        // minified files in prod, regular files in debug mode
+        $suffix = (defined('WP_DEBUG') && WP_DEBUG) ? '' : '.min';
+        
+        // register and enqueue styles
+        wp_register_style('powerpress-episode-box', powerpress_get_root_url() . "css/episode-box{$suffix}.css", array(), POWERPRESS_VERSION);
+        wp_register_style('powerpress-grid', powerpress_get_root_url() . "css/bootstrap-grid{$suffix}.css", array(), POWERPRESS_VERSION);
+        
+        // register and enqueue scripts
+        wp_enqueue_script('powerpress-admin', powerpress_get_root_url() . "js/admin{$suffix}.js", array(), POWERPRESS_VERSION);
+        wp_enqueue_script('powerpress-podcast2.0-managers', powerpress_get_root_url() . "js/powerpressadmin-metabox{$suffix}.js", array(), POWERPRESS_VERSION);
+                
+        // enqueue registered styles
+        wp_enqueue_style('powerpress-episode-box');
+        wp_enqueue_style('powerpress-grid');
     }
 }
 add_action('admin_enqueue_scripts', 'powerpress_admin_enqueue_scripts');
@@ -57,9 +57,12 @@ function powerpress_meta_box($object, $box)
     $Embed = '';
     $CoverImage = '';
     $iTunesDuration = false;
-    $iTunesKeywords = '';
-    $iTunesSubtitle = '';
-    $iTunesSummary = '';
+
+// deprecated tags
+//    $iTunesKeywords = '';
+//    $iTunesSubtitle = '';
+//    $iTunesSummary = '';
+
     $GooglePlayDesc = '';
     $GooglePlayExplicit = '';
     $GooglePlayBlock = '';
@@ -124,7 +127,8 @@ function powerpress_meta_box($object, $box)
         $EnclosureType = trim($EnclosureType);
 
         if ($EnclosureSerialized) {
-            $ExtraData = @unserialize($EnclosureSerialized);
+            // allowed_classes => false prevents php object injection via crafted serialized data
+            $ExtraData = @unserialize($EnclosureSerialized, ['allowed_classes' => false]);
             if ($ExtraData) {
                 if (isset($ExtraData['duration']))
                     $iTunesDuration = $ExtraData['duration'];
@@ -132,12 +136,17 @@ function powerpress_meta_box($object, $box)
                     $iTunesDuration = $ExtraData['length'];
                 if (isset($ExtraData['embed']))
                     $Embed = $ExtraData['embed'];
-                if (isset($ExtraData['keywords']))
-                    $iTunesKeywords = $ExtraData['keywords'];
-                if (isset($ExtraData['subtitle']))
-                    $iTunesSubtitle = $ExtraData['subtitle'];
-                if (isset($ExtraData['summary']))
-                    $iTunesSummary = $ExtraData['summary'];
+
+// itunes:keywords, itunes:subtitle, itunes:summary, itunes:order deprecated by Apple
+//                if (isset($ExtraData['keywords']))
+//                    $iTunesKeywords = $ExtraData['keywords'];
+//                if (isset($ExtraData['subtitle']))
+//                    $iTunesSubtitle = $ExtraData['subtitle'];
+//                if (isset($ExtraData['summary']))
+//                    $iTunesSummary = $ExtraData['summary'];
+//                if (isset($ExtraData['order']))
+//                    $iTunesOrder = $ExtraData['order'];
+
                 if (isset($ExtraData['gp_desc']))
                     $GooglePlayDesc = $ExtraData['gp_desc'];
                 if (isset($ExtraData['gp_explicit']))
@@ -154,8 +163,6 @@ function powerpress_meta_box($object, $box)
                     $iTunesExplicit = $ExtraData['explicit'];
                 if (isset($ExtraData['cc']))
                     $iTunesCC = $ExtraData['cc'];
-                if (isset($ExtraData['order']))
-                    $iTunesOrder = $ExtraData['order'];
                 if (isset($ExtraData['always']))
                     $FeedAlways = $ExtraData['always'];
                 if (isset($ExtraData['block']))
@@ -211,11 +218,10 @@ function powerpress_meta_box($object, $box)
         }
 
         // Check for HD Video formats
-        if( preg_match('/\.(mp4|m4v|webm|ogg|ogv)$/i', $EnclosureURL ) )
+        if( preg_match('/\.(m3u8|mp4|m4v|webm|ogg|ogv)$/i', $EnclosureURL ) )
         {
             $IsVideo = true;
         }
-
     } // if ($object->ID)
     $seo_feed_title = !empty($GeneralSettings['seo_feed_title']);
 
@@ -259,10 +265,10 @@ function powerpress_meta_box($object, $box)
     echo "<button class=\"tablinks\" id=\"4$FeedSlug\" title='{$titles['chapters']}' onclick=\"powerpress_openTab(event, 'chapters-$FeedSlug')\">" . esc_html(__('Chapter Builder', 'powerpress')) . "</button>";
     echo "<button class=\"tablinks\" id=\"5$FeedSlug\" title='{$titles['vts']}' onclick=\"powerpress_openTab(event, 'vts-$FeedSlug')\">" . esc_html(__('Value Time Splits', 'powerpress')) . "</button>";
     echo "</div>";
-    seo_tab($FeedSlug, $ExtraData, $iTunesExplicit, $seo_feed_title, $GeneralSettings, $iTunesSubtitle, $iTunesSummary, $iTunesAuthor, $iTunesOrder, $iTunesBlock, $object);
+    seo_tab($FeedSlug, $ExtraData, $iTunesExplicit, $seo_feed_title, $GeneralSettings, $iTunesAuthor, $iTunesBlock, $object);
     artwork_tab($FeedSlug, $ExtraData, $object, $CoverImage, $GeneralSettings);
     display_tab($FeedSlug, $IsVideo, $NoPlayer, $NoLinks, $Width, $Height, $Embed, $GeneralSettings);
-    notes_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITranscriptURL, $PCIChapters, $PCIChaptersURL, $PCISoundbites, $ExtraData);
+    notes_tab($FeedSlug, $object, $GeneralSettings, $ExtraData);
     chapters_tab($EnclosureURL, $FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITranscriptURL, $PCIChapters, $PCIChaptersManual, $PCIChaptersURL, $PCISoundbites, $ExtraData);
     vts_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITranscriptURL, $PCIChapters, $PCIChaptersManual, $PCIChaptersURL, $PCISoundbites, $ExtraData);
 
@@ -302,6 +308,4 @@ function powerpress_meta_box($object, $box)
         echo "});";
         echo "</script>";
     }
-} // function
-
-
+}

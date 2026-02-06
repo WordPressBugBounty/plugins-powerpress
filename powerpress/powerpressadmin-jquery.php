@@ -6,7 +6,7 @@ function powerpress_add_blubrry_redirect($program_keyword)
 	$Settings = powerpress_get_settings('powerpress_general');
 	$RedirectURL = 'https://media.blubrry.com/'.$program_keyword;
 	$NewSettings = array();
-	
+
 	// redirect1
 	// redirect2
 	// redirect3
@@ -17,7 +17,7 @@ function powerpress_add_blubrry_redirect($program_keyword)
 			$NewSettings[$field] = '';
 	}
 	$NewSettings['redirect1'] = $RedirectURL.'/';
-	
+
 	if( count($NewSettings) > 0 )
 		powerpress_save_settings($NewSettings);
 }
@@ -36,7 +36,7 @@ function powerpress_strip_redirect_urls($url)
 			$url = str_replace($redirect_no_http, '', $url);
 		}
 	}
-	
+
 	return $url;
 }
 
@@ -57,7 +57,7 @@ function powerpress_admin_jquery_init()
 	$action = (isset($_GET['action'])?$_GET['action']: (isset($_POST['action'])?$_POST['action']:false) );
 	if( !$action )
 		return;
-	
+
 	$DeleteFile = false;
 	switch($action)
 	{
@@ -70,7 +70,7 @@ function powerpress_admin_jquery_init()
             powerpress_admin_jquery_footer(false);
 	    }
 		case 'powerpress-jquery-media-disable': {
-			
+
 			if( !current_user_can('edit_posts') )
 			{
 				powerpress_admin_jquery_header('Uploader');
@@ -79,13 +79,13 @@ function powerpress_admin_jquery_init()
 				powerpress_admin_jquery_footer();
 				exit;
 			}
-			
+
 			check_admin_referer('powerpress-jquery-media-disable');
-			
+
 			$DisableSetting = array();
 			$DisableSetting['no_media_url_folder'] = 1;
 			powerpress_save_settings($DisableSetting);
-			
+
 			powerpress_admin_jquery_header( __('Select Media', 'powerpress') );
 ?>
 <h2><?php echo __('Select Media', 'powerpress'); ?></h2>
@@ -94,13 +94,13 @@ function powerpress_admin_jquery_init()
 <?php
 			powerpress_admin_jquery_footer();
 			exit;
-			
+
 		}; // No break here, let this fall thru..
 
 		case 'powerpress-jquery-hosting': {
-		
+
 				powerpress_admin_jquery_header( __('Blubrry Podcast Media Hosting', 'powerpress') );
-				
+
 				// Congratulations you aleady have hosting!
 ?>
 <div style="line-height: 32px; height: 32px;">&nbsp;</div>
@@ -109,7 +109,7 @@ function powerpress_admin_jquery_init()
 <?php
 				powerpress_admin_jquery_footer();
 				exit;
-				
+
 		}; break;
 
 		case 'powerpress-jquery-media-delete': {
@@ -129,7 +129,7 @@ function powerpress_admin_jquery_init()
 		}; // No break here, let this fall thru..
 
 		case 'powerpress-jquery-media': {
-			
+
 			$QuotaData = false;
 
 			if( !current_user_can('edit_posts') )
@@ -173,15 +173,13 @@ function powerpress_admin_jquery_init()
                     update_user_meta(get_current_user_id(), 'pp_default_podcast', $blubrryProgramKeyword);
                 }
             }
-            $alt_enclosure_id_suffix = '';
             $alt_enclosure_query_string = '';
-            $alt_enclosure_link_num = false;
 			$FeedSlug = sanitize_title($_GET['podcast-feed']);
-            if (isset($_GET['alternate_enclosure_idx'])) {
-                $alt_enclosure_link_num = intval($_GET['alternate_enclosure_idx']);
-                $alt_enclosure_id_suffix = "_{$FeedSlug}_alternate_" . intval($_GET['alternate_enclosure_idx']);
+            // Check if target field was passed in
+            if (isset($_GET['target_field']) && (strpos($_GET['target_field'], 'alt-enclosure') !== false || strpos($_GET['target_field'], 'alt-enc-uri') !== false)) {
+                $target_field = sanitize_text_field($_GET['target_field']);
                 $alt_enclosure_query_string = '&altEnclosure=true';
-            }
+            }    
             if( !empty($_GET['blubrryProgramKeyword']) && !empty($_GET['remSel']) &&  $_GET['remSel'] == 'true' ) {
                 update_user_meta(get_current_user_id(), 'pp_default_podcast', $blubrryProgramKeyword);
             }
@@ -349,98 +347,197 @@ window.addEventListener('message', function(event) {
     }, false);
 
 // selecting an unpublished media file...
-function SelectMedia(File)
-{
-    let curr_keyword;
+function SelectMedia(File) {
     let feedSlug = '<?php echo $FeedSlug; ?>';
-    if (document.querySelector('#blubrry_program_keyword')) {
-        // multi-program mode
-        curr_keyword = document.querySelector('#blubrry_program_keyword').value;
-    } else {
-        // default mode
-        curr_keyword = '<?php echo $Settings['blubrry_program_keyword']; ?>';
+    let curr_keyword = document.querySelector('#blubrry_program_keyword') ?
+        document.querySelector('#blubrry_program_keyword').value  // multi-program mode
+        : '<?php echo $Settings['blubrry_program_keyword']; ?>';     // default mode
+	
+    // set the hosting input flag, for regular media id will just be 'powerpress_hosting_podcast'
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetField = urlParams.get('target_field');
+
+    // setup which type of field we're editing, defaults to main enclosure when not provided
+    let targetFieldId = (targetField) ? targetField : `powerpress_url_${feedSlug}`
+    const targetElement = self.parent.document.getElementById(targetFieldId);
+
+    // Alternate Enclosure Handling
+    if (targetElement && targetFieldId.includes('alt-enclosure')) {
+        // for unpublished files api expects just filename 
+        targetElement.value = File;
+        targetElement.readOnly = true;
+
+        targetElement.setAttribute('data-hosting', '1');
+        if (document.querySelector('#blubrry_program_keyword')) 
+            targetElement.setAttribute('data-program-keyword', curr_keyword);
+
+        self.parent.tb_remove();
+        return;
     }
-    let fullMediaURL = 'https://media.blubrry.com/'+ curr_keyword +'/content.blubrry.com/' + curr_keyword + '/';
 
+    // Alternate Enclosure Uri Handling
+    else if (targetElement && targetFieldId.includes('alt-enc-uri')) {
+        // for unpublished files api expects just filename 
+        targetElement.value = File;
+        targetElement.readOnly = true;
 
-	// set the hosting input flag, for regular media id will just be 'powerpress_hosting_podcast'. for alt enclosure id will be 'powerpress_hosting_posting_alternate_NUM'
-    let powerpressHostingId = `powerpress_hosting_${feedSlug}`;
-    let altEnclosureIdSuffix = '<?php echo ($alt_enclosure_id_suffix ?: "");?>';
-    let altEnclosureHostingId = `${powerpressHostingId}${altEnclosureIdSuffix}`;
-    let alternateEnclosureLinkNum = '<?php echo $alt_enclosure_link_num; ?>';
-
-	self.parent.document.getElementById(altEnclosureHostingId).value='1';
-	self.parent.document.getElementById('powerpress_program_keyword_<?php echo $FeedSlug; ?><?php echo $alt_enclosure_id_suffix; ?>').value= document.querySelector('#blubrry_program_keyword').value;
-    <?php if (empty($alt_enclosure_id_suffix)) { ?>
-        self.parent.document.getElementById('powerpress_url_<?php echo $FeedSlug; ?>').value= fullMediaURL + File;
-        self.parent.document.getElementById('powerpress_url_display_<?php echo $FeedSlug; ?>').value=File;
-        self.parent.document.getElementById('powerpress_url_display_<?php echo $FeedSlug; ?>').readOnly=true;
-        self.parent.document.getElementById('powerpress_hosting_note_<?php echo $FeedSlug; ?>').style.display='block';
-        if (document.querySelector('#blubrry_program_transcript_plan').value == 1) {
-            // auto select 'generate transcript for me'
-            self.parent.document.getElementById('powerpress_transcript_generate_<?php echo $FeedSlug; ?>').click();
+        // set hosting flag for unpublished uri
+        const uriHostingId = `${targetFieldId}-hosting`;
+        const uriHostingField = self.parent.document.getElementById(uriHostingId);
+        if (uriHostingField) {
+            uriHostingField.value = '1';
         }
+
+        // set program keyword for unpublished uri
+        const uriProgramKeywordId = `${targetFieldId}-program-keyword`;
+        const uriProgramKeywordField = self.parent.document.getElementById(uriProgramKeywordId);
+        if (uriProgramKeywordField && document.querySelector('#blubrry_program_keyword')) {
+            uriProgramKeywordField.value = curr_keyword;
+        }
+
+        self.parent.tb_remove();
+        return;
+    }
+
+    // Main Enclosure Handling
+    else if (targetFieldId.includes('powerpress_url')) {
+        let EnclosureHostingId = `powerpress_hosting_${feedSlug}`;
+        let programKeywordFieldId = `powerpress_program_keyword_${feedSlug}`;
+
+        const displayField = self.parent.document.getElementById(`powerpress_url_display_${feedSlug}`);
+        if (displayField) {
+            displayField.value = File;
+            displayField.readOnly = true;
+        }
+
+        const hiddenField = self.parent.document.getElementById(`powerpress_url_${feedSlug}`);
+        if (hiddenField) hiddenField.value = File;
+
+        const hostingNote = self.parent.document.getElementById(`powerpress_hosting_note_${feedSlug}`);
+        if (hostingNote) hostingNote.style.display = 'block';
+
+        // Transcript generation handler
+        if (document.querySelector('#blubrry_program_transcript_plan') && document.querySelector('#blubrry_program_transcript_plan').value == 1) {
+            const transcriptButton = self.parent.document.getElementById(`powerpress_transcript_generate_${feedSlug}`);
+            if (transcriptButton) transcriptButton.click();
+        }
+
+        // Video Update
+        if (self.parent.powerpress_update_for_video) self.parent.powerpress_update_for_video(File, feedSlug);
+
+        // set hosting flag to 1 for blubrry hosted media files
+        const hostingField = self.parent.document.getElementById(EnclosureHostingId);
+        if (hostingField) hostingField.value = '1';
+
+        // set program keyword
+        const programKeywordField = self.parent.document.getElementById(programKeywordFieldId);
+        if (programKeywordField && document.querySelector('#blubrry_program_keyword')) 
+            programKeywordField.value = curr_keyword;
+
+
+        // Auto-verify
         // verify automatically to get around an odd bug in the info_media endpoint which only happens on publish
-        let verify_button = self.parent.document.getElementById('continue-to-episode-settings-<?php echo $FeedSlug; ?>');
-        if (verify_button.onclick) {
-           verify_button.onclick();
-        } else if (verify_button.click) {
-           verify_button.click();
+        const verifyButton = self.parent.document.getElementById(`continue-to-episode-settings-${feedSlug}`);
+        if (verifyButton) {
+            if (verifyButton.onclick) {
+                verifyButton.onclick();
+            } else if (verifyButton.click) {
+                verifyButton.click();
+            }
         }
-        if( self.parent.powerpress_update_for_video ) {
-            self.parent.powerpress_update_for_video(File, '<?php echo $FeedSlug; ?>');
-        }
-    <?php } else { ?>
-        // handle alt enclosure frontend logic
-        let altEnclosureId = `powerpress_url_<?php echo $FeedSlug; ?>_alternate_enclosure_${alternateEnclosureLinkNum}`;
-        let uploadContainerId = `alt-enc-upload-<?php echo $FeedSlug; ?>-${alternateEnclosureLinkNum}-container`;
+    }
 
-        // set input to filename, make readonly
-        self.parent.document.getElementById(altEnclosureId).value = File;
-        self.parent.document.getElementById(altEnclosureId).readOnly = true;
-
-        // remove upload container
-        self.parent.document.getElementById(uploadContainerId).remove();
-
-    <?php } ?>
-
-	self.parent.tb_remove();
+    self.parent.tb_remove();
 }
 
 // selecting published media file (url)
-function SelectURL(url)
-{
-	self.parent.document.getElementById('powerpress_hosting_<?php echo $FeedSlug; ?><?php echo $alt_enclosure_id_suffix; ?>').value='0';
-	self.parent.document.getElementById('powerpress_program_keyword_<?php echo $FeedSlug; ?><?php echo $alt_enclosure_id_suffix; ?>').value= document.querySelector('#blubrry_program_keyword').value;
+function SelectURL(url) {
+	let feedSlug = '<?php echo $FeedSlug; ?>';
 
-	<?php if (empty($alt_enclosure_id_suffix)) { ?>
-	    self.parent.document.getElementById('powerpress_url_<?php echo $FeedSlug; ?>').value=url;
-        self.parent.document.getElementById('powerpress_url_display_<?php echo $FeedSlug; ?>').readOnly=false;
-        self.parent.document.getElementById('powerpress_url_display_<?php echo $FeedSlug; ?>').value=url;
-        self.parent.document.getElementById('powerpress_hosting_note_<?php echo $FeedSlug; ?>').style.display='none';
-        if (document.querySelector('#blubrry_program_transcript_plan').value == 1) {
-            // auto select 'generate transcript for me'
-            self.parent.document.getElementById('powerpress_transcript_generate_<?php echo $FeedSlug; ?>').click();
+    // Extract Params to figure out what we're targetting
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetField = urlParams.get('target_field');
+
+    // setup which type of field we're editing, defaults to main enclosure when not provided
+    let targetFieldId = (targetField) ? targetField : `powerpress_url_${feedSlug}`
+    const targetElement = self.parent.document.getElementById(targetFieldId);
+
+    // Alternate Enclosure Handling
+    if (targetElement && targetFieldId.includes('alt-enclosure')) {
+        targetElement.value = url;
+        targetElement.readOnly = true;
+
+        targetElement.setAttribute('data-hosting', '0');
+        if (document.querySelector('#blubrry_program_keyword')) {
+            targetElement.setAttribute('data-program-keyword', document.querySelector('#blubrry_program_keyword').value 
+            ?? '<?php echo $Settings['blubrry_program_keyword']; ?>');     // default mode
         }
-        if( self.parent.powerpress_update_for_video ) {
-            self.parent.powerpress_update_for_video(url, '<?php echo $FeedSlug; ?>');
+    }
+
+    // Alternate Enclosure URI Handling
+    else if (targetElement && targetFieldId.includes('alt-enc-uri')) {
+        targetElement.value = url;
+        targetElement.readOnly = true;
+
+        // set hosting flag to 0 for already published media files
+        const uriHostingId = `${targetFieldId}-hosting`;
+        const hostingField = self.parent.document.getElementById(uriHostingId);
+        if (hostingField) hostingField.value = '0';
+
+        // set program keyword
+        const uriProgramKeywordId = `${targetFieldId}-program-keyword`;
+        const programKeywordField = self.parent.document.getElementById(uriProgramKeywordId);
+        if (programKeywordField && document.querySelector('#blubrry_program_keyword'))
+            programKeywordField.value = document.querySelector('#blubrry_program_keyword').value;
+    }
+
+    // Main Enclosure Handling
+    else {
+        let EnclosureHostingId = `powerpress_hosting_${feedSlug}`;
+        let programKeywordFieldId = `powerpress_program_keyword_${feedSlug}`;
+
+        const displayField = self.parent.document.getElementById(`powerpress_url_display_${feedSlug}`);
+        if (displayField) {
+            displayField.value = url;
+            displayField.readOnly = false;
         }
-    <?php } else { ?>
-        // handle alt enclosure frontend logic
-        let alternateEnclosureLinkNum = '<?php echo $alt_enclosure_link_num; ?>';
-        let altEnclosureId = `powerpress_url_<?php echo $FeedSlug; ?>_alternate_enclosure_${alternateEnclosureLinkNum}`;
-        let uploadContainerId = `alt-enc-upload-<?php echo $FeedSlug; ?>-${alternateEnclosureLinkNum}-container`;
 
-        // set input to filename, make readonly
-        self.parent.document.getElementById(altEnclosureId).value = url;
-        self.parent.document.getElementById(altEnclosureId).readOnly = true;
+        const hiddenField = self.parent.document.getElementById(`powerpress_url_${feedSlug}`);
+        if (hiddenField) hiddenField.value = url;
 
-        // remove upload container
-        self.parent.document.getElementById(uploadContainerId).remove();
+        const hostingNote = self.parent.document.getElementById(`powerpress_hosting_note_${feedSlug}`);
+        if (hostingNote) hostingNote.style.display = 'none';
 
-    <?php } ?>
+        // Handle Transcript Generation
+        if (document.querySelector('#blubrry_program_transcript_plan') && document.querySelector('#blubrry_program_transcript_plan').value == 1) {
+            const transcriptButton = self.parent.document.getElementById(`powerpress_transcript_generate_${feedSlug}`);
+            if (transcriptButton) transcriptButton.click();
+        }
+
+        // Video Update
+        if (self.parent.powerpress_update_for_video) self.parent.powerpress_update_for_video(url, feedSlug);
+
+        const hostingField = self.parent.document.getElementById(EnclosureHostingId);
+        if (hostingField) hostingField.value = '0';
+
+        const programKeywordField = self.parent.document.getElementById(programKeywordFieldId);
+        if (programKeywordField && document.querySelector('#blubrry_program_keyword'))
+            programKeywordField.value = document.querySelector('#blubrry_program_keyword').value;
+
+        // auto-verify
+        const verifyButton = self.parent.document.getElementById(`continue-to-episode-settings-${feedSlug}`);
+        if (verifyButton) {
+            if (verifyButton.onclick) {
+                verifyButton.onclick();
+            } else if (verifyButton.click) {
+                verifyButton.click();
+            }
+        }
+    }
+
     self.parent.tb_remove();
 }
+
 function DeleteMedia(File)
 {
 	return confirm('<?php echo __('Delete', 'powerpress'); ?>: '+File+'\n\n<?php echo __('Are you sure you want to delete this media file?', 'powerpress'); ?>');
@@ -505,7 +602,7 @@ window.onload = function() {
 					{
 						$message = '<p>'. sprintf( __('Media hosting service will expire on %s.', 'powerpress'), esc_attr($results['quota']['expires']['readable_date'])) . '</p>';
 					}
-					
+
 					$message .= '<p style="text-align: center;"><strong><a href="'. $results['quota']['expires']['renew_link'] .'" target="_blank" style="text-decoration: underline;">'. __('Renew Media Hosting Service', 'powerpress') . '</a></strong></p>';
 					powerpress_page_message_add_notice( $message, 'inline', false );
 					powerpress_page_message_print();
@@ -526,12 +623,12 @@ window.onload = function() {
 						$message .= '<p>'.$g_powerpress_remote_error.'</p>';
 					else
 						$message .= '<p>'.__('Unable to connect to service.','powerpress').'</p>';
-			
+
 					// Print an erro here
 					powerpress_page_message_add_notice( $message, 'inline', false );
 					powerpress_page_message_print();
 				}
-				
+
 				if( $Msg )
 				echo '<p>'. $Msg . '</p>';
                 if($blubrryProgramKeyword != '!selectPodcast') {
@@ -633,7 +730,7 @@ window.onload = function() {
                 <?php
                 }
 		if( $QuotaData ) {
-					
+
 			$NextDate = strtotime( $QuotaData['published']['next_date']);
 		?>
 			<?php
@@ -646,12 +743,12 @@ window.onload = function() {
 				//	'<em>'. powerpress_byte_size($QuotaData['unpublished']['total']) .'</em>' );
 				//echo '</p>';
 			}
-			
+
 			if( $QuotaData['published']['status'] == 'OK' )
 			{
 			?>
 			<p><?php
-			
+
 			if( $QuotaData['published']['available'] > 0 ) // != $QuotaData['published']['total'] )
 			{
 				echo sprintf( __('Publishing space available: %s of (%s %%) of %s/month quota.', 'powerpress'),
@@ -666,7 +763,7 @@ window.onload = function() {
 			}
 			else if( $QuotaData['published']['available'] == 0 ) // Hosting account frozen
 			{
-			
+
 			}
 			else
 			{
@@ -702,8 +799,8 @@ window.onload = function() {
 		}?>
 		<p style="text-align: center;"><a href="#" onclick="self.parent.tb_remove();"><?php echo __('Close', 'powerpress'); ?></a></p>
 	</div>
-	
-<?php	
+
+<?php
 			powerpress_admin_jquery_footer(true);
 			exit;
 		}; break;
@@ -852,8 +949,8 @@ window.onload = function() {
 
 			$Save = true;
 			$Close = true;
-		
-			
+
+
 			if( !empty($_POST['Remove']) || !empty($_GET['remove']) )
 			{
 				$SaveSettings['blubrry_username'] = '';
@@ -993,18 +1090,18 @@ window.onload = function() {
                 }
             }
 
-			
+
 			if( $Save ) {
                 $SaveSettings['network_mode'] = (isset($SaveSettings['network_mode'])) ? 1 : 0;
                 powerpress_save_settings($SaveSettings);
             }
-			
+
 			// Clear cached statistics
 			delete_option('powerpress_stats');
-			
+
 			if( $Error )
 				powerpress_page_message_add_notice( $Error, 'inline', false );
-				
+
 			if( $Close )
 			{
 			    $next_top_url = admin_url("admin.php?page=powerpressadmin_basic");
@@ -1050,7 +1147,7 @@ jQuery(document).ready(function($) {
 				powerpress_admin_jquery_footer();
 				exit;
 			}
-			
+
             break;
 		}
         case 'powerpress-jquery-account-edit':
@@ -1217,7 +1314,8 @@ jQuery(document).ready(function($) {
             $EnclosureType = trim($EnclosureType);
 
             if ($EnclosureSerialized) {
-                $ExtraData = @unserialize($EnclosureSerialized);
+                // allowed_classes => false prevents php object injection via crafted serialized data
+                $ExtraData = @unserialize($EnclosureSerialized, ['allowed_classes' => false]);
             }
 
             $existingLightning = $ExtraData['value_lightning'] ?? [];
@@ -1287,6 +1385,7 @@ jQuery(document).ready(function($) {
 
                         $feedGuid = htmlspecialchars($_POST['podcast-guid']);
                         $feedLink = htmlspecialchars($_POST['podcast-link']);
+                        $feedMedium = htmlspecialchars($_POST['podcast-medium'] ?? '');
                         $remotePercent = intval($_POST['remote-split'] ?? 100);
 
                         $vtsInfo[$vts_id]['recipient'] = 0;
@@ -1296,6 +1395,8 @@ jQuery(document).ready(function($) {
                             'item_title' => $itemTitle,
                             'item_guid' => $itemGuid
                         );
+                        if (!empty($feedMedium))
+                            $vtsInfo[$vts_id]['remote_item']['medium'] = $feedMedium;
 
                         $vtsInfo[$vts_id]['remote_percent'] = $remotePercent;
                         unset($vtsInfo[$vts_id]['value_recipients']);
@@ -1578,6 +1679,7 @@ jQuery(document).ready(function($) {
                             <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                                 <input type="hidden" id="podcast-guid" name="podcast-guid" class="form-control" >
                                 <input type="hidden" id="podcast-link" name="podcast-link" class="form-control" >
+                                <input type="hidden" id="podcast-medium" name="podcast-medium" class="form-control" >
                                 <input type="text" id="search-podcasts" name="podcast-name" class="pp-settings-text-input" style="width: 90%;" placeholder="Search for a show">
                                 <span id="search-for-show" class="input-group-text" style="cursor: pointer; color: #1976d2; font-weight: bold;">
                                     <?php echo __("Search", "powerpress"); ?>
@@ -1641,6 +1743,7 @@ jQuery(document).ready(function($) {
                         jQuery('#feed-search-results').empty();
                         jQuery('#podcast-guid').val('');
                         jQuery('#podcast-link').val('');
+                        jQuery('#podcast-medium').val('');
                         jQuery('#item-guid').val('');
                         jQuery('#episode-search-container').hide();
 
@@ -1660,9 +1763,10 @@ jQuery(document).ready(function($) {
                                         jQuery.each(feeds, function(key, val) {
                                             let showID = val.id;
                                             let showName = val.title;
-                                            let showLink = val.link;
+                                            let showLink = val.url || val.link;
                                             let showGUID = val.podcastGuid;
-                                            let newHTML = '<li class="search-result" id="feed-result-' + showID + '"><a>' + showName + '</a><p style="display: none;">'+showGUID+'</p><p style="display: none;">'+showLink+'</p></li>';
+                                            let showMedium = (val.medium && val.medium !== 'podcast') ? val.medium : '';
+                                            let newHTML = '<li class="search-result" id="feed-result-' + showID + '"><a>' + showName + '</a><p style="display: none;">'+showGUID+'</p><p style="display: none;">'+showLink+'</p><p style="display: none;">'+showMedium+'</p></li>';
                                             jQuery('#feed-search-results').append(newHTML);
                                         });
                                     } else {
@@ -1683,6 +1787,7 @@ jQuery(document).ready(function($) {
                         let pChildren = jQuery(this).children('p');
                         let guid = jQuery(jQuery(this).children('p')[0]).text()
                         let link = jQuery(jQuery(this).children('p')[1]).text()
+                        let medium = jQuery(jQuery(this).children('p')[2]).text()
 
                         jQuery.ajax( {
                             type: 'POST',
@@ -1722,6 +1827,7 @@ jQuery(document).ready(function($) {
 
                         jQuery('#podcast-guid').val(guid);
                         jQuery('#podcast-link').val(link);
+                        jQuery('#podcast-medium').val(medium);
                         jQuery('#search-podcasts').val(jQuery(this).children('a').text())
                         jQuery('#feed-search-results').empty();
 
@@ -1873,7 +1979,7 @@ jQuery(document).ready(function($) {
             exit;
         }
 		case 'powerpress-jquery-subscribe-preview': {
-			
+
 			// Preview the current styling for the subscribe button
             nocache_headers();
 			echo "<html>";
@@ -1891,7 +1997,7 @@ jQuery(document).ready(function($) {
             exit;
 		}; break;
 		case 'powerpress-jquery-upload': {
-			
+
 			if( !current_user_can('edit_posts') )
 			{
 				powerpress_admin_jquery_header( __('Uploader', 'powerpress') );
@@ -1900,22 +2006,22 @@ jQuery(document).ready(function($) {
 				powerpress_admin_jquery_footer();
 				exit;
 			}
-			
+
 			check_admin_referer('powerpress-jquery-upload');
-			
+
 			$RedirectURL = false;
 			$Error = false;
-			
+
 			if( !$Settings )
 				$Settings = get_option('powerpress_general', array());
-			
+
 			if( empty($Settings['blubrry_hosting']) || $Settings['blubrry_hosting'] === 'false' )
 				$Settings['blubrry_hosting'] = false;
 			if( empty($Settings['blubrry_program_keyword']) )
 				$Settings['blubrry_program_keyword'] = '';
 			if( empty($Settings['blubrry_auth']) )
-				$Settings['blubrry_auth'] = '';	
-				
+				$Settings['blubrry_auth'] = '';
+
 			if( empty($Settings['blubrry_hosting']) )
 			{
 				$Error = __('This feature is available to Blubrry Hosting users only.','powerpress');
@@ -1967,11 +2073,15 @@ jQuery(document).ready(function($) {
 						$RedirectURL = $results['url'];
 				}
 			}
-			
+
 			if( $Error == false && $RedirectURL )
 			{
 				$RedirectURL .= '&ReturnURL=';
-				$RedirectURL .= urlencode( admin_url("admin.php?action=powerpress-jquery-upload-complete") );
+				$upload_complete_url = admin_url("admin.php?action=powerpress-jquery-upload-complete");
+				if (isset($_GET['target_field'])) {
+					$upload_complete_url .= '&target_field=' . urlencode($_GET['target_field']);
+				}
+				$RedirectURL .= urlencode( $upload_complete_url );
 				$RedirectURL .= '&message=true';
                 $RedirectURL .= '&ver='.POWERPRESS_VERSION;
                 if (isset($_GET['altEnclosure'])) {
@@ -1990,7 +2100,7 @@ jQuery(document).ready(function($) {
 				else
 					$Error = '<p>'.__('Unable to obtain upload session.','powerpress') .'</p>';
 			}
-			
+
 			powerpress_admin_jquery_header( __('Uploader','powerpress') );
 			echo '<h2>'. __('Uploader','powerpress') .'</h2>';
 			echo '<p>';
@@ -2003,7 +2113,7 @@ jQuery(document).ready(function($) {
 			exit;
 		}; break;
 		case 'powerpress-jquery-upload-complete': {
-		
+
 			if( !current_user_can('edit_posts') )
 			{
 				powerpress_admin_jquery_header('Uploader');
@@ -2015,7 +2125,8 @@ jQuery(document).ready(function($) {
 			// sanitize_title esc_attr esc_html powerpress_esc_html
 			$File = (isset($_GET['File'])? htmlspecialchars($_GET['File']):false);
 			$Message = (isset($_GET['Message'])? htmlspecialchars($_GET['Message']):'');
-			
+			$TargetField = (isset($_GET['target_field'])? htmlspecialchars($_GET['target_field']):'');
+
 			powerpress_admin_jquery_header( __('Upload Complete', 'powerpress') );
 			echo '<h2>'. __('Uploader', 'powerpress') .'</h2>';
 			echo '<p>';
@@ -2030,13 +2141,19 @@ jQuery(document).ready(function($) {
 			?>
 			<p style="text-align: center;"><a href="#" onclick="self.parent.tb_remove();"><?php echo __('Close', 'powerpress'); ?></a></p>
 			<?php
-			
+
 			if( empty($Message) )
 			{
 ?>
 <script language="JavaScript" type="text/javascript"><!--
 <?php if( $File != '' ) { ?>
-self.parent.SelectMedia('<?php echo $File ; ?>'); <?php } ?>
+	<?php if( !empty($TargetField) && strpos($TargetField, 'alt-enclosure') !== false ) { ?>
+		// alternate enclosure upload, skip select media
+	<?php } else { ?>
+		// main enclosure upload, call SelectMedia
+		self.parent.SelectMedia('<?php echo $File ; ?>');
+	<?php } ?>
+<?php } ?>
 self.parent.tb_remove();
 //-->
 </script>
@@ -2102,8 +2219,7 @@ self.parent.tb_remove();
             if ( ! wp_verify_nonce( $_POST['nonce'], 'powerpress-edit-feed' ) ) {
                 exit;
             }
-            $json_data = false;
-            $results = array();
+            $results = [];
             $api_url_array = powerpress_get_api_array();
             if ($creds) {
                 $accessToken = powerpress_getAccessToken();
@@ -2111,6 +2227,7 @@ self.parent.tb_remove();
                 $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA')?'?'. POWERPRESS_BLUBRRY_API_QSA:'');
                 $results = $auth->api($accessToken, $req_url, array('piQuery' => $_POST['piQuery']), 'POST');
             } else {
+                $json_data = false;
                 foreach ($api_url_array as $index => $api_url) {
                     $req_url = sprintf('%s/podcast-index/get-shows/?format=json', rtrim($api_url, '/'));
                     $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '&' . POWERPRESS_BLUBRRY_API_QSA : '');
@@ -2121,7 +2238,7 @@ self.parent.tb_remove();
                     if ($json_data != false)
                         break;
                 }
-                $results = powerpress_json_decode($json_data);
+                $results = $json_data;
             }
 
             echo $results;
@@ -2131,8 +2248,7 @@ self.parent.tb_remove();
             if ( ! wp_verify_nonce( $_POST['nonce'], 'powerpress-edit-feed' ) ) {
                 exit;
             }
-            $json_data = false;
-            $results = array();
+            $results = [];
             $api_url_array = powerpress_get_api_array();
             if ($creds) {
                 $accessToken = powerpress_getAccessToken();
@@ -2140,6 +2256,7 @@ self.parent.tb_remove();
                 $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA')?'?'. POWERPRESS_BLUBRRY_API_QSA:'');
                 $results = $auth->api($accessToken, $req_url, array('podcastGuid' => $_POST['podcastGuid']), 'POST');
             } else {
+                $json_data = false;
                 foreach ($api_url_array as $index => $api_url) {
                     $req_url = sprintf('%s/podcast-index/get-episodes/?format=json', rtrim($api_url, '/'));
                     $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '&' . POWERPRESS_BLUBRRY_API_QSA : '');
@@ -2150,14 +2267,14 @@ self.parent.tb_remove();
                     if ($json_data != false)
                         break;
                 }
-                $results = powerpress_json_decode($json_data);
+                $results = $json_data;
             }
 
             echo $results;
             exit;
         }
 	}
-	
+
 }
 
 function powerpress_admin_jquery_account_header($title, $jquery = false, $no_exit = false) {
@@ -2232,11 +2349,11 @@ function powerpress_admin_jquery_header($title, $jquery = false)
 {
 	if( function_exists('get_current_screen') ) {
 		$current_screen = get_current_screen();
-		if( !empty($current_screen) && is_object($current_screen) && $current_screen->is_block_editor() ) { 
+		if( !empty($current_screen) && is_object($current_screen) && $current_screen->is_block_editor() ) {
 			return;
 		}
 	}
-	
+
 	nocache_headers();
 	$other = false;
 	if( $jquery )
@@ -2292,7 +2409,7 @@ function powerpress_admin_jquery_footer($jquery = false)
 {
 	if( $jquery )
 		do_action('admin_print_footer_scripts');
-	
+
 ?>
 </div><!-- end container -->
 </body>

@@ -162,6 +162,7 @@ function powerpress_admin_live_item(){
                                 foreach($PowerPressTaxonomies as $tt_id => $null) {
                                     $taxonomy_type = '';
                                     $term_ID = '';
+                                    $tt_id = intval($tt_id); // sanitize for sql
 
                                     global $wpdb;
                                     $term_info = $wpdb->get_results("SELECT term_id, taxonomy FROM $wpdb->term_taxonomy WHERE term_taxonomy_id = $tt_id",  ARRAY_A);

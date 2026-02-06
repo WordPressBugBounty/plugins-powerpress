@@ -304,9 +304,18 @@ function powerpress_showHideMediaDetails(el) {
     let feed_slug = el.id.replace("show-details-link-", "");
     let show_det = jQuery("#show-details-link-" + feed_slug);
     let div = jQuery("#hidden-media-details-" + feed_slug);
-    show_det.toggleClass('pp-hidden-settings');
-    show_det.toggleClass('media-details');
+
+    let isCurrentlyHidden = div.hasClass('pp-hidden-settings');
+
     div.toggleClass('pp-hidden-settings');
+
+    if (isCurrentlyHidden) {
+        show_det.html('Hide File Size and Duration  &#708;');
+        show_det.attr('title', 'Hide file size and duration');
+    } else {
+        show_det.html('View File Size and Duration  &#709;');
+        show_det.attr('title', 'Show file size and duration');
+    }
 }
 
 function powerpress_showHideAppleAdvanced(el) {
@@ -393,34 +402,17 @@ function powerpress_cancelMediaEdit(el) {
 //save button for edit media link
 function powerpress_saveMediaFile(el) {
     let feed_slug = el.id.replace("save-media-", "");
-    powerpress_get_media_info(feed_slug);
     let link = sanitizeHTML(jQuery("#powerpress_url_display_" + feed_slug).val());
-    let display_filename = jQuery("#ep-box-filename-" + feed_slug);
-    let input = jQuery("#pp-url-input-container-" + feed_slug);
-    let show_input = jQuery("#powerpress_url_show_" + feed_slug);
-    let edit_media = jQuery("#edit-media-file-" + feed_slug);
-    let buttons = jQuery("#pp-change-media-file-" + feed_slug);
     let warning = jQuery("#file-change-warning-" + feed_slug);
-    let blubrry_info = jQuery("#ep-box-blubrry-service-" + feed_slug);
-    let container = jQuery("#pp-media-blubrry-container-" + feed_slug);
+
     if (link !== '') {
+        // call verification
+        powerpress_get_media_info(feed_slug);
         if(verify_interval) {
             clearInterval(verify_interval);
             verify_interval = false;
         }
-        show_input.attr("title", link);
-        display_filename.html(link);
         warning.css('display', 'none');
-        input.removeAttr("style");
-        input.attr("style", "display: none");
-        show_input.css("display", "inline-block");
-        edit_media.removeAttr("style");
-        edit_media.attr("style", "display: inline-block");
-        buttons.removeAttr("style");
-        buttons.attr("style", "display: none");
-        blubrry_info.removeAttr("style");
-        blubrry_info.attr("style", "display: none");
-        container.removeAttr("style");
     } else {
         warning.css('display', 'block');
         warning.addClass("error");
@@ -462,47 +454,18 @@ function powerpress_updateMediaInput(el) {
 //Continue button for adding media to a post
 function powerpress_continueToEpisodeSettings(el) {
     let feed_slug = el.id.replace("continue-to-episode-settings-", "");
-    powerpress_get_media_info(feed_slug);
     let link = sanitizeHTML(jQuery("#powerpress_url_display_" + feed_slug).val());
-    let file_input = jQuery("#pp-url-input-container-" + feed_slug);
-    let file_show = jQuery("#powerpress_url_show_" + feed_slug);
-    let display_filename = jQuery("#ep-box-filename-" + feed_slug);
-    let tab_container = jQuery("#tab-container-" + feed_slug);
     let warning = jQuery("#file-select-warning-" + feed_slug);
-    let edit_file = jQuery("#edit-media-file-" + feed_slug);
-    let select_file = jQuery("#select-media-file-" + feed_slug);
-    let details = jQuery("#media-file-details-" + feed_slug);
-    let blubrry_info = jQuery("#ep-box-blubrry-service-" + feed_slug);
-    let blu_container = jQuery("#pp-media-blubrry-container-" + feed_slug);
-    let connect_info = jQuery("#ep-box-blubrry-connect-" + feed_slug);
-    let connect_info_small = jQuery("#ep-box-min-blubrry-connect-" + feed_slug);
-    if (link.length > 0) {
+
+    if (link !== '') {
+        // call verification 
+        powerpress_get_media_info(feed_slug);
         if(verify_interval) {
             clearInterval(verify_interval);
             verify_interval = false;
         }
-        file_show.attr("title", link);
-        display_filename.html(link);
-        tab_container.removeAttr("style");
-        tab_container.attr("style", "display: block");
-        select_file.removeAttr("style");
-        select_file.attr("style", "display: none");
-        edit_file.removeAttr("style");
-        edit_file.attr("style", "display: inline-block");
-        file_input.removeAttr("style");
-        file_input.attr("style", "display: none");
-        file_show.css("display", "inline-block");
         warning.removeAttr("style");
         warning.attr("style", "display: none");
-        blubrry_info.removeAttr("style");
-        blubrry_info.attr("style", "display: none");
-        details.removeAttr("style");
-        details.attr("style", "display: inline-block");
-        blu_container.removeAttr("style");
-        if (connect_info.length) {
-            connect_info.attr("style", "display: none");
-            connect_info_small.removeAttr("style");
-        }
     } else {
         warning.css('display', 'block');
         warning.addClass("error");

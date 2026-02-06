@@ -3,11 +3,11 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.13.12
+Version: 11.15.11
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
-Tested up to: 6.8
+Tested up to: 6.9
 Text Domain: powerpress
 Change Log:
 	Please see readme.txt for detailed change log.
@@ -26,6 +26,8 @@ License: GPL (http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt)
 
 	This project uses source that is GPL licensed.
 */
+
+use Mpdf\Tag\A;
 
 if( !function_exists('add_action') ) {
     header( 'Status: 403 Forbidden' );
@@ -132,7 +134,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.13.12' );
+define('POWERPRESS_VERSION', '11.15.11' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -361,8 +363,8 @@ function powerpress_content($content)
     {
         if( isset($matches[3]) && is_array($matches[3]) )
         {
-            foreach ($matches[3] as $key => $row) {
-                $attributes = shortcode_parse_atts($row);
+            foreach ($matches[3] as $key => $recipientow) {
+                $attributes = shortcode_parse_atts($recipientow);
                 if (isset($attributes['url'])) {
                     // not a problem...
                 } else if (isset($attributes['feed'])) {
@@ -544,7 +546,7 @@ function powerpress_header()
 
                 if( !empty($Settings['feed_redirect_url']) )
                     $Settings['feed_url'] = $Settings['feed_redirect_url'];
-                else if( !empty($General['cat_casting_podcast_feeds']) )
+                else if( !empty($Powerpress['cat_casting_podcast_feeds']) )
                     $Settings['feed_url'] = get_category_feed_link($category_id, 'podcast');
                 else
                     $Settings['feed_url'] = get_category_feed_link( $category_id ); // Get category feed URL
@@ -565,7 +567,7 @@ function powerpress_wp_head_completed()
 
 add_action('wp_head', 'powerpress_wp_head_completed', 100000);
 
-function powerpress_exit_on_http_head($return)
+function powerpress_exit_on_http_head($recipienteturn)
 {
     if( is_feed() )
     {
@@ -584,7 +586,7 @@ function powerpress_exit_on_http_head($return)
             }
         }
     }
-    return $return;
+    return $recipienteturn;
 }
 
 add_filter('exit_on_http_head', 'powerpress_exit_on_http_head' );
@@ -605,7 +607,6 @@ function powerpress_rss2_ns()
         echo 'xmlns:rawvoice="https://blubrry.com/developer/rawvoice-rss/"'.PHP_EOL;
     }
 }
-
 
 
 function powerpress_check_for_chartable()
@@ -635,8 +636,8 @@ function powerpress_check_for_chartable()
     if (!$found_chartable) {
         global $wpdb;
         $query = "SELECT meta_id, post_id, meta_key, meta_value FROM {$wpdb->postmeta} WHERE meta_key LIKE \"%enclosure\"";
-        $results_data = $wpdb->get_results($query, ARRAY_A);
-        foreach ($results_data as $idx => $data) {
+        $recipientesults_data = $wpdb->get_results($query, ARRAY_A);
+        foreach ($recipientesults_data as $idx => $data) {
             $meta_parts = explode("\n", $data['meta_value']);
             $post_enclosure_url = $meta_parts[0];
             if (strpos($post_enclosure_url, 'chrt.fm') !== false || strpos($post_enclosure_url, 'chtbl.com') !== false) {
@@ -653,33 +654,33 @@ function powerpress_check_for_chartable()
 add_action('powerpress_check_for_chartable_hook', 'powerpress_check_for_chartable');
 
 if (!function_exists('buildRedirect')) {
-    function buildRedirect($Redirects)
+    function buildRedirect($recipientedirects)
     {
-        $redirect_result = '';
+        $recipientedirect_result = '';
         for ($x = 3; $x >= 0; $x--) {
             $key = sprintf('redirect%d', $x);
-            if (!empty($Redirects[$key])) {
-                if (preg_match('/^https?:\/\/(.*)$/', trim($Redirects[$key]), $matches) == 0)
+            if (!empty($recipientedirects[$key])) {
+                if (preg_match('/^https?:\/\/(.*)$/', trim($recipientedirects[$key]), $matches) == 0)
                     continue;
 
-                if (is_chartable_url($Redirects[$key])) {
+                if (is_chartable_url($recipientedirects[$key])) {
                     continue;
                 }
 
-                $RedirectClean = $matches[1];
-                if (substr($RedirectClean, -1, 1) != '/') // Rediercts need to end with a slash /.
-                    $RedirectClean .= '/';
+                $recipientedirectClean = $matches[1];
+                if (substr($recipientedirectClean, -1, 1) != '/') // Rediercts need to end with a slash /.
+                    $recipientedirectClean .= '/';
 
-                if (!empty($RedirectClean)) {
-                    if (strpos($RedirectClean, '/') == 0) // Not a valid redirect URL
+                if (!empty($recipientedirectClean)) {
+                    if (strpos($recipientedirectClean, '/') == 0) // Not a valid redirect URL
                         continue;
 
-                    if (!strstr($redirect_result, $RedirectClean)) // If the redirect is not already added...
-                        $redirect_result = $RedirectClean . $redirect_result;
+                    if (!strstr($recipientedirect_result, $recipientedirectClean)) // If the redirect is not already added...
+                        $recipientedirect_result = $recipientedirectClean . $recipientedirect_result;
                 }
             }
         }
-        return 'https://' . $redirect_result;
+        return 'https://' . $recipientedirect_result;
     }
 }
 
@@ -697,18 +698,18 @@ if (!function_exists('powerpress_getAccessToken')) {
             // Create new access token with refresh token here...
             require_once('powerpressadmin-auth.class.php');
             $auth = new PowerPressAuth();
-            $resultTokens = $auth->getAccessTokenFromRefreshToken($creds['refresh_token'], $creds['client_id'], $creds['client_secret']);
+            $recipientesultTokens = $auth->getAccessTokenFromRefreshToken($creds['refresh_token'], $creds['client_id'], $creds['client_secret']);
 
-            if (!empty($resultTokens['access_token']) && !empty($resultTokens['expires_in'])) {
+            if (!empty($recipientesultTokens['access_token']) && !empty($recipientesultTokens['expires_in'])) {
                 powerpress_save_settings(
                     array(
-                        'access_token' => $resultTokens['access_token'], 
-                        'access_expires' => (time() + $resultTokens['expires_in'] - 10)
+                        'access_token' => $recipientesultTokens['access_token'], 
+                        'access_expires' => (time() + $recipientesultTokens['expires_in'] - 10)
                     ), 
                     'powerpress_creds'
                 );
 
-                return $resultTokens['access_token'];
+                return $recipientesultTokens['access_token'];
             } else {
                 //if their refresh token is expired, sign them out so they can re-authenticate
                 delete_option('powerpress_creds');
@@ -903,17 +904,17 @@ function powerpress_sync_progad() {
     // grab the redirect url prefixes for each feed slug and make an array
     $General = get_option('powerpress_general');
     // append general redirects to each other (starting with redirect1)
-    $Redirects = array('redirect0'=>'', 'redirect1'=>'', 'redirect2'=>'', 'redirect3'=>'');
+    $recipientedirects = array('redirect0'=>'', 'redirect1'=>'', 'redirect2'=>'', 'redirect3'=>'');
     if( !empty($General['redirect1']) )
-        $Redirects['redirect1'] = $General['redirect1'];
+        $recipientedirects['redirect1'] = $General['redirect1'];
     if( !empty($General['redirect2']) )
-        $Redirects['redirect2'] = $General['redirect2'];
+        $recipientedirects['redirect2'] = $General['redirect2'];
     if( !empty($General['redirect3']) )
-        $Redirects['redirect3'] = $General['redirect3'];
+        $recipientedirects['redirect3'] = $General['redirect3'];
 
     // add to redirect array with key 'enclosure'
-    $main_redirect = buildRedirect($Redirects);
-    $redirect_array = array('enclosure' => $main_redirect);
+    $main_redirect = buildRedirect($recipientedirects);
+    $recipientedirect_array = array('enclosure' => $main_redirect);
 
     // then append custom feed redirects to beginning of main feed redirect with _slug:enclosure for each custom feed
     // channels
@@ -921,11 +922,11 @@ function powerpress_sync_progad() {
         foreach ($General['custom_feeds'] as $slug => $title) {
             $Feed = get_option('powerpress_feed_' . $slug, array());
             if (!empty($Feed['redirect'])) {
-                $Redirects['redirect0'] = $Feed['redirect'];
-                $redirect_array += array('_' . $slug . ':enclosure' => buildRedirect($Redirects));
-                $Redirects['redirect0'] = '';
+                $recipientedirects['redirect0'] = $Feed['redirect'];
+                $recipientedirect_array += array('_' . $slug . ':enclosure' => buildRedirect($recipientedirects));
+                $recipientedirects['redirect0'] = '';
             } else {
-                $redirect_array += array('_' . $slug . ':enclosure' => $main_redirect);
+                $recipientedirect_array += array('_' . $slug . ':enclosure' => $main_redirect);
                 // default stats redirect
             }
         }
@@ -938,11 +939,11 @@ function powerpress_sync_progad() {
             // $category['slug']
             $Feed = get_option('powerpress_cat_feed_' . $id, array());
             if (!empty($Feed['redirect'])) {
-                $Redirects['redirect0'] = $Feed['redirect'];
-                $redirect_array += array('_' . $category->slug . ':enclosure' => buildRedirect($Redirects));
-                $Redirects['redirect0'] = '';
+                $recipientedirects['redirect0'] = $Feed['redirect'];
+                $recipientedirect_array += array('_' . $category->slug . ':enclosure' => buildRedirect($recipientedirects));
+                $recipientedirects['redirect0'] = '';
             } else {
-                $redirect_array += array('_' . $category->slug . ':enclosure' => $main_redirect);
+                $recipientedirect_array += array('_' . $category->slug . ':enclosure' => $main_redirect);
                 // default stats redirect
             }
         }
@@ -955,6 +956,7 @@ function powerpress_sync_progad() {
 
             $taxonomy_type = '';
             $term_ID = '';
+            $tt_id = intval($tt_id); // sanitize for sql
 
             global $wpdb;
             $term_info = $wpdb->get_results("SELECT term_id, taxonomy FROM $wpdb->term_taxonomy WHERE term_taxonomy_id = $tt_id", ARRAY_A);
@@ -968,11 +970,11 @@ function powerpress_sync_progad() {
             $Feed = get_option('powerpress_taxonomy_' . $tt_id);
             $term_object = get_term( $term_ID, $taxonomy_type, OBJECT, 'edit');
             if (!empty($Feed['redirect'])) {
-                $Redirects['redirect0'] = $Feed['redirect'];
-                $redirect_array += array('_' . $term_object->slug . ':enclosure' => buildRedirect($Redirects));
-                $Redirects['redirect0'] = '';
+                $recipientedirects['redirect0'] = $Feed['redirect'];
+                $recipientedirect_array += array('_' . $term_object->slug . ':enclosure' => buildRedirect($recipientedirects));
+                $recipientedirects['redirect0'] = '';
             } else {
-                $redirect_array += array('_' . $term_object->slug . ':enclosure' => $main_redirect);
+                $recipientedirect_array += array('_' . $term_object->slug . ':enclosure' => $main_redirect);
                 // default stats redirect
             }
         }
@@ -998,11 +1000,11 @@ function powerpress_sync_progad() {
 
             foreach ($PostTypeSettingsArray as $feed_slug => $Feed) {
                 if (!empty($Feed['redirect'])) {
-                    $Redirects['redirect0'] = $Feed['redirect'];
-                    $redirect_array += array('_' . $feed_slug . ':enclosure' => buildRedirect($Redirects));
-                    $Redirects['redirect0'] = '';
+                    $recipientedirects['redirect0'] = $Feed['redirect'];
+                    $recipientedirect_array += array('_' . $feed_slug . ':enclosure' => buildRedirect($recipientedirects));
+                    $recipientedirects['redirect0'] = '';
                 } else {
-                    $redirect_array += array('_' . $feed_slug . ':enclosure' => $main_redirect);
+                    $recipientedirect_array += array('_' . $feed_slug . ':enclosure' => $main_redirect);
                     // default stats redirect
                 }
             }
@@ -1016,10 +1018,10 @@ function powerpress_sync_progad() {
     $progad_disable_urls = array();
     $auth = new PowerPressAuth();
     $accessToken = powerpress_getAccessToken();
-    $req_url = sprintf('/2/media/prog_ad_status.json?cache=' . md5(rand(0, 999) . time()));
-    $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '?' . POWERPRESS_BLUBRRY_API_QSA : '');
-    $req_url .= (defined('POWERPRESS_PUBLISH_PROTECTED') ? '&protected=true' : '');
-    $progad_enabled_shows = $auth->api($accessToken, $req_url, array(), false, 60 * 30);
+    $recipienteq_url = sprintf('/2/media/prog_ad_status.json?cache=' . md5(rand(0, 999) . time()));
+    $recipienteq_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '?' . POWERPRESS_BLUBRRY_API_QSA : '');
+    $recipienteq_url .= (defined('POWERPRESS_PUBLISH_PROTECTED') ? '&protected=true' : '');
+    $progad_enabled_shows = $auth->api($accessToken, $recipienteq_url, array(), false, 60 * 30);
     if (!$progad_enabled_shows) {
         $progad_error = $auth->getLastError();
     }
@@ -1037,19 +1039,19 @@ function powerpress_sync_progad() {
     // use the API to get associated URLs for all URLs in any program whose ads were just enabled
     if (!empty($shows_to_enable)) {
         foreach ($shows_to_enable as $idx => $keyword) {
-            $req_url = sprintf('/2/media/' . $keyword . '/prog_ad_urls.json?cache=' . md5(rand(0, 999) . time()));
+            $recipienteq_url = sprintf('/2/media/' . $keyword . '/prog_ad_urls.json?cache=' . md5(rand(0, 999) . time()));
             if (defined('POWERPRESS_PROGRAMMATIC_FIX')) {
-                $req_url .= '&pp_first_release_fix=true';
+                $recipienteq_url .= '&pp_first_release_fix=true';
             }
-            $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '?' . POWERPRESS_BLUBRRY_API_QSA : '');
-            $req_url .= (defined('POWERPRESS_PUBLISH_PROTECTED') ? '&protected=true' : '');
-            $result_prog = $auth->api($accessToken, $req_url, array(), false, 60 * 30);
-            if (isset($result_prog['urls']) && is_array($result_prog['urls'])) {
-                foreach ($result_prog['urls'] as $i => $url_pair) {
+            $recipienteq_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '?' . POWERPRESS_BLUBRRY_API_QSA : '');
+            $recipienteq_url .= (defined('POWERPRESS_PUBLISH_PROTECTED') ? '&protected=true' : '');
+            $recipientesult_prog = $auth->api($accessToken, $recipienteq_url, array(), false, 60 * 30);
+            if (isset($recipientesult_prog['urls']) && is_array($recipientesult_prog['urls'])) {
+                foreach ($recipientesult_prog['urls'] as $i => $url_pair) {
                     // add the redirect to the key before adding this pair
                     $progad_enable_urls += $url_pair;
                 }
-            } elseif (isset($result_prog['message']) && $result_prog['message'] == 'no media') {
+            } elseif (isset($recipientesult_prog['message']) && $recipientesult_prog['message'] == 'no media') {
                 // no error--continue
             }
             else {
@@ -1061,17 +1063,17 @@ function powerpress_sync_progad() {
     // use the API to get associated URLs for all URLs in any program whose ads were just disabled
     if (!empty($shows_to_disable)) {
         foreach ($shows_to_disable as $idx => $keyword) {
-            $req_url = sprintf('/2/media/' . $keyword . '/prog_ad_urls.json?disable=true&cache=' . md5(rand(0, 999) . time()));
-            $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '?' . POWERPRESS_BLUBRRY_API_QSA : '');
-            $req_url .= (defined('POWERPRESS_PUBLISH_PROTECTED') ? '&protected=true' : '');
-            $result_prog = $auth->api($accessToken, $req_url, array(), false, 60 * 30);
+            $recipienteq_url = sprintf('/2/media/' . $keyword . '/prog_ad_urls.json?disable=true&cache=' . md5(rand(0, 999) . time()));
+            $recipienteq_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '?' . POWERPRESS_BLUBRRY_API_QSA : '');
+            $recipienteq_url .= (defined('POWERPRESS_PUBLISH_PROTECTED') ? '&protected=true' : '');
+            $recipientesult_prog = $auth->api($accessToken, $recipienteq_url, array(), false, 60 * 30);
             $progad_error = $auth->getLastError();
-            if (isset($result_prog['urls']) && is_array($result_prog['urls'])) {
-                foreach ($result_prog['urls'] as $i => $url_pair) {
+            if (isset($recipientesult_prog['urls']) && is_array($recipientesult_prog['urls'])) {
+                foreach ($recipientesult_prog['urls'] as $i => $url_pair) {
                     // add the redirect to the key before adding this pair
                     $progad_disable_urls += $url_pair;
                 }
-            } elseif (isset($result_prog['message']) && $result_prog['message'] == 'no media') {
+            } elseif (isset($recipientesult_prog['message']) && $recipientesult_prog['message'] == 'no media') {
                 // no error--continue
             }
             else {
@@ -1083,8 +1085,8 @@ function powerpress_sync_progad() {
     // query the wordpress database to match up the URLs that we need to update
     global $wpdb;
     $query = "SELECT meta_id, post_id, meta_key, meta_value FROM {$wpdb->postmeta} WHERE meta_key LIKE \"%enclosure\"";
-    $results_data = $wpdb->get_results($query, ARRAY_A);
-    foreach ($results_data as $idx => $data) {
+    $recipientesults_data = $wpdb->get_results($query, ARRAY_A);
+    foreach ($recipientesults_data as $idx => $data) {
         $meta_parts = explode("\n", $data['meta_value']);
 
         if (strpos($meta_parts[0], 'ins.blubrry.com')) {
@@ -1103,13 +1105,13 @@ function powerpress_sync_progad() {
         $parts_drop_qs = explode('?', $url_without_prefix);
         if (!empty($progad_enable_urls) && array_key_exists($parts_drop_qs[0], $progad_enable_urls)) {
             // now, if they have a redirect for the feed that this url is in, we need to replace the https://media.blubrry.com/{keyword}/ with those redirects
-            $progad_url_with_pp_redirect = preg_replace('#https://media.blubrry.com/(.*)/#U', $redirect_array[$data['meta_key']], $progad_enable_urls[$parts_drop_qs[0]]);
+            $progad_url_with_pp_redirect = preg_replace('#https://media.blubrry.com/(.*)/#U', $recipientedirect_array[$data['meta_key']], $progad_enable_urls[$parts_drop_qs[0]]);
             // replace the url in the meta_parts array, implode it back together, and update the program meta
             $meta_parts[0] = $progad_url_with_pp_redirect;
             $new_meta_value = implode("\n", $meta_parts);
             update_post_meta($data['post_id'], $data['meta_key'], $new_meta_value);
         } else if (!empty($progad_disable_urls) && array_key_exists($parts_drop_qs[0], $progad_disable_urls)) {
-            $hosting_url_with_pp_redirect = preg_replace('#http(s?)://#U', $redirect_array[$data['meta_key']], $progad_disable_urls[$parts_drop_qs[0]]);
+            $hosting_url_with_pp_redirect = preg_replace('#http(s?)://#U', $recipientedirect_array[$data['meta_key']], $progad_disable_urls[$parts_drop_qs[0]]);
             // replace the url in the meta_parts array, implode it back together, and update the program meta
             $meta_parts[0] = $hosting_url_with_pp_redirect;
             $new_meta_value = implode("\n", $meta_parts);
@@ -1162,7 +1164,7 @@ function powerpress_rss2_head()
             $Feed = powerpress_merge_empty_feed_settings($CustomFeed, $Feed);
 
         global $wpdb;
-        $term_info = $wpdb->get_results("SELECT term_id, taxonomy FROM $wpdb->term_taxonomy WHERE term_taxonomy_id = " . $powerpress_feed['term_taxonomy_id'],  ARRAY_A);
+        $term_info = $wpdb->get_results("SELECT term_id, taxonomy FROM $wpdb->term_taxonomy WHERE term_taxonomy_id = " . intval($powerpress_feed['term_taxonomy_id']),  ARRAY_A);
         $taxonomy_type = $term_info[0]['taxonomy'];
         $feed_url = get_term_feed_link($powerpress_feed['term_taxonomy_id'], $taxonomy_type, 'rss2');
     }
@@ -1239,6 +1241,7 @@ function powerpress_rss2_head()
         echo "\t<itunes:new-feed-url>". htmlspecialchars(trim($Feed['itunes_new_feed_url'])) .'</itunes:new-feed-url>'.PHP_EOL;
     }
 
+    /*
     if( !empty($General['itunes_cdata']) ) {
         if( !empty($Feed['itunes_summary']) )
             echo "\t".'<itunes:summary><![CDATA['. powerpress_format_itunes_value( $Feed['itunes_summary'], 'summary', true ) .']]></itunes:summary>'.PHP_EOL;
@@ -1250,11 +1253,13 @@ function powerpress_rss2_head()
         else
             echo "\t".'<itunes:summary>'.  powerpress_format_itunes_value( get_bloginfo('description'), 'summary' ) .'</itunes:summary>'.PHP_EOL;
     }
+    */
 
     if( !empty($powerpress_feed['itunes_talent_name']) )
         echo "\t<itunes:author>" . esc_html($powerpress_feed['itunes_talent_name']) . '</itunes:author>'.PHP_EOL;
 
-    if( !empty($powerpress_feed['explicit']) && $powerpress_feed['explicit'] != 'no' )
+    // itunes:explicit is REQUIRED by Apple on channel level
+    if( !empty($powerpress_feed['explicit']) )
         echo "\t".'<itunes:explicit>' . $powerpress_feed['explicit'] . '</itunes:explicit>'.PHP_EOL;
 
     if( !empty($Feed['itunes_block']) )
@@ -1289,27 +1294,43 @@ function powerpress_rss2_head()
         echo "\t".'<podcast:txt purpose="applepodcastsverify">'.esc_html($Feed['apple_claim_token'])."</podcast:txt>".PHP_EOL;
     }
 
-    if( !empty($Feed['copyright']) )
+    if( isset( $Feed['copyright'] ) && strlen($Feed['copyright']) > 1 )
     {
-        // In case the user entered the copyright html version or the copyright UTF-8 or ASCII symbol or just (c)
         $Feed['copyright'] = str_replace(array('&copy;', '(c)', '(C)', chr(194) . chr(169), chr(169) ), '&#xA9;', $Feed['copyright']);
         echo "\t".'<copyright>'. esc_html($Feed['copyright']) . '</copyright>'.PHP_EOL;
-        echo "\t".'<podcast:license>'. esc_html($Feed['copyright']) . '</podcast:license>'.PHP_EOL;
+        if ( isset( $Feed['copyright_url'] ) && strlen($Feed['copyright_url']) > 1 ) {
+            echo "\t".'<podcast:license url="' . esc_attr(powerpress_url_in_feed($Feed['copyright_url'])) . '">'. esc_html($Feed['copyright']) . '</podcast:license>'.PHP_EOL;
+        } else {
+            echo "\t".'<podcast:license>'. esc_html($Feed['copyright']) . '</podcast:license>'.PHP_EOL;
+        }
     }
 
-    if ( !empty($Feed['txt_tag']) )
+    if (!empty($Feed['txt_tag']) && is_array($Feed['txt_tag']))
     {
-        echo "\t".'<podcast:txt>'. esc_html($Feed['txt_tag']) . '</podcast:txt>'.PHP_EOL;
+        foreach ($Feed['txt_tag'] as $txt_tag) {
+            if (!empty($txt_tag['tag'])) {
+                $tag_output = "\t" . '<podcast:txt';
+                
+                if (!empty($txt_tag['purpose'])) {
+                    $tag_output .= ' purpose="' . esc_attr($txt_tag['purpose']) . '"';
+                }
+                
+                $tag_output .= '>' . esc_html($txt_tag['tag']) . '</podcast:txt>' . PHP_EOL;
+                
+                echo $tag_output;
+            }
+        }
     }
 
     echo "\t".'<podcast:medium>'. esc_html($Feed['medium'] ?? 'podcast') . '</podcast:medium>'.PHP_EOL;
-
+    /*
     if( !empty($Feed['itunes_subtitle']) )
         echo "\t".'<itunes:subtitle>' . powerpress_format_itunes_value($Feed['itunes_subtitle'], 'subtitle') . '</itunes:subtitle>'.PHP_EOL;
     else
         echo "\t".'<itunes:subtitle>'.  powerpress_format_itunes_value( get_bloginfo('description'), 'subtitle') .'</itunes:subtitle>'.PHP_EOL;
+    */
     $podcast_title_safe = '';
-    if( version_compare($GLOBALS['wp_version'], 4.4, '<' ) ) {
+    if( version_compare($GLOBALS['wp_version'], '4.4', '<' ) ) {
         $podcast_title_safe .= get_bloginfo_rss('name');
     }
     $podcast_title_safe .= get_wp_title_rss();
@@ -1317,11 +1338,11 @@ function powerpress_rss2_head()
     {
         if(!empty($Feed['itunes_image']) )
         {
-            $rss_image = $Feed['itunes_image'];
+            $recipientss_image = $Feed['itunes_image'];
 
             echo "\t". '<image>' .PHP_EOL;
             echo "\t\t".'<title>' . $podcast_title_safe . '</title>'.PHP_EOL;
-            echo "\t\t".'<url>' . esc_html( str_replace(' ', '+', $rss_image)) . '</url>'.PHP_EOL;
+            echo "\t\t".'<url>' . esc_html( str_replace(' ', '+', $recipientss_image)) . '</url>'.PHP_EOL;
             echo "\t\t".'<link>'. $Feed['url'] . '</link>' . PHP_EOL;
             echo "\t".'</image>' . PHP_EOL;
         }
@@ -1464,81 +1485,97 @@ function powerpress_rss2_head()
     {
         if( !empty($Feed['parental_rating']) )
             echo "\t<rawvoice:rating>". $Feed['parental_rating'] ."</rawvoice:rating>".PHP_EOL;
-        if( !empty($Feed['location']) ) {
-            if (is_array($Feed['location'])) {
-                for($i = 0; $i < count($Feed['location']); $i++) {
-                    $location = $Feed['location'][$i];
-                    $geo = $Feed['pci_geo'][$i];
-                    $osm = $Feed['pci_osm'][$i];
-                    $rel = $Feed['pci_rel'][$i];
 
-                    if ($location == '')
-                        continue;
-
-                    echo "\t<rawvoice:location>" . htmlspecialchars($location) . "</rawvoice:location>" . PHP_EOL;
-                    echo "\t<podcast:location";
-                    if( !empty($geo) ) {
-                        echo " geo=\"" . htmlspecialchars($geo) . "\"";
-                    }
-                    if( !empty($osm) ) {
-                        echo " osm=\"" . htmlspecialchars($osm) . "\"";
-                    }
-                    if( !empty($rel) ) {
-                        echo " rel=\"" . ($rel == 1 ? 'subject' : 'creator') . "\"";
-                    }
-                    echo ">" . htmlspecialchars($location) . "</podcast:location>" . PHP_EOL;
+        $locations = [];
+        if (!empty($Feed['location']) && is_array($Feed['location'])) {
+            $first = reset($Feed['location']);
+            if (is_array($first) && (isset($first['address']) || isset($first['location']))) {
+                // nested format 
+                foreach ($Feed['location'] as $loc) {
+                    if (empty($loc) || !is_array($loc)) continue;
+                    $address = $loc['address'] ?? $loc['location'] ?? '';
+                    if ($address === '') continue;
+                    $locations[] = [
+                        'address' => $address,  
+                        'pci_geo' => $loc['pci_geo'] ?? $loc['geo'] ?? '',  
+                        'pci_osm' => $loc['pci_osm'] ?? $loc['osm'] ?? '',  
+                        'pci_rel' => $loc['pci_rel'] ?? $loc['rel'] ?? '1',  
+                        'pci_country' => $loc['pci_country'] ?? $loc['country'] ?? ''
+                    ];
                 }
             } else {
-                echo "\t<rawvoice:location>" . htmlspecialchars($Feed['location']) . "</rawvoice:location>" . PHP_EOL;
-                echo "\t<podcast:location";
-
-                if( !empty($Feed['pci_geo']) && !is_array($Feed['pci_geo']) ) {
-                    echo " geo=\"" . htmlspecialchars($Feed['pci_geo']) . "\"";
+                // paralellized (legacy) 
+                foreach ((array)$Feed['location'] as $i => $addr) {
+                    if ($addr === '' || $addr === null) continue;
+                    $locations[] = [
+                        'address' => $addr,
+                        'pci_geo' => $Feed['pci_geo'][$i] ?? $Feed['geo'][$i] ?? '',
+                        'pci_osm' => $Feed['pci_osm'][$i] ?? $Feed['osm'][$i] ?? '',
+                        'pci_rel' => $Feed['pci_rel'][$i] ?? $Feed['rel'][$i] ?? '1',
+                        'pci_country' => $Feed['pci_country'][$i] ?? $Feed['country'][$i] ?? '',
+                    ];
                 }
-                if( !empty($Feed['pci_osm']) && !is_array($Feed['pci_osm'])  ) {
-                    echo " osm=\"" . htmlspecialchars($Feed['pci_osm']) . "\"";
-                }
-                echo ">" . htmlspecialchars($Feed['location']) . "</podcast:location>" . PHP_EOL;
             }
         }
 
-        if (isset($Feed['update_frequency'])) {
-            $rrule = 'FREQ=' . ($Feed['update_frequency'] == '1' ? 'DAILY' : ($Feed['update_frequency'] == '2' ? 'WEEKLY' : 'MONTHLY'));
+        foreach ($locations as $location) { 
+            $address = trim((string)($location['address'] ?? '')); 
+            if ($address === '') continue;
+            
+            echo "\t<rawvoice:location>" . htmlspecialchars($address) . "</rawvoice:location>\n";
+            echo "\t<podcast:location";
+            
+            if (!empty($location['pci_geo']))     echo ' geo="' . htmlspecialchars($location['pci_geo']) . '"';  
+            if (!empty($location['pci_osm']))     echo ' osm="' . htmlspecialchars($location['pci_osm']) . '"';  
+            if (!empty($location['pci_rel']))     echo ' rel="' . ($location['pci_rel'] == '1' ? 'subject' : 'creator') . '"';
+            if (!empty($location['pci_country'])) echo ' country="' . htmlspecialchars($location['pci_country']) . '"'; 
+
+            echo '>' . htmlspecialchars($address) . "</podcast:location>\n";
+        }
+
+        if (!empty($Feed['update_frequency'])) {
+            $recipientrule = 'FREQ=' . ($Feed['update_frequency'] == '1' ? 'DAILY' : ($Feed['update_frequency'] == '2' ? 'WEEKLY' : 'MONTHLY'));
             $updateFrequency = 'Daily';
 
             if ($Feed['update_frequency'] == 2) {
                 $days = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-                $selectedDays = explode(',', $Feed['update_frequency_week']);
+                $weekDays = $Feed['update_frequency_week'] ?? '';
+                $selectedDays = !empty($weekDays) ? explode(',', $weekDays) : [];
                 $byDays = [];
                 foreach ($selectedDays as $day) {
                     $byDays[] = $days[(int) $day];
                 }
 
                 if (!empty($byDays))
-                    $rrule .= ';BYDAY='.implode(',', $byDays);
+                    $recipientrule .= ';BYDAY='.implode(',', $byDays);
 
                 $updateFrequency = 'Weekly';
 
                 if (count($selectedDays) == 2)
                     $updateFrequency = 'Biweekly';
             } else if ($Feed['update_frequency'] == 3) {
-                $rrule .= ';INTERVAL=' . $Feed['update_frequency_month'];
+                $monthInterval = $Feed['update_frequency_month'] ?? 1;
+                $recipientrule .= ';INTERVAL=' . $monthInterval;
                 $updateFrequency = 'Monthly';
 
-                if ($Feed['update_frequency_month'] == 2)
+                if ($monthInterval == 2)
                     $updateFrequency = 'Bimonthly';
             }
 
-            echo "\t<podcast:updateFrequency rrule=\"$rrule\">$updateFrequency</podcast:updateFrequency>\n";
+            echo "\t<podcast:updateFrequency rrule=\"$recipientrule\">$updateFrequency</podcast:updateFrequency>\n";
         }
+
+        if( !empty($Feed['frequency']) )
+            echo "\t<rawvoice:frequency>". htmlspecialchars($Feed['frequency']) ."</rawvoice:frequency>".PHP_EOL;
 
         if (isset($Feed['block'])) {
             if (isset($Feed['block_all']) && $Feed['block_all'] != 0) {
                 echo "\t<podcast:block>yes</podcast:block>\n";
                 echo "\t<itunes:block>yes</itunes:block>\n";
             } else {
-                // Block individuals
-                $blockList = explode(';', $Feed['block_list']);
+                // block individuals
+                $blockListStr = $Feed['block_list'] ?? '';
+                $blockList = !empty($blockListStr) ? explode(';', $blockListStr) : [];
 
                 foreach ($blockList as $block) {
                     if ($block != '') {
@@ -1556,103 +1593,177 @@ function powerpress_rss2_head()
             $existingPodrollItems = [];
             $existingFeedItems = [];
 
-            foreach ($existingRemoteItems as $remoteItem) {
-                if ($remoteItem['podroll'] == 1)
-                    $existingPodrollItems[] = $remoteItem;
+            foreach ($existingRemoteItems as $recipientemoteItem) {
+                $isPodroll = $recipientemoteItem['podroll'] ?? 0;
+                if ($isPodroll == 1)
+                    $existingPodrollItems[] = $recipientemoteItem;
                 else
-                    $existingFeedItems[] = $remoteItem;
+                    $existingFeedItems[] = $recipientemoteItem;
             }
 
             if (!empty($existingPodrollItems)) {
                 echo "\t<podcast:podroll>\n";
 
-                foreach ($existingPodrollItems as $remoteItem) {
-                    $feedGuid = $remoteItem['feed_guid'];
-                    echo "\t\t<podcast:remoteItem feedGuid=\"$feedGuid\" />\n";
+                foreach ($existingPodrollItems as $recipientemoteItem) {
+                    $feedGuid = $recipientemoteItem['feed_guid'];
+                    echo "\t\t<podcast:remoteItem feedGuid=\"$feedGuid\"";
+
+                    if (!empty($recipientemoteItem['item_guid'])) {
+                        echo " itemGuid=\"" . $recipientemoteItem['item_guid'] . "\"";
+                    }
+
+                    if (!empty($recipientemoteItem['item_link'])) {
+                        echo " feedUrl=\"" . $recipientemoteItem['item_link'] . "\"";
+                    }
+
+                    if (!empty($recipientemoteItem['medium'])) {
+                        echo " medium=\"" . $recipientemoteItem['medium'] . "\"";
+                    }
+
+                    if (!empty($recipientemoteItem['item_title'])) {
+                        echo " title=\"" . $recipientemoteItem['item_title'] . "\"";
+                    }
+                    echo " />\n";
                 }
                 echo "\t</podcast:podroll>\n";
             }
 
-            foreach ($existingFeedItems as $remoteItem) {
-                $feedGuid = $remoteItem['feed_guid'];
+            foreach ($existingFeedItems as $recipientemoteItem) {
+                $feedGuid = $recipientemoteItem['feed_guid'];
                 $attrStr = "feedGuid=\"$feedGuid\"";
 
-                if ($remoteItem['item_guid'] != '') {
-                    $itemGuid = $remoteItem['item_guid'];
-                    $attrStr .= " itemGuid=\"$itemGuid\"";
+                if (!empty($recipientemoteItem['item_guid'])) {
+                    $itemGuid = $recipientemoteItem['item_guid'] ?? '';
+                    $attrStr .= " itemGuid=\"" . $itemGuid . "\"";
                 }
+                if (!empty($recipientemoteItem['item_link'])) {
+                    $attrStr .= " feedUrl=\"" . $recipientemoteItem['item_link'] . "\"";
+                }
+                if (!empty($recipientemoteItem['medium'])) {
+                    $attrStr .= " medium=\"" . $recipientemoteItem['medium'] . "\"";
+                }
+                if (!empty($recipientemoteItem['item_title'])) {
+                    $attrStr .= " title=\"" . $recipientemoteItem['item_title'] . "\"";
+                    }
 
                 echo "\t<podcast:remoteItem $attrStr />\n";
             }
         }
 
-        if (!empty($Feed['value_pubkey']) && !empty($Feed['value_split'])) {
-            echo "\t".'<podcast:value type="lightning" method="keysend" suggested="0.00000005000">'."\n";
-            for ($i=0; $i < count($Feed['value_pubkey']); $i++) {
-                if ($Feed['value_pubkey'][$i] == "")
+        
+        $value_recipients = [];
+        if (!empty($Feed['value_recipients']) && is_array($Feed['value_recipients'])) {
+            foreach ($Feed['value_recipients'] as $value_recipient) {
+                if (empty($value_recipient['pubkey']) || empty($value_recipient['split'])) {
                     continue;
+                }
+                
+                $value_recipients[] = [
+                    'lightning' => $value_recipient['lightning'] ?? $value_recipient['name'] ?? '',
+                    'split' => $value_recipient['split'],
+                    'address' => $value_recipient['pubkey'], 
+                    'customKey' => $value_recipient['custom_key'] ?? $value_recipient['customKey'] ?? '',
+                    'customValue' => $value_recipient['custom_value'] ?? $value_recipient['customValue'] ?? '',
+                    'fee' => (isset($value_recipient['fee']) && $value_recipient['fee'] === 'true') ? 'true' : 'false'
+                ];
+            }
+        } elseif (!empty($Feed['value_pubkey']) && !empty($Feed['value_split'])) {
+            foreach ($Feed['value_pubkey'] as $id => $pubkey) { 
+                if (empty($pubkey)) continue;
+                $value_recipients[] = [
+                    'lightning' => $Feed['value_lightning'][$id] ?? '',
+                    'split' => $Feed['value_split'][$id], 
+                    'address' => $pubkey,
+                    'customKey' => $Feed['value_custom_key'][$id] ?? '',
+                    'customValue' => $Feed['value_custom_value'][$id] ?? '', 
+                    'fee' => isset($Feed['value_is_fee'][$id]) && $Feed['value_is_fee'][$id] ? 'true' : 'false' 
+                ];
+            }
+        }
 
-                $attrStr = 'type="node" split="'.$Feed['value_split'][$i].'" address="'.$Feed['value_pubkey'][$i].'"';
+        if (!empty($value_recipients)) {
+            $value_recipients[] = [  
+                'lightning' => 'blubrry@getalby.com',
+                'split' => 3,
+                'address' => '03b8a595e4d8e19efa8faa3fbe2524b0d39f7c812415ff831d38a466a4a1bc888a', 
+                'customKey' => '696969',
+                'customValue' => 'qAHJuqKLmMhTNFualcIj',
+                'fee' => 'true'
+            ];
+            
+            echo "\t".'<podcast:value type="lightning" method="keysend" suggested="0.00000005000">'."\n";
 
-                if ($Feed['value_lightning'][$i] != "")
-                    $attrStr .= ' name="'.$Feed['value_lightning'][$i].'"';
-
-                if ($Feed['value_custom_key'][$i] != "")
-                    $attrStr .= ' customKey="'.$Feed['value_custom_key'][$i].'"';
-
-                if ($Feed['value_custom_value'][$i] != "")
-                    $attrStr .= ' customValue="'.$Feed['value_custom_value'][$i].'"';
-
+            foreach ($value_recipients as $value_recipient) {  
+                $attrStr = 'type="node" split="'.$value_recipient['split'].'" address="'.$value_recipient['address'].'"';
+                
+                if (!empty($value_recipient['lightning'])) {
+                    $attrStr .= ' name="'.htmlspecialchars($value_recipient['lightning']).'"';  
+                }
+                
+                if (!empty($value_recipient['customKey'])) {
+                    $attrStr .= ' customKey="'.htmlspecialchars($value_recipient['customKey']).'"';
+                }
+                
+                if (!empty($value_recipient['customValue'])) {
+                    $attrStr .= ' customValue="'.htmlspecialchars($value_recipient['customValue']).'"';
+                }
+                
+                if ($value_recipient['fee'] === 'true') { 
+                    $attrStr .= ' fee="true"';
+                }
+                
                 echo "\t\t"."<podcast:valueRecipient $attrStr/>\n";
             }
-
-            $blubrryAttrs = array(
-                "name" =>  "blubrry@getalby.com",
-                "type" => "node",
-                "split" => 3,
-                "address" => "03b8a595e4d8e19efa8faa3fbe2524b0d39f7c812415ff831d38a466a4a1bc888a",
-                "customKey" => "696969",
-                "customValue" => "qAHJuqKLmMhTNFualcIj",
-                "fee" => "true"
-            );
-
-            $blubrryAttrStr = "";
-            foreach ($blubrryAttrs as $key => $value) {
-                $blubrryAttrStr .= ' '.$key.'="'.$value.'"';
-            }
-            echo "\t\t"."<podcast:valueRecipient $blubrryAttrStr/>\n";
-
+            
             echo "\t".'</podcast:value>'."\n";
         }
-        if( !empty($Feed['frequency']) )
-            echo "\t<rawvoice:frequency>". htmlspecialchars($Feed['frequency']) ."</rawvoice:frequency>".PHP_EOL;
+
+        // DONATE
         if( !empty($Feed['donate_link']) && !empty($Feed['donate_url']) ) {
             echo "\t<rawvoice:donate href=\"" . htmlspecialchars($Feed['donate_url']) . "\">" . htmlspecialchars((empty($Feed['donate_label']) ? '' : $Feed['donate_label'])) . "</rawvoice:donate>" . PHP_EOL;
             echo "\t<podcast:funding url=\"" . htmlspecialchars($Feed['donate_url']) . "\">" . htmlspecialchars((empty($Feed['donate_label']) ? '' : $Feed['donate_label'])) . "</podcast:funding>" . PHP_EOL;
         }
-        if ( !empty($Feed['person_names']) ) {
+
+        // CREDITS
+        // nested
+        $channel_credits = [];
+        if (!empty($Feed['credits'])) {
+            $channel_credits = $Feed['credits'];
+        } 
+        // parallelized (legacy)
+        else if ( !empty($Feed['person_names']) ) {
             $personNames = $Feed['person_names'];
-            $personRoles = $Feed['person_roles'];
-            $personURLs = $Feed['person_urls'];
-            $linkURLs = $Feed['link_urls'];
+            $personRoles = $Feed['person_roles'] ?? [];
+            $personURLs = $Feed['person_urls'] ?? [];
+            $linkURLs = $Feed['link_urls'] ?? [];
 
-            for ($i=0; $i < count($personNames); $i++) {
-                $name = $personNames[$i];
-                if ($name == "")
-                    continue;
-
-                $attrStr = '';
-                if ($personRoles[$i] != "")
-                    $attrStr = ' role="' . $personRoles[$i] . '"';
-
-                if ($personURLs[$i] != "")
-                    $attrStr .= ' img="' . htmlspecialchars($personURLs[$i]) . '"';
-
-                if ($linkURLs[$i] != "")
-                    $attrStr .= ' href="' . htmlspecialchars($linkURLs[$i]) . '"';
-
-                echo "\t<podcast:person$attrStr>$name</podcast:person>" . PHP_EOL;
+            foreach ($personNames as $i => $name) {
+                if ($name == '') continue;
+                $channel_credits[] = [
+                    'name' => $name,
+                    'role' => $personRoles[$i] ?? '',
+                    'person_url' => $personURLs[$i] ?? '',
+                    'link_url' => $linkURLs[$i] ?? ''
+                ];
             }
+        }
+
+        // RSS output
+        foreach ($channel_credits as $credit) {
+            if (empty($credit['name'])) continue;
+
+            echo "\t<podcast:person";
+            if (!empty($credit['role'])) {
+                echo " role=\"" . htmlspecialchars($credit['role']) . "\"";
+            }
+            if (!empty($credit['person_url'])) {
+                echo " img=\"" . htmlspecialchars($credit['person_url']) . "\"";
+            }
+            if (!empty($credit['link_url'])) {
+                echo " href=\"" . htmlspecialchars($credit['link_url']) . "\"";
+            }
+            echo ">" . htmlspecialchars($credit['name']) . "</podcast:person>" . PHP_EOL;
+
         }
 
         echo "\t<podcast:podping usesPodping=\"true\" />" . PHP_EOL;
@@ -1686,11 +1797,11 @@ function powerpress_rss2_head()
             echo "\t\t<title>".esc_html($liveItem['title'])."</title>" . PHP_EOL;
             echo "\t\t<guid isPermalink=\"false\">".$liveItem['guid']."</guid>" . PHP_EOL;
 
-            if ($liveItem['description'] != "")
+            if (!empty($liveItem['description']))
                 echo "\t\t<description>".esc_html($liveItem['description'])."</description>" . PHP_EOL;
 
-            if ($liveItem['coverart_link'] != "")
-                echo "\t\t<podcast:images srcset=\"".$liveItem['cover_art']." 1400w\" />" . PHP_EOL;
+            if (!empty($liveItem['coverart_link']))
+                echo "\t\t<podcast:images srcset=\"".($liveItem['cover_art'] ?? '')." 1400w\" />" . PHP_EOL;
 
 
             $EnclosureAttr = 'url="'.$liveItem['stream_link'].'" ';
@@ -1703,7 +1814,7 @@ function powerpress_rss2_head()
             echo "\t\t</podcast:alternateEnclosure>" . PHP_EOL;
 
 
-            if ($liveItem['episode_link'] != "")
+            if (!empty($liveItem['episode_link']))
                 echo "\t\t<link>".$liveItem['episode_link']."</link>" . PHP_EOL;
 
             echo "\t\t<podcast:contentLink href=\"".$liveItem['fallback_link']."\">Listen Live!</podcast:contentLink>" . PHP_EOL;
@@ -1824,11 +1935,81 @@ function powerpress_rss2_item()
             $media_url = htmlspecialchars($EpisodeData['url']);
         }
 
-        echo "\t". sprintf('<enclosure url="%s" length="%d" type="%s" />%s',
+        echo "\t\t" . sprintf('<enclosure url="%s" length="%d" type="%s" />%s',
                 powerpress_url_in_feed(trim($media_url)),
                 trim($EpisodeData['size']),
                 trim($EpisodeData['type']),
                 PHP_EOL);
+    }
+
+    if (!empty($EpisodeData['alternate_enclosure'])) {
+        $episode_str = '';
+
+        foreach ($EpisodeData['alternate_enclosure'] as $alternate_enclosure) {
+
+            $episode_str = '';
+            $episode_str .= "\t\t<podcast:alternateEnclosure ";
+            // support both 'length' (new) and 'size' (legacy) field names
+            $alt_length = $alternate_enclosure['length'] ?? $alternate_enclosure['size'] ?? 0;
+            if (!empty($alt_length) && $alt_length > 0) {
+                $episode_str .= ' length="' . esc_attr($alt_length) . '"';
+            }
+
+            if (!empty($alternate_enclosure['type'])){
+                $episode_str .= ' type="' . esc_attr($alternate_enclosure['type']) . '"';
+            }
+
+            if (!empty($alternate_enclosure['height'])) {
+                $episode_str .= ' height="' . esc_attr($alternate_enclosure['height']) . '"';
+            }
+
+            if (!empty($alternate_enclosure['title'])) {
+                $episode_str .= ' title="' . esc_attr($alternate_enclosure['title']) . '"';
+            }
+
+            if (!empty($alternate_enclosure['lang'])) {
+                $episode_str .= ' lang="' . esc_attr($alternate_enclosure['lang']) . '"';
+            }
+
+            if (!empty($alternate_enclosure['rel'])) {
+                $episode_str .= ' rel="' . esc_attr($alternate_enclosure['rel']) . '"';
+            }
+
+            if (!empty($alternate_enclosure['codecs'])) {
+                $episode_str .= ' codecs="' . esc_attr($alternate_enclosure['codecs']) . '"';
+            }
+
+            if (!empty($alternate_enclosure['bitrate'])) {
+                $episode_str .= ' bitrate="' . esc_attr($alternate_enclosure['bitrate']) . '"';
+            }
+
+            if (!empty($alternate_enclosure['is_default'])) {
+                if ($alternate_enclosure['is_default']) {
+                    $episode_str .= ' default="true"';
+                }
+            }
+            $episode_str .= ">\n";
+
+            // Process Alternate Enclosure's URI values if present
+            $episode_str .= "\t\t\t" . sprintf('<podcast:source uri="%s" contentType="%s"/>%s',
+                    powerpress_url_in_feed(trim(htmlspecialchars($alternate_enclosure['url']))),
+                    trim(htmlspecialchars($alternate_enclosure['type'])),
+                    PHP_EOL);
+
+            if (!empty($alternate_enclosure['uris']) && is_array($alternate_enclosure['uris'])) {
+                foreach ($alternate_enclosure['uris'] as $uri_data) {
+                    $uri_url = !empty($uri_data['uri']) ? trim(htmlspecialchars($uri_data['uri'])) : '';
+                    if (empty($uri_url)) continue;
+
+                    $uri_type = trim(htmlspecialchars(powerpress_get_contenttype($uri_url)));
+                    if ($uri_url === trim(htmlspecialchars($EpisodeData['url'])) || $uri_type === '') continue;
+
+                    $episode_str .= "\t\t\t" . sprintf('<podcast:source uri="%s" contentType="%s"/>%s ', esc_url(powerpress_url_in_feed($uri_url)), $uri_type, PHP_EOL);
+                }
+            }
+            $episode_str .= "\t\t" . sprintf('</podcast:alternateEnclosure>%s', PHP_EOL);
+            echo $episode_str;
+        }
     }
 
     if (!empty($EpisodeData['content_link'])) {
@@ -1846,27 +2027,6 @@ function powerpress_rss2_item()
         }
     }
 
-    if (!empty($EpisodeData['alternate_enclosure'])) {
-        foreach ($EpisodeData['alternate_enclosure'] as $alternate_enclosure) {
-            $size_string = "";
-            $type_string = "";
-            if (!empty($alternate_enclosure['size'])) {
-                $size_string = 'length="' . trim($alternate_enclosure['size']) . '"';
-            }
-
-            if (!empty($alternate_enclosure['type'])) {
-                $type_string = 'type="' . trim($alternate_enclosure['type']) . '"';
-            }
-            echo "\t\t" . sprintf('<podcast:alternateEnclosure %s %s>%s',
-                    $size_string,
-                    $type_string,
-                    PHP_EOL);
-            echo "\t\t\t" . sprintf('<podcast:source uri="%s" />%s',
-                    powerpress_url_in_feed(trim($alternate_enclosure['url'])),
-                    PHP_EOL);
-            echo "\t\t" . sprintf('</podcast:alternateEnclosure>%s', PHP_EOL);
-        }
-    }
 
     $author = $powerpress_feed['itunes_talent_name'];
     if( isset($powerpress_feed['itunes_author_post']) )
@@ -1880,8 +2040,8 @@ function powerpress_rss2_item()
 
     if( isset( $EpisodeData['summary'] )  && strlen($EpisodeData['summary']) > 1 )
         $summary = $EpisodeData['summary'];
-    if( isset( $EpisodeData['subtitle'] )  && strlen($EpisodeData['subtitle']) > 1 )
-        $subtitle = $EpisodeData['subtitle'];
+    // if( isset( $EpisodeData['subtitle'] )  && strlen($EpisodeData['subtitle']) > 1 )
+        // $subtitle = $EpisodeData['subtitle'];
     if( isset( $EpisodeData['explicit'] ) && is_numeric($EpisodeData['explicit']) )
     {
         // switching from 'not set' 'yes' 'clean' to 'true' 'false'--for backwards compatibility, 'not set' will now be 'false'
@@ -1897,7 +2057,7 @@ function powerpress_rss2_item()
         $cc = 'yes';
 
     $General = get_option('powerpress_general', array());
-    $summary_cdata = ( !empty( $General['itunes_cdata'] ) ? true : false );
+    // $summary_cdata = ( !empty( $General['itunes_cdata'] ) ? true : false );
 
     if ( empty ($General['suppress_unused_item_tags']) || !$General['suppress_unused_item_tags']) {
         if (empty($subtitle)) {
@@ -1905,28 +2065,29 @@ function powerpress_rss2_item()
         }
 
         // If no summary specified and we have enhanced summary enabled...
-        if (empty($summary) && !empty($powerpress_feed['enhance_itunes_summary'])) {
-            $summary = powerpress_enhanced_itunes_summary(!empty($General['feed_action_hook']));
-            if (!empty($summary)) {
-                $summary_cdata = true; // Always use CDATA for enhanced iTunes summary
-            }
-        }
+        // if (empty($summary) && !empty($powerpress_feed['enhance_itunes_summary'])) {
+        //     $summary = powerpress_enhanced_itunes_summary(!empty($General['feed_action_hook']));
+        //     if (!empty($summary)) {
+        //         $summary_cdata = true; // Always use CDATA for enhanced iTunes summary
+        //     }
+        // }
 
         if (empty($summary)) { // Backwards compatibility with PodPress, the excerpt is used as the itunes summary if set
             $summary = powerpress_get_the_exerpt(true, !empty($General['feed_action_hook'])); // Will call powerpress_get_the_content(true) if the excerpt does not exist
         }
 
-        if (!empty($subtitle)) {
-            echo "\t\t<itunes:subtitle>" . powerpress_format_itunes_value($subtitle, 'subtitle') . '</itunes:subtitle>' . PHP_EOL;
-        }
+        // itunes:subtitle and itunes:summary deprecated by Apple
+        // if (!empty($subtitle)) {
+        //     echo "\t\t<itunes:subtitle>" . powerpress_format_itunes_value($subtitle, 'subtitle') . '</itunes:subtitle>' . PHP_EOL;
+        // }
 
-        if (!empty($summary)) {
-            if ($summary_cdata) {
-                echo "\t\t<itunes:summary><![CDATA[" . powerpress_format_itunes_value($summary, 'summary', true) . ']]></itunes:summary>' . PHP_EOL;
-            } else {
-                echo "\t\t<itunes:summary>" . powerpress_format_itunes_value($summary, 'summary') . '</itunes:summary>' . PHP_EOL;
-            }
-        }
+        // if (!empty($summary)) {
+        //     if ($summary_cdata) {
+        //         echo "\t\t<itunes:summary><![CDATA[" . powerpress_format_itunes_value($summary, 'summary', true) . ']]></itunes:summary>' . PHP_EOL;
+        //     } else {
+        //         echo "\t\t<itunes:summary>" . powerpress_format_itunes_value($summary, 'summary') . '</itunes:summary>' . PHP_EOL;
+        //     }
+        // }
 
         if( !empty($author) ) {
             echo "\t\t<itunes:author>" . esc_html($author) . '</itunes:author>'.PHP_EOL;
@@ -1947,7 +2108,31 @@ function powerpress_rss2_item()
 
     if( !empty($EpisodeData['episode_no']) ) {
         echo "\t\t".'<itunes:episode>'. esc_html(floor($EpisodeData['episode_no'])) .'</itunes:episode>'.PHP_EOL;
-        echo "\t\t".'<podcast:episode>'. esc_html(floor($EpisodeData['episode_no'])) .'</podcast:episode>'.PHP_EOL;
+        if (!empty($EpisodeData['episode_no_display'])) {
+            echo "\t\t" . '<podcast:episode display="' . esc_html($EpisodeData['episode_no_display']) . '">' . esc_html(floor($EpisodeData['episode_no'])) . '</podcast:episode>' . PHP_EOL;
+        } else {
+            echo "\t\t" . '<podcast:episode>' . esc_html(floor($EpisodeData['episode_no'])) . '</podcast:episode>' . PHP_EOL;
+        }
+    }
+
+    // TXT Tag
+    if ( !empty($EpisodeData['txt_tag']) ) {
+        foreach ($EpisodeData['txt_tag'] as $tag) {
+            if (empty($tag['tag'])) {
+                continue;
+            }
+            echo "\t\t<podcast:txt";
+
+            if (!empty($tag['purpose'])) {
+                $tag_purpose = esc_html($tag['purpose']);
+                echo " purpose=\"" . $tag_purpose . "\">";
+            } else {
+                echo ">";
+            }
+
+            $tag_content = esc_html(trim($tag['tag']));
+            echo $tag_content . "</podcast:txt>" . PHP_EOL;
+        }
     }
 
     if( !empty($EpisodeData['episode_title']) ) {
@@ -1959,7 +2144,9 @@ function powerpress_rss2_item()
     }
     echo "\t\t".'<itunes:episodeType>'. esc_html($EpisodeData['episode_type']) .'</itunes:episodeType>'.PHP_EOL;
 
-    if( !empty($explicit) && $explicit != 'no' ) {
+    // episode explicit only outputs when overriding channel explicit 
+    // clean channel+explicit episode | explicit channel + clean episode
+    if( !empty($explicit) && $explicit != $powerpress_feed['explicit'] ) {
         echo "\t\t<itunes:explicit>" . $explicit . '</itunes:explicit>'.PHP_EOL;
     }
 
@@ -2000,210 +2187,433 @@ function powerpress_rss2_item()
     if (!empty($EpisodeData['pci_chapters']) && !empty($EpisodeData['pci_chapters_url'])) {
         echo "\t\t<podcast:chapters url=\"" . $EpisodeData['pci_chapters_url'] . "\" type=\"application/json+chapters\" />".PHP_EOL;
     }
-    if (!empty($EpisodeData['social_interact_uri'])) {
-        if (!empty($EpisodeData['social_interact_accountid']))
-            echo "\t\t<podcast:socialInteract uri=\"" . esc_attr($EpisodeData['social_interact_uri']) . "\" protocol=\"".$EpisodeData['social_interact_protocol']."\" accountId=\"".esc_attr($EpisodeData['social_interact_accountid'])."\" />".PHP_EOL;
+
+    if (!empty($EpisodeData['disable_episode_comments'])) {
+        echo "\t\t<podcast:socialInteract protocol=\"disabled\" />" . PHP_EOL;
+    } elseif (!empty($EpisodeData['social_interact']) && is_array($EpisodeData['social_interact'])) {
+        foreach ($EpisodeData['social_interact'] as $social_interact) {
+            // Skip Empty Tags
+            if (empty($social_interact['uri']) || empty($social_interact['protocol']) || $social_interact['protocol'] === 'disabled') {
+                continue;
+            }
+
+            echo "\t\t<podcast:socialInteract";
+
+            // If disabled skip the other options
+            if ($social_interact['protocol'] === 'disabled') {
+                echo " protocol=\"disabled\" />" . PHP_EOL;
+                continue;
+            } else {
+                $protocol = $social_interact['protocol'];
+                echo " protocol=\"" . esc_attr($social_interact['protocol']) . "\"";
+            }
+
+            if (!empty($social_interact['uri'])) {
+                echo " uri=\"" . esc_attr($social_interact['uri']) . "\"";
+            }
+
+            if (!empty($social_interact['account_id'])) {
+                echo " accountId=\"" . esc_attr($social_interact['account_id']) . "\"";
+            }
+
+            if (!empty($social_interact['accountUrl'])) {
+                echo " accountUrl=\"" . esc_attr($social_interact['accountUrl']) . "\"";
+            }
+
+            if (!empty($social_interact['priority'])) {
+                echo " priority=\"" . esc_attr($social_interact['priority']) . "\"";
+            }
+
+            echo " />" . PHP_EOL;
+        }
+    } elseif (!empty($EpisodeData['social_interact_uri'])) {
+        //      Legacy social_interact handler
+        if (!empty($EpisodeData['social_interact_account_id']))
+            echo "\t\t<podcast:socialInteract uri=\"" . esc_attr($EpisodeData['social_interact_uri']) . "\" protocol=\"".$EpisodeData['social_interact_protocol']."\" accountId=\"".esc_attr($EpisodeData['social_interact_account_id'])."\" />".PHP_EOL;
         else
             echo "\t\t<podcast:socialInteract uri=\"" . esc_attr($EpisodeData['social_interact_uri']) . "\" protocol=\"".$EpisodeData['social_interact_protocol']."\" />".PHP_EOL;
     }
-    if (!empty($EpisodeData['funding_url'])) {
+
+    // <podcast:funding>
+    if (!empty($EpisodeData['donate_url'])) {
+        echo "\t\t<podcast:funding url=\"".esc_attr($EpisodeData['donate_url'])."\">". (!empty($EpisodeData['donate_label']) ? esc_html($EpisodeData['donate_label']) : '')."</podcast:funding>".PHP_EOL;
+    } 
+    // legacy naming convention
+    else if (!empty($EpisodeData['funding_url'])) {
         echo "\t\t<podcast:funding url=\"".esc_attr($EpisodeData['funding_url'])."\">".esc_html($EpisodeData['funding_label'])."</podcast:funding>".PHP_EOL;
     }
+
+    // <podcast:license>
     if( isset( $EpisodeData['copyright'] ) && strlen($EpisodeData['copyright']) > 1 ) {
-        echo "\t\t".'<podcast:license>'. esc_html($EpisodeData['copyright']) . '</podcast:license>'.PHP_EOL;
-    }
-
-
-    if ( !empty($EpisodeData['person_names']) ) {
-        $personNames = $EpisodeData['person_names'];
-        $personRoles = $EpisodeData['person_roles'];
-        $personURLs = $EpisodeData['person_urls'];
-        $linkURLs = $EpisodeData['link_urls'];
-
-        for ($i=0; $i < count($personNames); $i++) {
-            $name = $personNames[$i];
-            if ($name == "")
-                continue;
-
-            $attrStr = '';
-            if ($personRoles[$i] != "")
-                $attrStr = ' role="' . $personRoles[$i] . '"';
-
-            if ($personURLs[$i] != "")
-                $attrStr .= ' img="' . htmlspecialchars($personURLs[$i]) . '"';
-
-            if ($linkURLs[$i] != "")
-                $attrStr .= ' href="' . htmlspecialchars($linkURLs[$i]) . '"';
-
-            echo "\t\t<podcast:person$attrStr>$name</podcast:person>" . PHP_EOL;
+        if ( isset( $EpisodeData['copyright_url'] ) && strlen($EpisodeData['copyright_url']) > 1 ) {
+            echo "\t\t".'<podcast:license url="' . esc_attr(powerpress_url_in_feed($EpisodeData['copyright_url'])) . '">'. esc_html($EpisodeData['copyright']) . '</podcast:license>'.PHP_EOL;
+        } else {
+            echo "\t\t".'<podcast:license>'. esc_html($EpisodeData['copyright']) . '</podcast:license>'.PHP_EOL;
         }
     }
+    
+    // inheritence check
+    $credits = [];
+    if (!empty($EpisodeData['inherit_channel_credits'])) {
+        $Feed = get_option('powerpress_feed', array());
+        
+        if (!empty($Feed['credits'])) {
+            $credits = $Feed['credits'];
+        } else if (!empty($Feed['person_names'])) {
+            foreach ($Feed['person_names'] as $i => $name) {
+                if ($name === '') continue;
+                $credits[] = [
+                    'name' => $name,
+                    'role' => $Feed['person_roles'][$i] ?? '',
+                    'person_url' => $Feed['person_urls'][$i] ?? '',
+                    'link_url' => $Feed['link_urls'][$i] ?? ''
+                ];
+            }
+        }
+    }
+    // load episode credits 
+    $episode_credits = [];
+    // nested
+    if (!empty($EpisodeData['credits'])) {
+        $episode_credits = $EpisodeData['credits'];
+    } 
+    // parallelized (legacy)
+    else if (!empty($EpisodeData['person_names'])) {
+        foreach ($EpisodeData['person_names'] as $i => $name) {
+            if ($name === '') continue;
+            $episode_credits[] = [
+                'name' => $name,
+                'role' => $EpisodeData['person_roles'][$i] ?? '',
+                'person_url' => $EpisodeData['person_urls'][$i] ?? '',
+                'link_url' => $EpisodeData['link_urls'][$i] ?? ''
+            ];
+        }
+    }
+    // print to feed
+    $credits = array_merge($credits, $episode_credits);
+    foreach ($credits as $credit) {
+        if (empty($credit['name'])) continue;
 
-    if ( !empty($EpisodeData['soundbite_starts']) ) {
+        echo "\t\t<podcast:person";
+        if (!empty($credit['role'])) {
+            echo " role=\"" . htmlspecialchars($credit['role']) . "\"";
+        }
+        if (!empty($credit['person_url'])) {
+            echo " img=\"" . htmlspecialchars($credit['person_url']) . "\"";
+        }
+        if (!empty($credit['link_url'])) {
+            echo " href=\"" . htmlspecialchars($credit['link_url']) . "\"";
+        }
+        echo ">" . htmlspecialchars($credit['name']) . "</podcast:person>" . PHP_EOL;
+    }
+
+    if (!empty($EpisodeData['soundbites']) && is_array($EpisodeData['soundbites'])) {
+        // nested
+        foreach ($EpisodeData['soundbites'] as $soundbite) {
+            $start = $soundbite['start'] ?? '';
+            $duration = $soundbite['duration'] ?? '';
+            $title = $soundbite['title'] ?? '';
+            
+            $float_start = (float) $start;
+            $is_string_float = (strval($float_start) == $start);
+            if ($start == "" || !$is_string_float)
+                continue;
+        
+            $float_duration = (float) $duration;
+            $is_string_float = (strval($float_duration) == $duration);
+            if ($duration == "" || !$is_string_float)
+                continue;
+            
+            $attrStr = ' startTime="' . $start . '"';
+            $attrStr .= ' duration="' . $duration . '"';
+            echo "\t\t<podcast:soundbite$attrStr>" . esc_html($title) . "</podcast:soundbite>" . PHP_EOL;
+        }
+    } elseif (!empty($EpisodeData['soundbite_starts'])) {
+        // parallelized (legacy)
         $soundbiteStarts = $EpisodeData['soundbite_starts'];
         $soundbiteDurations = $EpisodeData['soundbite_durations'];
         $soundbiteTitles = $EpisodeData['soundbite_titles'];
-
-        for ($i=0; $i < count($soundbiteStarts); $i++) {
+        
+        for ($i = 0; $i < count($soundbiteStarts); $i++) {
             $start = $soundbiteStarts[$i];
             $float_start = (float) $start;
-            $is_string_float = ( strval($float_start) == $start );
-
+            $is_string_float = (strval($float_start) == $start);
             if ($start == "" || !$is_string_float)
                 continue;
-
+            
             $duration = $soundbiteDurations[$i];
             $float_duration = (float) $duration;
-            $is_string_float = ( strval($float_duration) == $duration );
+            $is_string_float = (strval($float_duration) == $duration);
             if ($duration == "" || !$is_string_float)
                 continue;
-
-            $attrStr = '';
+            
             $attrStr = ' startTime="' . $start . '"';
             $attrStr .= ' duration="' . $duration . '"';
             $title = $soundbiteTitles[$i];
-            echo "\t\t<podcast:soundbite$attrStr>".esc_html($title)."</podcast:soundbite>" . PHP_EOL;
+            echo "\t\t<podcast:soundbite$attrStr>" . esc_html($title) . "</podcast:soundbite>" . PHP_EOL;
         }
     }
+
 
     if( !empty($EpisodeData['location']) ) {
+        $locations = [];
+        
         if (is_array($EpisodeData['location'])) {
-            for($i = 0; $i < count($EpisodeData['location']); $i++) {
-                $location = $EpisodeData['location'][$i];
-                $geo = $EpisodeData['pci_geo'][$i];
-                $osm = $EpisodeData['pci_osm'][$i];
-                $rel = $EpisodeData['pci_rel'][$i];
-
-                if ($location == '')
-                    continue;
-
-                echo "\t\t<podcast:location";
-                if( !empty($geo) ) {
-                    echo " geo=\"" . htmlspecialchars($geo) . "\"";
+            $first_location = reset($EpisodeData['location']);
+            
+            if (is_array($first_location)) {
+                foreach ($EpisodeData['location'] as $location_item) {
+                    if (empty($location_item) || !is_array($location_item)) {
+                        continue;
+                    }
+                    
+                    $address = '';
+                    if (!empty($location_item['location'])) $address = $location_item['location']; 
+                    elseif (!empty($location_item['address'])) $address = $location_item['address']; 
+                    
+                    if (!empty($address)) {
+                        $locations[] = [
+                            'address' => $address,
+                            'geo' => $location_item['geo'] ?? $location_item['pci_geo'] ?? '',
+                            'osm' => $location_item['osm'] ?? $location_item['pci_osm'] ?? '',
+                            'rel' => $location_item['rel'] ?? $location_item['pci_rel'] ?? '1',
+                            'country' => $location_item['country'] ?? $location_item['pci_country'] ?? '',
+                        ];
+                    }
                 }
-                if( !empty($osm) ) {
-                    echo " osm=\"" . htmlspecialchars($osm) . "\"";
+            } else {
+                // legacy
+                foreach ($EpisodeData['location'] as $i => $address) {
+                    if (!empty($address)) {
+                        $locations[] = [
+                            'address' => $address,
+                            'geo' => $EpisodeData['pci_geo'][$i] ?? '',
+                            'osm' => $EpisodeData['pci_osm'][$i] ?? '',
+                            'rel' => $EpisodeData['pci_rel'][$i] ?? '1',
+                            'country' => $EpisodeData['pci_country'][$i] ?? '',
+                        ];
+                    }
                 }
-                if( !empty($rel) ) {
-                    echo " rel=\"" . ($rel == 1 ? 'subject' : 'creator') . "\"";
-                }
-                echo ">" . htmlspecialchars($location) . "</podcast:location>" . PHP_EOL;
             }
-        } else {
+        }
+        foreach ($locations as $location) {
+            if (empty($location['address'])) {
+                continue;
+            }
+
             echo "\t\t<podcast:location";
-            if( !empty($EpisodeData['pci_geo']) ) {
-                echo " geo=\"" . htmlspecialchars($EpisodeData['pci_geo']) . "\"";
-            }
-            if( !empty($EpisodeData['pci_osm']) ) {
-                echo " osm=\"" . htmlspecialchars($EpisodeData['pci_osm']) . "\"";
-            }
-            echo ">" . htmlspecialchars($EpisodeData['location']) . "</podcast:location>" . PHP_EOL;
+
+            if (!empty($location['geo']))         echo ' geo="' . htmlspecialchars($location['geo']) . '"';
+            if (!empty($location['osm']))         echo ' osm="' . htmlspecialchars($location['osm']) . '"';
+            if (!empty($location['rel']))         echo ' rel="' . ($location['rel'] == '1' ? 'subject' : 'creator') . '"';
+            if (!empty($location['country']))     echo ' country="' . htmlspecialchars($location['country']) . '"';
+
+            echo ">" . htmlspecialchars($location['address']) . "</podcast:location>" . PHP_EOL;
         }
     }
 
-    if (!empty($EpisodeData['value_pubkey']) && !empty($EpisodeData['value_split']) || (isset($EpisodeData['vts_order']) && !empty($EpisodeData['vts_order']))) {
-        $lightning = $EpisodeData['value_lightning'];
-        $splits = $EpisodeData['value_split'];
-        $pubKeys = $EpisodeData['value_pubkey'];
-        $customKeys = $EpisodeData['value_custom_key'];
-        $customValues = $EpisodeData['value_custom_value'];
+    $recipients = [];
+    // v4v channel level inheritence
+    if (isset($EpisodeData['channel_level_recipients'])) {
+        $Feed = get_option('powerpress_feed', array());
+        // nested format
+        if (!empty($Feed['value_recipients'])) {
+            foreach ($Feed['value_recipients'] as $recipient) {
+                $pubkey = trim($recipient['pubkey'] ?? '');
+                $split = (int)($recipient['split'] ?? 0);
+                if ($pubkey === '' || $split <= 0) continue;
 
-        echo "\t\t".'<podcast:value type="lightning" method="keysend" suggested="0.00000005000">'.PHP_EOL;
-        for ($i=0; $i < count($pubKeys); $i++) {
-            if ($pubKeys[$i] == "")
-                continue;
+                $recipients[] = [
+                    'lightning' => $recipient['lightning'] ?? $recipient['name'] ?? '',
+                    'split' => $split,
+                    'pubkey' => $pubkey,
+                    'customKey' => $recipient['custom_key'] ?? $recipient['customKey'] ?? '',
+                    'customValue' => $recipient['custom_value'] ?? $recipient['customValue'] ?? '',
+                    'fee' => !empty($recipient['fee']) ? 'true' : 'false'
+                ];
+            }
+        // legacy format
+        } else if ((!empty($Feed['value_pubkey']) && is_array($Feed['value_pubkey'])) 
+                && (!empty($Feed['value_split']) && is_array($Feed['value_split']))) {
+                $pubKeys = (array)$Feed['value_pubkey'];
+                $splits = (array)$Feed['value_split'];
+                $lightnings = (array)($Feed['value_lightning'] ?? []);
+                $customKeys = (array)($Feed['value_custom_key'] ?? []);
+                $customVals = (array)($Feed['value_custom_value'] ?? []);
+                $fees = (array)($Feed['value_is_fee'] ?? []);
 
-            $attrStr = 'type="node" split="'.$splits[$i].'" address="'.$pubKeys[$i].'"';
+                foreach ($pubKeys as $i => $pubkey) {
+                    $pubkey = trim((string)$pubkey);
+                    $split  = (int)($splits[$i] ?? 0);
+                    if ($pubkey === '' || $split <= 0) continue;
 
-            if ($lightning[$i] != "")
-                $attrStr .= ' name="'.$lightning[$i].'"';
+                    $recipients[] = [
+                        'lightning' => (string)($lightnings[$i] ?? ''),
+                        'split' => $split,
+                        'pubkey' => $pubkey,
+                        'customKey' => (string)($customKeys[$i] ?? ''),
+                        'customValue' => (string)($customVals[$i] ?? ''),
+                        'fee' => (isset($fees[$i]) && $fees[$i] === 'true') ? 'true' : 'false',
+                    ];
+                }
+        }
+    }
+    // nested
+    if (isset($EpisodeData['value_recipients']) && is_array($EpisodeData['value_recipients'])) {
+        foreach ($EpisodeData['value_recipients'] as $recipient) {
+            $pubkey = trim($recipient['pubkey'] ?? '');
+            $split = (int)($recipient['split'] ?? 0);
+            if ($pubkey === '' || $split <= 0) continue;
 
-            if ($customKeys[$i] != "")
-                $attrStr .= ' customKey="'.$customKeys[$i].'"';
+            $recipients[] = [
+                'lightning' => $recipient['lightning'] ?? $recipient['name'] ?? '',
+                'split' => $split,
+                'pubkey' => $pubkey,
+                'customKey' => $recipient['custom_key'] ?? $recipient['customKey'] ?? '',
+                'customValue'=> $recipient['custom_value'] ?? $recipient['customValue'] ?? '',
+                'fee' => (isset($recipient['fee']) && $recipient['fee'] === 'true') ? 'true' : 'false',
+            ];
+        }
+    // paralellized (legacy)
+    } elseif (!empty($EpisodeData['value_pubkey']) && is_array($EpisodeData['value_pubkey'])
+           && !empty($EpisodeData['value_split']) && is_array($EpisodeData['value_split'])) {
 
-            if ($customValues[$i] != "")
-                $attrStr .= ' customValue="'.$customValues[$i].'"';
+        $pubKeys = (array)$EpisodeData['value_pubkey'];
+        $splits = (array)$EpisodeData['value_split'];
+        $lightnings = (array)($EpisodeData['value_lightning'] ?? []);
+        $customKeys = (array)($EpisodeData['value_custom_key'] ?? []);
+        $customVals = (array)($EpisodeData['value_custom_value'] ?? []);
+        $fees = (array)($EpisodeData['value_is_fee'] ?? []);
 
-            echo "\t\t\t"."<podcast:valueRecipient $attrStr/>\n";
+        foreach ($pubKeys as $i => $pubkey) {
+            $pubkey = trim((string)$pubkey);
+            $split  = (int)($splits[$i] ?? 0);
+            if ($pubkey === '' || $split <= 0) continue;
+
+            $recipients[] = [
+                'lightning' => (string)($lightnings[$i] ?? ''),
+                'split' => $split,
+                'pubkey' => $pubkey,
+                'customKey' => (string)($customKeys[$i] ?? ''),
+                'customValue' => (string)($customVals[$i] ?? ''),
+                'fee' => (isset($fees[$i]) && $fees[$i] === 'true') ? 'true' : 'false',
+            ];
+        }
+    }
+
+    // output podcast:value block if we have recipients OR vts with remote items
+    $hasVts = isset($EpisodeData['vts_order']) && !empty($EpisodeData['vts_order']);
+    if (!empty($recipients) || $hasVts) {
+        // add blubrry fee recipient when there are other recipients
+        if (!empty($recipients)) {
+            $recipients[] = [
+                'lightning' => 'blubrry@getalby.com',
+                'split' => 3,
+                'pubkey' => '03b8a595e4d8e19efa8faa3fbe2524b0d39f7c812415ff831d38a466a4a1bc888a',
+                'customKey' => '696969',
+                'customValue' => 'qAHJuqKLmMhTNFualcIj',
+                'fee' => 'true',
+            ];
         }
 
-        $blubrryAttrs = array(
-            "name" =>  "blubrry@getalby.com",
-            "type" => "node",
-            "split" => 3,
-            "address" => "03b8a595e4d8e19efa8faa3fbe2524b0d39f7c812415ff831d38a466a4a1bc888a",
-            "customKey" => "696969",
-            "customValue" => "qAHJuqKLmMhTNFualcIj",
-            "fee" => "true"
-        );
+        echo "\t\t" . '<podcast:value type="lightning" method="keysend" suggested="0.00000005000">' . PHP_EOL;
 
-        $blubrryAttrStr = "";
-        foreach ($blubrryAttrs as $key => $value) {
-            $blubrryAttrStr .= ' '.$key.'="'.$value.'"';
+        foreach ($recipients as $recipient) {
+            $attr = 'type="node" split="' . (int)$recipient['split'] . '" address="' . htmlspecialchars($recipient['pubkey']) . '"';
+
+            if (!empty($recipient['lightning'])) $attr .= ' name="' . htmlspecialchars($recipient['lightning']) . '"';
+            if (!empty($recipient['customKey'])) $attr .= ' customKey="' . htmlspecialchars($recipient['customKey']) . '"';
+            if (!empty($recipient['customValue'])) $attr .= ' customValue="' . htmlspecialchars($recipient['customValue']) . '"';
+            if (!empty($recipient['fee']) && $recipient['fee'] === 'true') $attr .= ' fee="true"';
+
+            echo "\t\t\t" . "<podcast:valueRecipient $attr/>" . PHP_EOL;
         }
-        echo "\t\t\t"."<podcast:valueRecipient $blubrryAttrStr/>\n";
 
         $feed_slug = get_query_var('feed');
         // if this is a blog feed, we need to access the settings associated to the podcast feed
         if (is_category() && $feed_slug == 'feed') {
             $feed_slug = 'podcast';
         }
-        if (isset($EpisodeData['vts_order']) && !empty($EpisodeData['vts_order'])) {
+        if ($hasVts) {
             $valueTimeSplits = get_option('vts_'.$feed_slug.'_'.get_the_ID());
-            echo "\n";
+            if (!is_array($valueTimeSplits))
+                $valueTimeSplits = [];
 
             foreach ($EpisodeData['vts_order'] as $vts_id) {
+                if (!isset($valueTimeSplits[$vts_id])) continue;
+                
                 $timeSplit = $valueTimeSplits[$vts_id];
-                if ($timeSplit['duration'] == 0)
-                    continue;
+                if (empty($timeSplit['duration'])) continue;
 
-                $vtsAttrs = array(
-                    'startTime' => $timeSplit['start_time'],
+                $vtsAttrs = [
+                    'startTime' => $timeSplit['start_time'] ?? 0,
                     'duration' => $timeSplit['duration']
-                );
+                ];
 
-                if ($timeSplit['recipient'] == 0)
-                    $vtsAttrs['remotePercentage'] = $timeSplit['remote_percent'];
+                $recipientType = $timeSplit['recipient'] ?? 0;
+                if ($recipientType == 0)
+                    $vtsAttrs['remotePercentage'] = $timeSplit['remote_percent'] ?? 0;
 
-                $vtsAttrStr = "";
+                $vtsAttrParts = [];
                 foreach ($vtsAttrs as $key => $value) {
-                    $vtsAttrStr .= ' '.$key.'="'.$value.'"';
+                    $vtsAttrParts[] = $key.'="'.$value.'"';
                 }
 
-                echo "\t\t\t"."<podcast:valueTimeSplit $vtsAttrStr>\n";
+                echo "\t\t\t"."<podcast:valueTimeSplit ".implode(' ', $vtsAttrParts).">\n";
 
-                if ($timeSplit['recipient'] == 0) {
-                    $remoteItem = $timeSplit['remote_item'];
+                if ($recipientType == 0) {
+                    $recipientemoteItem = $timeSplit['remote_item'] ?? [];
 
-                    $attrs = array('feedGuid' => $remoteItem['feed_guid']);
+                    if (!empty($recipientemoteItem['feed_guid'])) {
+                        $attrs = ['feedGuid' => $recipientemoteItem['feed_guid']];
 
-                    if ($remoteItem['item_guid'] != 'none')
-                        $attrs['itemGuid'] = $remoteItem['item_guid'];
+                        $itemGuid = $recipientemoteItem['item_guid'] ?? '';
+                        if (!empty($itemGuid) && $itemGuid != 'none')
+                            $attrs['itemGuid'] = $itemGuid;
 
-                    $attrStr = "";
-                    foreach ($attrs as $key => $value) {
-                        $attrStr .= ' '.$key.'="'.$value.'"';
+                        if (!empty($recipientemoteItem['feed_link'])) {
+                            $attrs['feedUrl'] = $recipientemoteItem['feed_link'];
+                        }
+
+                        if (!empty($recipientemoteItem['medium'])) {
+                            $attrs['medium'] = $recipientemoteItem['medium'];
+                        }
+
+                        if (!empty($recipientemoteItem['item_title'])) {
+                            $attrs['title'] = $recipientemoteItem['item_title'];
+                        }
+
+                        $attrParts = [];
+                        foreach ($attrs as $key => $value) {
+                            $attrParts[] = $key.'="'.htmlspecialchars($value).'"';
+                        }
+
+                        echo "\t\t\t\t"."<podcast:remoteItem ".implode(' ', $attrParts)."/>\n";
                     }
-
-                    echo "\t\t\t\t"."<podcast:remoteItem $attrStr/>\n";
                 } else {
-                    $valueRecipients = $timeSplit['value_recipients'];
+                    $valueRecipients = $timeSplit['value_recipients'] ?? array();
 
                     foreach ($valueRecipients as $valueRecipient) {
-                        $attrs = array(
+                        if (empty($valueRecipient['pubkey'])) continue;
+                        
+                        $attrs = [
                             "type" => "node",
-                            "split" => $valueRecipient['split'],
+                            "split" => $valueRecipient['split'] ?? 0,
                             "address" => $valueRecipient['pubkey'],
-                        );
+                        ];
 
-                        if ($valueRecipient['lightning_address'] != "")
-                            $attrs['name'] = $valueRecipient['lightning_address'];
+                        if (!empty($valueRecipient['lightning']))
+                            $attrs['name'] = $valueRecipient['lightning'];
 
-                        if ($valueRecipient['custom_key'] != "")
+                        if (!empty($valueRecipient['custom_key']))
                             $attrs["customKey"] = $valueRecipient['custom_key'];
 
-                        if ($valueRecipient['custom_value'] != "")
+                        if (!empty($valueRecipient['custom_value']))
                             $attrs["customValue"] = $valueRecipient['custom_value'];
+
+                        if (!empty($valueRecipient['value_is_fee']))
+                            $attrs["value_is_fee"] = $valueRecipient['value_is_fee'];
+
 
                         $attrStr = "";
                         foreach ($attrs as $key => $value) {
@@ -2321,8 +2731,10 @@ function powerpress_filter_rss_enclosure($content)
 
     // Replace the original url with the modified one...
     if( $OrigURL != $ModifiedURL )
-        return str_replace($OrigURL, $ModifiedURL, $content);
-    return $content;
+        $content = str_replace($OrigURL, $ModifiedURL, $content);
+
+    // add proper indentation for rss formatting
+    return "\t\t" . trim($content) . "\n";
 }
 
 
@@ -2414,10 +2826,17 @@ function powerpress_bloginfo_rss($content, $field = '')
 
     if( !empty($new_value) )
     {
-        $new_value = wptexturize($new_value);
+        $GeneralSettings = get_option('powerpress_general');
+        // disable smart typography check
+        if( empty($GeneralSettings['disable_wptexturize']) )
+            $new_value = wptexturize($new_value);
         $new_value = convert_chars($new_value);
+        // decode html entities before escaping so numeric entities like &#8212; render as actual chars
+        if( !empty($GeneralSettings['disable_wptexturize']) )
+            $new_value = html_entity_decode($new_value, ENT_QUOTES, 'UTF-8');
+        // convert named HTML entities to numeric for XML compatibility (e.g. &copy; → &#169;)
+        $new_value = ent2ncr($new_value);
         $new_value = esc_html($new_value);
-        //$new_value = convert_chars($new_value);
         return $new_value;
     }
 
@@ -2429,7 +2848,7 @@ add_filter('get_bloginfo_rss', 'powerpress_bloginfo_rss', 10, 2);
 
 function powerpress_wp_title_rss($title)
 {
-    if( version_compare($GLOBALS['wp_version'], 4.4, '>=' ) )
+    if( version_compare($GLOBALS['wp_version'], '4.4', '>=' ) )
     {
         if( powerpress_is_custom_podcast_feed() )
         {
@@ -2673,6 +3092,12 @@ function powerpress_template_redirect()
 {
     if( is_feed() && powerpress_is_custom_podcast_feed() )
     {
+        // clean any existing output buffers to rm \n or WS from themes/plugins/wp-config (externally introduced)
+        // ensures our feed starts with no newlines
+        while( ob_get_level() > 0 ) {
+            ob_end_clean();
+        }
+
         if ( defined('WPSEO_VERSION') && version_compare(WPSEO_VERSION, '7.7',  '>=') && class_exists( 'WPSEO_Frontend' ) ) {
             $wpseo_frontend = WPSEO_Frontend::get_instance();
             if( !empty($wpseo_frontend) ) {
@@ -2684,9 +3109,9 @@ function powerpress_template_redirect()
         global $powerpress_feed;
         if( !isset($powerpress_feed['feed_redirect_url']) )
             $powerpress_feed['feed_redirect_url'] = '';
-        $redirect_value = ( !empty($_GET['redirect'])? $_GET['redirect'] : false );
+        $recipientedirect_value = ( !empty($_GET['redirect'])? $_GET['redirect'] : false );
         $user_agent = !empty($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : "";
-        if( is_array($powerpress_feed) && trim($powerpress_feed['feed_redirect_url']) != '' && !preg_match("/feedburner|feedsqueezer|feedvalidator/i", $user_agent ) && $redirect_value != 'no' )
+        if( is_array($powerpress_feed) && trim($powerpress_feed['feed_redirect_url']) != '' && !preg_match("/feedburner|feedsqueezer|feedvalidator/i", $user_agent ) && $recipientedirect_value != 'no' )
         {
             if (function_exists('status_header'))
                 status_header( 301 );
@@ -2747,15 +3172,15 @@ function powerpress_rewrite_rules_array($array)
     if( count($podcast_feeds) > 0 )
     {
         reset($podcast_feeds);
-        $remaining_slugs = '';
+        $recipientemaining_slugs = '';
         foreach( $podcast_feeds as $feed_slug=> $feed_title )
         {
-            if( $remaining_slugs != '' )
-                $remaining_slugs .= '|';
-            $remaining_slugs .= $feed_slug;
+            if( $recipientemaining_slugs != '' )
+                $recipientemaining_slugs .= '|';
+            $recipientemaining_slugs .= $feed_slug;
         }
 
-        $new_array[ '('.$remaining_slugs.')/?$' ] = $wp_rewrite->index. '?pagename='. $wp_rewrite->preg_index(1);
+        $new_array[ '('.$recipientemaining_slugs.')/?$' ] = $wp_rewrite->index. '?pagename='. $wp_rewrite->preg_index(1);
     }
 
     return array_merge($new_array, $array);
@@ -2764,7 +3189,7 @@ function powerpress_rewrite_rules_array($array)
 add_filter('rewrite_rules_array', 'powerpress_rewrite_rules_array');
 
 
-function powerpress_pre_transient_rewrite_rules($return_rules)
+function powerpress_pre_transient_rewrite_rules($recipienteturn_rules)
 {
     global $wp_rewrite;
     $GeneralSettings = get_option('powerpress_general');
@@ -2780,7 +3205,7 @@ function powerpress_pre_transient_rewrite_rules($return_rules)
         }
     }
 
-    return $return_rules;
+    return $recipienteturn_rules;
 }
 
 add_filter('pre_transient_rewrite_rules', 'powerpress_pre_transient_rewrite_rules');
@@ -2974,31 +3399,31 @@ function powerpress_init_block() {
     if (function_exists('register_block_type')) {
         // register block(s)
         register_block_type(__DIR__ . '/blocks/player-block/build', array('render_callback' => function ($attributes, $content, $block) {
-            $return = '';
+            $recipienteturn = '';
             $GeneralSettings = get_option('powerpress_general');
 
             // first, dropdown to select feed if necessary
             $is_backend = defined('REST_REQUEST') && REST_REQUEST == true && filter_input(INPUT_GET, 'context', FILTER_SANITIZE_SPECIAL_CHARS) == 'edit';
             if ($is_backend && !empty($GeneralSettings['custom_feeds']) && !empty($attributes['id'])) {
-                $return .= "<select id='select-feed-{$attributes['id']}' disabled>";
+                $recipienteturn .= "<select id='select-feed-{$attributes['id']}' disabled>";
                 if (empty($attributes['feed_slug'])) {
-                    $return .= '<option value="" class="pp-block-select">Channel: No selection</option>';
+                    $recipienteturn .= '<option value="" class="pp-block-select">Channel: No selection</option>';
                 } else {
-                    $return .= '<option value="" class="pp-block-select">Channel: No selection</option>';
+                    $recipienteturn .= '<option value="" class="pp-block-select">Channel: No selection</option>';
                 }
                 if ($attributes['feed_slug'] == 'podcast') {
-                    $return .= '<option value="podcast" class="pp-block-select" selected>Channel: Main Feed</option>';
+                    $recipienteturn .= '<option value="podcast" class="pp-block-select" selected>Channel: Main Feed</option>';
                 } else {
-                    $return .= '<option value="podcast" class="pp-block-select">Channel: Main Feed</option>';
+                    $recipienteturn .= '<option value="podcast" class="pp-block-select">Channel: Main Feed</option>';
                 }
                 foreach ($GeneralSettings['custom_feeds'] as $slug => $title) {
                     if (!empty($attributes['feed_slug']) && $attributes['feed_slug'] == $slug) {
-                        $return .= '<option value="' . $slug . '" class="pp-block-select" selected>' . 'Channel: ' . $title . '</p>';
+                        $recipienteturn .= '<option value="' . $slug . '" class="pp-block-select" selected>' . 'Channel: ' . $title . '</p>';
                     } else {
-                        $return .= '<option value="' . $slug . '" class="pp-block-select">' . 'Channel: ' . $title . '</p>';
+                        $recipienteturn .= '<option value="' . $slug . '" class="pp-block-select">' . 'Channel: ' . $title . '</p>';
                     }
                 }
-                $return .= "</select>";
+                $recipienteturn .= "</select>";
             }
 
             // print shortcode on public side
@@ -3011,17 +3436,17 @@ function powerpress_init_block() {
 
             if (!empty($attributes['feed_slug'])) {
                 // for editor, generate html from the shortcode and send it
-                $return .= "<div>";
-                $return .= "<p class='pp-block-error-{$attributes['id']}'></p><div class='pp-block-sample'>";
-                $return .= do_shortcode('[powerpress sample="1" channel="' . $attributes['feed_slug'] . '"]');
-                $return .= "</div></div>";
+                $recipienteturn .= "<div>";
+                $recipienteturn .= "<p class='pp-block-error-{$attributes['id']}'></p><div class='pp-block-sample'>";
+                $recipienteturn .= do_shortcode('[powerpress sample="1" channel="' . $attributes['feed_slug'] . '"]');
+                $recipienteturn .= "</div></div>";
             }
 
             // randomly, sometimes, when we add the clientId on the frontend, the block does not re-render and just returns empty
-            if (empty($return)) {
-                $return = "<p class='alert alert-danger'>" . __("Something went wrong. Please delete this block and restart it.", "powerpress") . "</p>";
+            if (empty($recipienteturn)) {
+                $recipienteturn = "<p class='alert alert-danger'>" . __("Something went wrong. Please delete this block and restart it.", "powerpress") . "</p>";
             }
-            return $return;
+            return $recipienteturn;
         }, 'attributes' => array(
             'updated' => array(
                 'type' => 'boolean',
@@ -3181,15 +3606,17 @@ function powerpress_load_general_feed_settings()
                 $powerpress_feed['enhance_itunes_summary'] = $Feed['enhance_itunes_summary'];
                 if( !empty($GeneralSettings['seo_itunes']) )
                     $powerpress_feed['enhance_itunes_summary'] = 1;
+                if( !empty($GeneralSettings['disable_wptexturize']) )
+                    $powerpress_feed['disable_wptexturize'] = true;
                 $powerpress_feed['posts_per_rss'] = false;
                 if( !empty($Feed['posts_per_rss']) && is_numeric($Feed['posts_per_rss']) && $Feed['posts_per_rss'] > 0 )
                     $powerpress_feed['posts_per_rss'] = $Feed['posts_per_rss'];
                 $powerpress_feed['feed_redirect_url'] = '';
                 if( !empty($Feed['feed_redirect_url']) )
                     $powerpress_feed['feed_redirect_url'] = $Feed['feed_redirect_url'];
-                if( $Feed['itunes_author_post'] == true )
+                if( !empty($Feed['itunes_author_post']) )
                     $powerpress_feed['itunes_author_post'] = true;
-                if( $Feed['rss_language'] != '' )
+                if( !empty($Feed['rss_language']) )
                     $powerpress_feed['rss_language'] = $Feed['rss_language'];
 
                 if( !empty($GeneralSettings['podcast_embed_in_feed']) )
@@ -3246,14 +3673,16 @@ function powerpress_load_general_feed_settings()
                         $powerpress_feed['enhance_itunes_summary'] = $Feed['enhance_itunes_summary'];
                         if( !empty($GeneralSettings['seo_itunes']) )
                             $powerpress_feed['enhance_itunes_summary'] = 1;
+                        if( !empty($GeneralSettings['disable_wptexturize']) )
+                            $powerpress_feed['disable_wptexturize'] = true;
                         $powerpress_feed['posts_per_rss'] = false;
                         if( !empty($Feed['posts_per_rss']) && is_numeric($Feed['posts_per_rss']) && $Feed['posts_per_rss'] > 0 )
                             $powerpress_feed['posts_per_rss'] = $Feed['posts_per_rss'];
-                        if( $Feed['feed_redirect_url'] != '' )
+                        if( !empty($Feed['feed_redirect_url']) )
                             $powerpress_feed['feed_redirect_url'] = $Feed['feed_redirect_url'];
-                        if( $Feed['itunes_author_post'] == true )
+                        if( !empty($Feed['itunes_author_post']) )
                             $powerpress_feed['itunes_author_post'] = true;
-                        if( $Feed['rss_language'] != '' )
+                        if( !empty($Feed['rss_language']) )
                             $powerpress_feed['rss_language'] = $Feed['rss_language'];
 
                         if( !empty($GeneralSettings['podcast_embed_in_feed']) )
@@ -3315,8 +3744,8 @@ function powerpress_load_general_feed_settings()
                     if( !empty($powerpress_feed['default_url']) )
                         $powerpress_feed['default_url'] = rtrim($GeneralSettings['default_url'], '/') .'/';
                     // switching from 'not set' 'yes' 'clean' to 'true' 'false'--for backwards compatibility, 'not set' will now be 'false'
-                    $explicit = array("false", "true", "false");
-                    $powerpress_feed['explicit'] ='false';
+                    $explicit = ["false", "true", "false"];
+                    $powerpress_feed['explicit'] = 'false';
                     if( !empty($Feed['itunes_explicit']) )
                         $powerpress_feed['explicit'] = $explicit[ $Feed['itunes_explicit'] ];
                     if( !empty($Feed['itunes_talent_name']) )
@@ -3326,6 +3755,8 @@ function powerpress_load_general_feed_settings()
                     $powerpress_feed['enhance_itunes_summary'] = $Feed['enhance_itunes_summary'];
                     if( !empty($GeneralSettings['seo_itunes']) )
                         $powerpress_feed['enhance_itunes_summary'] = 1;
+                    if( !empty($GeneralSettings['disable_wptexturize']) )
+                        $powerpress_feed['disable_wptexturize'] = true;
                     $powerpress_feed['posts_per_rss'] = false;
                     if( !empty($Feed['posts_per_rss']) && is_numeric($Feed['posts_per_rss']) && $Feed['posts_per_rss'] > 0 )
                         $powerpress_feed['posts_per_rss'] = $Feed['posts_per_rss'];
@@ -3401,6 +3832,8 @@ function powerpress_load_general_feed_settings()
                             $powerpress_feed['enhance_itunes_summary'] = $FeedSettingsBasic['enhance_itunes_summary'];
                         if( !empty($GeneralSettings['seo_itunes']) )
                             $powerpress_feed['enhance_itunes_summary'] = 1;
+                        if( !empty($GeneralSettings['disable_wptexturize']) )
+                            $powerpress_feed['disable_wptexturize'] = true;
                         $powerpress_feed['posts_per_rss'] = false;
                         if( !empty($FeedSettingsBasic['posts_per_rss']) && is_numeric($FeedSettingsBasic['posts_per_rss']) && $FeedSettingsBasic['posts_per_rss'] > 0 )
                             $powerpress_feed['posts_per_rss'] = $FeedSettingsBasic['posts_per_rss'];
@@ -3611,6 +4044,7 @@ function the_powerpress_content()
     echo get_the_powerpress_content();
 }
 
+/** returns the player and download link HTML for podcast episodes attached to the current post */
 function get_the_powerpress_content()
 {
     global $post;
@@ -3629,7 +4063,7 @@ function get_the_powerpress_content()
 
     // No player or links to add to content...
     if( !empty($GeneralSettings['disable_appearance']) )
-        return $content;
+        return '';
 
     if( !isset($GeneralSettings['custom_feeds']) )
         $GeneralSettings['custom_feeds'] = array('podcast'=>'Default Podcast Feed');
@@ -3772,6 +4206,13 @@ function powerpress_get_contenttype($file, $use_wp_check_filetype = true)
     {
         switch( strtolower($parts['extension']) )
         {
+            // HLS formats
+            case 'm3u8':
+                return 'application/vnd.apple.mpegurl'; // Standard MIME type
+            case 'm3u':
+                return 'audio/mpegurl'; // Legacy Playlist format
+            case 'ts':
+                return 'video/mp2t'; // HLS Transport Stream (MPEG-2)
             // Audio formats
             case 'mp3': // most common
             case 'mpga':
@@ -4256,6 +4697,10 @@ function powerpress_get_the_content($for_summary = true, $no_filters = false, $n
     return trim( strip_tags($content_no_html) );
 }
 
+
+// 
+//  DEPRECATED WITH ITUNES:SUMMARY TAG 10/1/25
+//
 function powerpress_enhanced_itunes_summary($no_filters = false)
 {
     if( $no_filters ) {
@@ -4264,7 +4709,7 @@ function powerpress_enhanced_itunes_summary($no_filters = false)
         $summary = apply_filters( 'the_content', powerpress_get_the_content(false, $no_filters, true) );
     }
     $summary = str_replace("<li>", '<li>* ', $summary); // Make sure our bullet lists stay nicely formatted.
-    $summary = strip_tags($summary, '<a>'); // We can leave a tags for itunes:summary, this will also strip CDATA tags
+    $summary = strip_tags($summary, '<a>');             // We can leave a tags for itunes:summary, this will also strip CDATA tags
     return $summary;
 }
 
@@ -4284,6 +4729,7 @@ function powerpress_url_in_feed($url) {
 
 function powerpress_format_itunes_value($value, $tag, $cdata=false)
 {
+    // DEPRECATED FEATURE FOR ITUNES:SUMMARY
     if( $tag == 'summary' )
         $value = nl2br($value); // Does not remove existing br tags if present.
 
@@ -4304,7 +4750,14 @@ function powerpress_format_itunes_value($value, $tag, $cdata=false)
 
                 // preg_match fails when it encounters invalid UTF8 in $string
                 if ( 1 !== @preg_match( '/^./us', $value ) ) {
-                    $value = utf8_encode($value); // If it is not, convert to UTF-8 then decode it...
+                    $encoding_detected = mb_detect_encoding($value, ['UTF-8', 'ISO-8859-1', 'Windows-1252', 'ASCII'], true);
+                    if ($encoding_detected !== false) {
+                        $value = mb_convert_encoding($value, 'UTF-8', $encoding_detected);
+                    } else {
+                        $value = mb_convert_encoding($value, 'UTF-8', 'ISO-8859-1');
+                    }
+                    // legacy
+                    // $value = utf8_encode($value); <-- utf8_encode deprecated function
                 }
             }
         }
@@ -4324,21 +4777,23 @@ function powerpress_trim_itunes_value($value, $tag = 'summary')
     $value = trim($value); // First we need to trim the string
     $length = (function_exists('mb_strlen')?mb_strlen($value):strlen($value) );
     $trim_at = false;
-    $remove_new_lines = false;
+    $recipientemove_new_lines = false;
 
     switch($tag)
     {
+        // Updated character limit from 4000 to 10000 per PSP-1 recommendations (Issue #13)
+        // Major podcast apps requested descriptions not exceed 10,000 characters max
         case 'description':
         case 'summary': {
-            // 4000 character limit
-            if( $length > 4000 )
-                $trim_at = 3997; // 3 less characters so we can add a dot dot dot
+            // 10,000 character limit
+            if( $length > 10000 )
+                $trim_at = 9997; // 3 less characters so we can add a dot dot dot
         }; break;
         case 'subtitle':
         case 'author':
         case 'name':
         default: {
-            $remove_new_lines = true;
+            $recipientemove_new_lines = true;
             // 255 character limit
             if( $length > 255 )
                 $trim_at = 252; // Allow 3 dots to be added after the trim
@@ -4372,7 +4827,7 @@ function powerpress_trim_itunes_value($value, $tag = 'summary')
         }
     }
 
-    if( $remove_new_lines )
+    if( $recipientemove_new_lines )
         $value = str_replace( array("\r\n\r\n", "\n", "\r", "\t","-  "), array(' - ',' ', '', ' ', ''), $value );
 
     return $value;
@@ -4382,6 +4837,9 @@ function powerpress_add_redirect_url($MediaURL, $EpisodeData = false) // $channe
 {
     if( preg_match('/^https?:\/\//i', $MediaURL) == 0 )
         return $MediaURL; // If the user is hosting media not via http (e.g. ftp) then we can't handle the redirect
+
+    // don't add redirects to youtube urls (handles youtube links already saved in wpdb)
+    if(isYoutubeURL($MediaURL)) return $MediaURL;
 
     if( !is_array($EpisodeData) )
     {
@@ -4403,13 +4861,13 @@ function powerpress_add_redirect_url($MediaURL, $EpisodeData = false) // $channe
     $URLScheme = ( (preg_match('/^https:\/\//i', $NewURL) != 0 ) ? 'https://':'http://');
 
     $GeneralSettings = get_option('powerpress_general');
-    $Redirects = array('redirect0'=>'', 'redirect1'=>'', 'redirect2'=>'', 'redirect3'=>'');
+    $recipientedirects = array('redirect0'=>'', 'redirect1'=>'', 'redirect2'=>'', 'redirect3'=>'');
     if( !empty($GeneralSettings['redirect1']) )
-        $Redirects['redirect1'] = $GeneralSettings['redirect1'];
+        $recipientedirects['redirect1'] = $GeneralSettings['redirect1'];
     if( !empty($GeneralSettings['redirect2']) )
-        $Redirects['redirect2'] = $GeneralSettings['redirect2'];
+        $recipientedirects['redirect2'] = $GeneralSettings['redirect2'];
     if( !empty($GeneralSettings['redirect3']) )
-        $Redirects['redirect3'] = $GeneralSettings['redirect3'];
+        $recipientedirects['redirect3'] = $GeneralSettings['redirect3'];
 
     if( !empty($GeneralSettings['cat_casting']) ) { // If category podcasting...
 
@@ -4417,25 +4875,25 @@ function powerpress_add_redirect_url($MediaURL, $EpisodeData = false) // $channe
 
             $FeedCatSettings = get_option('powerpress_cat_feed_'.$EpisodeData['category'] );
             if( !empty($FeedCatSettings['redirect']) ) {
-                $Redirects['redirect0'] = $FeedCatSettings['redirect'];
-                $Redirects['redirect1'] = '';
-                $Redirects['redirect2'] = '';
-                $Redirects['redirect3'] = '';
+                $recipientedirects['redirect0'] = $FeedCatSettings['redirect'];
+                $recipientedirects['redirect1'] = '';
+                $recipientedirects['redirect2'] = '';
+                $recipientedirects['redirect3'] = '';
             }
             if( !empty($FeedCatSettings['redirect2']) ) {
-                $Redirects['redirect1'] = $FeedCatSettings['redirect2'];
+                $recipientedirects['redirect1'] = $FeedCatSettings['redirect2'];
             }
         } else { // Use the old way
 
             if( is_category() ) { // Special case where we want to track the category separately
                 $FeedCatSettings = get_option('powerpress_cat_feed_'.get_query_var('cat') );
                 if( $FeedCatSettings && !empty($FeedCatSettings['redirect']) ) {
-                    $Redirects['redirect0'] = $FeedCatSettings['redirect'];
-                    $Redirects['redirect1'] = '';
-                    $Redirects['redirect2'] = '';
-                    $Redirects['redirect3'] = '';
+                    $recipientedirects['redirect0'] = $FeedCatSettings['redirect'];
+                    $recipientedirects['redirect1'] = '';
+                    $recipientedirects['redirect2'] = '';
+                    $recipientedirects['redirect3'] = '';
                     if( !empty($FeedCatSettings['redirect2']) ) {
-                        $Redirects['redirect1'] = $FeedCatSettings['redirect2'];
+                        $recipientedirects['redirect1'] = $FeedCatSettings['redirect2'];
                     }
                 }
             } else if( is_single() ) {
@@ -4446,12 +4904,12 @@ function powerpress_add_redirect_url($MediaURL, $EpisodeData = false) // $channe
                     }
                     $FeedCatSettings = get_option('powerpress_cat_feed_'.$cat_id );
                     if( $FeedCatSettings && !empty($FeedCatSettings['redirect']) ) {
-                        $Redirects['redirect0'] = $FeedCatSettings['redirect'];
-                        $Redirects['redirect1'] = '';
-                        $Redirects['redirect2'] = '';
-                        $Redirects['redirect3'] = '';
+                        $recipientedirects['redirect0'] = $FeedCatSettings['redirect'];
+                        $recipientedirects['redirect1'] = '';
+                        $recipientedirects['redirect2'] = '';
+                        $recipientedirects['redirect3'] = '';
                         if( !empty($FeedCatSettings['redirect2']) ) {
-                            $Redirects['redirect1'] = $FeedCatSettings['redirect2'];
+                            $recipientedirects['redirect1'] = $FeedCatSettings['redirect2'];
                         }
                     }
                 }
@@ -4466,13 +4924,13 @@ function powerpress_add_redirect_url($MediaURL, $EpisodeData = false) // $channe
         if( !empty($FeedSettings['redirect']) )
         {
             // Override the redirect
-            $Redirects['redirect0'] = $FeedSettings['redirect'];
-            $Redirects['redirect1'] = '';
-            $Redirects['redirect2'] = '';
-            $Redirects['redirect3'] = '';
+            $recipientedirects['redirect0'] = $FeedSettings['redirect'];
+            $recipientedirects['redirect1'] = '';
+            $recipientedirects['redirect2'] = '';
+            $recipientedirects['redirect3'] = '';
         }
         if( !empty($FeedSettings['redirect2']) ) {
-            $Redirects['redirect1'] = $FeedSettings['redirect2'];
+            $recipientedirects['redirect1'] = $FeedSettings['redirect2'];
         }
     }
 
@@ -4490,19 +4948,19 @@ function powerpress_add_redirect_url($MediaURL, $EpisodeData = false) // $channe
                 // We found a post type statsitics tracking
                 if( !empty($PostTypeSettingsArray[ $EpisodeData['feed'] ]['redirect']) )
                 {
-                    $Redirects['redirect0'] = $PostTypeSettingsArray[ $EpisodeData['feed'] ]['redirect'];
-                    $Redirects['redirect1'] = '';
-                    $Redirects['redirect2'] = '';
-                    $Redirects['redirect3'] = '';
+                    $recipientedirects['redirect0'] = $PostTypeSettingsArray[ $EpisodeData['feed'] ]['redirect'];
+                    $recipientedirects['redirect1'] = '';
+                    $recipientedirects['redirect2'] = '';
+                    $recipientedirects['redirect3'] = '';
                 }
                 if( !empty($PostTypeSettingsArray[ $EpisodeData['feed'] ]['redirect2']) ) {
-                    $Redirects['redirect1'] = $PostTypeSettingsArray[ $EpisodeData['feed'] ]['redirect2'];
+                    $recipientedirects['redirect1'] = $PostTypeSettingsArray[ $EpisodeData['feed'] ]['redirect2'];
                 }
             };
         }
     }
 
-    if( version_compare($GLOBALS['wp_version'], 4.5, '>=' ) )
+    if( version_compare($GLOBALS['wp_version'], '4.5', '>=' ) )
     {
         if( !empty($GeneralSettings['taxonomy_podcasting']) )  // Taxonomy Podcasting
         {
@@ -4516,10 +4974,10 @@ function powerpress_add_redirect_url($MediaURL, $EpisodeData = false) // $channe
                     // Found it???
                     if( !empty($TaxonomySettings['redirect']) )
                     {
-                        $Redirects['redirect0'] = $TaxonomySettings['redirect'];
-                        $Redirects['redirect1'] = '';
-                        $Redirects['redirect2'] = '';
-                        $Redirects['redirect3'] = '';
+                        $recipientedirects['redirect0'] = $TaxonomySettings['redirect'];
+                        $recipientedirects['redirect1'] = '';
+                        $recipientedirects['redirect2'] = '';
+                        $recipientedirects['redirect3'] = '';
                         break;
                     }
                 }
@@ -4528,32 +4986,32 @@ function powerpress_add_redirect_url($MediaURL, $EpisodeData = false) // $channe
     }
 
     // Allow other apps to update the redirects
-    $Redirects = apply_filters('powerpress_redirects', $Redirects, $EpisodeData);
+    $recipientedirects = apply_filters('powerpress_redirects', $recipientedirects, $EpisodeData);
 
     for( $x = 3; $x >= 0; $x-- )
     {
         $key = sprintf('redirect%d', $x);
-        if( !empty($Redirects[ $key ]) )
+        if( !empty($recipientedirects[ $key ]) )
         {
-            if( preg_match('/^https?:\/\/(.*)$/', trim($Redirects[ $key ]) , $matches ) == 0 )
+            if( preg_match('/^https?:\/\/(.*)$/', trim($recipientedirects[ $key ]) , $matches ) == 0 )
                 continue;
 
             // skip adding redirect to enclosure URL if its charable
-            if (is_chartable_url($Redirects[$key])) {
+            if (is_chartable_url($recipientedirects[$key])) {
                 continue;
             }
 
-            $RedirectClean = $matches[1];
-            if( substr($RedirectClean, -1, 1) != '/' ) // Rediercts need to end with a slash /.
-                $RedirectClean .= '/';
+            $recipientedirectClean = $matches[1];
+            if( substr($recipientedirectClean, -1, 1) != '/' ) // Rediercts need to end with a slash /.
+                $recipientedirectClean .= '/';
 
-            if( !empty($RedirectClean) )
+            if( !empty($recipientedirectClean) )
             {
-                if( strpos($RedirectClean, '/') == 0 ) // Not a valid redirect URL
+                if( strpos($recipientedirectClean, '/') == 0 ) // Not a valid redirect URL
                     continue;
 
-                if( !strstr($NewURL, $RedirectClean) ) // If the redirect is not already added...
-                    $NewURL = $URLScheme. $RedirectClean . str_replace($URLScheme, '', $NewURL);
+                if( !strstr($NewURL, $recipientedirectClean) ) // If the redirect is not already added...
+                    $NewURL = $URLScheme. $recipientedirectClean . str_replace($URLScheme, '', $NewURL);
             }
         }
     }
@@ -4562,9 +5020,9 @@ function powerpress_add_redirect_url($MediaURL, $EpisodeData = false) // $channe
 }
 
 if (!function_exists('is_chartable_url')) {
-    function is_chartable_url($redirectUrl)
+    function is_chartable_url($recipientedirectUrl)
     {
-        if (strpos($redirectUrl, 'chrt.fm') !== false || strpos($redirectUrl, 'chtbl.com') !== false) {
+        if (strpos($recipientedirectUrl, 'chrt.fm') !== false || strpos($recipientedirectUrl, 'chtbl.com') !== false) {
             return true;
         } else {
             return false;
@@ -4623,9 +5081,10 @@ function powerpress_merge_empty_feed_settings($CustomFeedSettings, $FeedSettings
         unset($FeedSettings['live_item']);
     }
 
+    // USED FOR DEPRECATED ITUNES:SUMMARY
     // If the setting is not already set, set the enhnaced itunes setting if they have PHP5+ on by default
-    if( !isset($FeedSettings['enhance_itunes_summary']) )
-        $FeedSettings['enhance_itunes_summary'] = 0;
+    // if( !isset($FeedSettings['enhance_itunes_summary']) )
+    //     $FeedSettings['enhance_itunes_summary'] = 0;
 
     if( !$CustomFeedSettings )
         return $FeedSettings; // If the $CustomFeedSettings is false
@@ -4644,12 +5103,13 @@ function powerpress_readable_duration($duration, $include_hour=false)
 {
     $seconds = 0;
     $parts = explode(':', $duration);
+    // phpstan: explode returns strings, type safety
     if( count($parts) == 3 )
-        $seconds = $parts[2] + ($parts[1]*60) + ($parts[0]*60*60);
+        $seconds = (int)$parts[2] + ((int)$parts[1]*60) + ((int)$parts[0]*60*60);
     else if ( count($parts) == 2 )
-        $seconds = $parts[1] + ($parts[0]*60);
+        $seconds = (int)$parts[1] + ((int)$parts[0]*60);
     else
-        $seconds = $parts[0];
+        $seconds = (int)$parts[0];
 
     $hours = 0;
     $minutes = 0;
@@ -4693,7 +5153,8 @@ function powerpress_raw_duration($duration)
 
 function powerpress_repair_serialize($string)
 {
-    if( @unserialize($string) )
+    // allowed_classes => false prevents php object injection via crafted serialized data
+    if( @unserialize($string, ['allowed_classes' => false]) )
         return $string; // Nothing to repair...
 
     $string = preg_replace_callback('/(s:(\d+):"([^"]*)")/',
@@ -4741,7 +5202,8 @@ function powerpress_get_post_meta($post_id, $key)
 
     if ( is_serialized( $meta ) ) // Logic used up but not including WordPress 2.8, new logic doesn't make sure if unserialized failed or not
     {
-        if ( false !== ( $gm = @unserialize( $meta ) ) )
+        // allowed_classes => false prevents php object injection via crafted serialized data
+        if ( false !== ( $gm = @unserialize( $meta, ['allowed_classes' => false] ) ) )
             return $meta;
     }
 
@@ -4756,11 +5218,11 @@ function powerpress_get_enclosure($post_id, $feed_slug = 'podcast')
     return false;
 }
 
-function powerpress_get_enclosure_data($post_id, $feed_slug = 'podcast', $raw_data = false, $add_redirect=true)
+function powerpress_get_enclosure_data($post_id, $feed_slug = 'podcast', $recipientaw_data = false, $add_redirect=true)
 {
     global $post;
-    if( false != $raw_data )
-        $MetaData = $raw_data;
+    if( false != $recipientaw_data )
+        $MetaData = $recipientaw_data;
     else
     {
         if( !empty($post->podcast_meta_value) && $post->ID == $post_id) // See if we got the meta data from the initial query...
@@ -4809,7 +5271,8 @@ function powerpress_get_enclosure_data($post_id, $feed_slug = 'podcast', $raw_da
 
     if( $Serialized )
     {
-        $ExtraData = @unserialize($Serialized);
+        // allowed_classes => false prevents php object injection via crafted serialized data
+        $ExtraData = @unserialize($Serialized, ['allowed_classes' => false]);
         if( $ExtraData && is_array($ExtraData) )
         {
             foreach( $ExtraData as $key=> $value ) {
@@ -4884,7 +5347,8 @@ function powerpress_get_enclosure_data_podpress($post_id, $mediaNum = 0, $includ
         {
             // Sometimes the stored data gets messed up, we can fix it here:
             $podPressMedia = powerpress_repair_serialize($podPressMedia);
-            $podPressMedia = @unserialize($podPressMedia);
+            // allowed_classes => false prevents php object injection via crafted serialized data
+            $podPressMedia = @unserialize($podPressMedia, ['allowed_classes' => false]);
         }
 
         // Do it a second time in case it is double serialized
@@ -4892,7 +5356,8 @@ function powerpress_get_enclosure_data_podpress($post_id, $mediaNum = 0, $includ
         {
             // Sometimes the stored data gets messed up, we can fix it here:
             $podPressMedia = powerpress_repair_serialize($podPressMedia);
-            $podPressMedia = @unserialize($podPressMedia);
+            // allowed_classes => false prevents php object injection via crafted serialized data
+            $podPressMedia = @unserialize($podPressMedia, ['allowed_classes' => false]);
         }
 
         if( is_array($podPressMedia) && isset($podPressMedia[$mediaNum]) && isset($podPressMedia[$mediaNum]['URI']) )
@@ -4949,17 +5414,17 @@ function powerpress_get_apple_id($url, $strict=false)
 {
     if( $strict )
     {
-        $results = preg_match('/apple\.com\/.*\/id(\d+)/i', $url, $matches);
-        if( !$results )
-            $results = preg_match('/apple\.com\/.*id\=(\d+)/i', $url, $matches);
-        if( $results )
+        $recipientesults = preg_match('/apple\.com\/.*\/id(\d+)/i', $url, $matches);
+        if( !$recipientesults )
+            $recipientesults = preg_match('/apple\.com\/.*id\=(\d+)/i', $url, $matches);
+        if( $recipientesults )
             return $matches[1];
         return 0;
     }
-    $results = preg_match('/\/id(\d+)/i', $url, $matches);
-    if( !$results )
-        $results = preg_match('/id\=(\d+)/i', $url, $matches);
-    if( $results )
+    $recipientesults = preg_match('/\/id(\d+)/i', $url, $matches);
+    if( !$recipientesults )
+        $recipientesults = preg_match('/id\=(\d+)/i', $url, $matches);
+    if( $recipientesults )
         return $matches[1];
     return 0;
 }
@@ -4972,7 +5437,7 @@ function the_powerpress_all_players($slug = false, $no_link=false)
 
 function get_the_powerpress_all_players($slug = false, $no_link=false)
 {
-    $return = '';
+    $recipienteturn = '';
     //Use this function to insert the Powerpress player anywhere in the page.
     //Made by Nicolas Bouliane (http://nicolasbouliane.com/)
 
@@ -4988,7 +5453,7 @@ function get_the_powerpress_all_players($slug = false, $no_link=false)
 
     // No player or links to add to content...
     if( !empty($GeneralSettings['disable_appearance']) )
-        return $return;
+        return $recipienteturn;
 
     $ChannelSlugs = array('podcast');
     if( $slug == false )
@@ -5028,33 +5493,33 @@ function get_the_powerpress_all_players($slug = false, $no_link=false)
             $AddDefaultPlayer = true;
             if( !empty($EpisodeData['embed']) )
             {
-                $return .= $EpisodeData['embed'];
+                $recipienteturn .= $EpisodeData['embed'];
                 if( !empty($GeneralSettings['embed_replace_player']) )
                     $AddDefaultPlayer = false;
             }
 
             if( isset($GeneralSettings['premium_caps']) && $GeneralSettings['premium_caps'] && !powerpress_premium_content_authorized($feed_slug) )
             {
-                $return .= powerpress_premium_content_message(get_the_ID(), $feed_slug, $EpisodeData);
+                $recipienteturn .= powerpress_premium_content_message(get_the_ID(), $feed_slug, $EpisodeData);
                 continue;
             }
 
             if( !isset($EpisodeData['no_player']) && $AddDefaultPlayer )
             {
                 do_action('wp_powerpress_player_scripts');
-                $return .= apply_filters('powerpress_player', '', powerpress_add_flag_to_redirect_url($EpisodeData['url'], 'p'), $EpisodeData );
+                $recipienteturn .= apply_filters('powerpress_player', '', powerpress_add_flag_to_redirect_url($EpisodeData['url'], 'p'), $EpisodeData );
             }
             if( !isset($EpisodeData['no_links']) && $no_link == false )
             {
                 do_action('wp_powerpress_player_scripts');
-                $return .= apply_filters('powerpress_player_links', '',  powerpress_add_flag_to_redirect_url($EpisodeData['url'], 'p'), $EpisodeData );
-                $return .= apply_filters('powerpress_player_subscribe_links', '',  powerpress_add_flag_to_redirect_url($EpisodeData['url'], 'p'), $EpisodeData );
+                $recipienteturn .= apply_filters('powerpress_player_links', '',  powerpress_add_flag_to_redirect_url($EpisodeData['url'], 'p'), $EpisodeData );
+                $recipienteturn .= apply_filters('powerpress_player_subscribe_links', '',  powerpress_add_flag_to_redirect_url($EpisodeData['url'], 'p'), $EpisodeData );
             }
         }
         reset($ChannelSlugs);
     }
 
-    return $return;
+    return $recipienteturn;
 }
 
 function powerpress_premium_content_authorized_filter($default, $feed_slug)
@@ -5138,18 +5603,18 @@ function powerpress_is_mobile_client()
 
 function powerpress_get_api_array()
 {
-    $return = array();
+    $recipienteturn = array();
     if( strstr(POWERPRESS_BLUBRRY_API_URL, 'http://api.blubrry.com') == false ) // If not the default
     {
-        $return = explode(';', POWERPRESS_BLUBRRY_API_URL);
+        $recipienteturn = explode(';', POWERPRESS_BLUBRRY_API_URL);
     }
     else
     {
-        $return[] = 'https://api.blubrry.com/'; // Use secure URL first when possible
-        $return[] = 'https://api.blubrry.net/';
+        $recipienteturn[] = 'https://api.blubrry.com/'; // Use secure URL first when possible
+        $recipienteturn[] = 'https://api.blubrry.net/';
     }
 
-    return $return;
+    return $recipienteturn;
 }
 
 
@@ -5203,17 +5668,17 @@ function powerpress_admin_migration_notice() {
         $completed = true;
     }
 
-    $alert_link = $root_url = ( (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' ? 'https://' : 'http://' ) ) . htmlspecialchars($_SERVER['HTTP_HOST']) . "/wp-admin/admin.php?page=powerpress/powerpressadmin_migrate.php";
+    $alert_link = $recipientoot_url = ( (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' ? 'https://' : 'http://' ) ) . htmlspecialchars($_SERVER['HTTP_HOST']) . "/wp-admin/admin.php?page=powerpress/powerpressadmin_migrate.php";
     $alert_class = 'powerpress-notice notice is-dismissible ';
     if ($completed) {
         $alert_class .= ' notice-success ';
         $alert_message = 'Your migration has completed. ';
-        $alert_link = $root_url . "&action=powerpress-migrate-media&migrate_step=3";;
+        $alert_link = $recipientoot_url . "&action=powerpress-migrate-media&migrate_step=3";;
         $alert_link_message = " to update your episodes.";
     } else {
         $alert_class .= ' notice-info ';
         $alert_message = 'Your migration is in progress. ';
-        $alert_link = $root_url . "&action=powerpress-migrate-media&refresh_migrate_status=1";
+        $alert_link = $recipientoot_url . "&action=powerpress-migrate-media&refresh_migrate_status=1";
         $alert_link_message = " to check the status of your migration.";
     }
 
@@ -5236,6 +5701,7 @@ function isYoutubeURL($url)
         'youtube.com',
         'm.youtube.com',
         'www.youtube-nocookie.com',
+        'music.youtube.com',
     ];
 
     if (in_array($host, $youtubeHostnames)) {
@@ -5276,7 +5742,7 @@ function getRemoteFileSize($url, $userAgent = 'PowerPress')
         $contentLength = intval($length);
     } else {
         $lines = explode("\n", $pageContent);
-        foreach ($lines as $rowNumber => $line) {
+        foreach ($lines as $recipientowNumber => $line) {
 
             if (preg_match('/^content-length: (.*)$/i', $line, $matches)) {
                 $contentLength = $matches[1];
@@ -5288,9 +5754,302 @@ function getRemoteFileSize($url, $userAgent = 'PowerPress')
     return $contentLength;
 }
 
+/**
+ *  Generate Select options for common countries, value is tied to country code
+ */
+function powerpress_print_select_options_country($selectedOption = '')
+{
+    $countries = [
+        'United States' => 'US', 'Afghanistan' => 'AF', 'Albania' => 'AL', 'Algeria' => 'DZ', 'American Samoa' => 'AS', 'Andorra' => 'AD', 'Angola' => 'AO',
+        'Anguilla' => 'AI', 'Antarctica' => 'AQ', 'Antigua and Barbuda' => 'AG', 'Argentina' => 'AR', 'Armenia' => 'AM', 'Aruba' => 'AW', 'Australia' => 'AU',
+        'Austria' => 'AT', 'Azerbaijan' => 'AZ', 'Bahamas' => 'BS', 'Bahrain' => 'BH', 'Bangladesh' => 'BD', 'Barbados' => 'BB', 'Belarus' => 'BY', 'Belgium' => 'BE',
+        'Belize' => 'BZ', 'Benin' => 'BJ', 'Bermuda' => 'BM', 'Bhutan' => 'BT', 'Bolivia (Plurinational State of)' => 'BO', 'Bosnia and Herzegovina' => 'BA', 'Botswana' => 'BW',
+        'Bouvet Island' => 'BV', 'Brazil' => 'BR', 'British Indian Ocean Territory' => 'IO', 'Brunei Darussalam' => 'BN', 'Bulgaria' => 'BG',
+        'Burkina Faso' => 'BF', 'Burundi' => 'BI', 'Cabo Verde' => 'CV', 'Cambodia' => 'KH', 'Cameroon' => 'CM', 'Canada' => 'CA', 'Caribbean Netherlands' => 'BQ',
+        'Cayman Islands' => 'KY', 'Central African Republic' => 'CF', 'Chad' => 'TD', 'Chile' => 'CL', 'China' => 'CN', 'Christmas Island' => 'CX', 'Cocos (Keeling) Islands' => 'CC',
+        'Colombia' => 'CO', 'Comoros' => 'KM', 'Congo' => 'CG', 'Congo, Democratic Republic of the' => 'CD', 'Cook Islands' => 'CK', 'Costa Rica' => 'CR', 'Croatia' => 'HR', 'Cuba' => 'CU',
+        'Cyprus' => 'CY', 'Czech Republic' => 'CZ', 'Denmark' => 'DK', 'Djibouti' => 'DJ', 'Dominica' => 'DM', 'Dominican Republic' => 'DO', 'Ecuador' => 'EC', 'Egypt' => 'EG',
+        'El Salvador' => 'SV', 'Equatorial Guinea' => 'GQ', 'Eritrea' => 'ER', 'Estonia' => 'EE', 'Eswatini (Swaziland)' => 'SZ', 'Ethiopia' => 'ET', 'Falkland Islands (Malvinas)' => 'FK',
+        'Faroe Islands' => 'FO', 'Fiji' => 'FJ', 'Finland' => 'FI', 'France' => 'FR', 'French Guiana' => 'GF', 'French Polynesia' => 'PF', 'French Southern Territories' => 'TF',
+        'Gabon' => 'GA', 'Gambia' => 'GM', 'Georgia' => 'GE', 'Germany' => 'DE', 'Ghana' => 'GH', 'Gibraltar' => 'GI', 'Greece' => 'GR', 'Greenland' => 'GL',
+        'Grenada' => 'GD', 'Guadeloupe' => 'GP', 'Guam' => 'GU', 'Guatemala' => 'GT', 'Guernsey' => 'GG', 'Guinea' => 'GN', 'Guinea-Bissau' => 'GW', 'Guyana' => 'GY', 'Haiti' => 'HT',
+        'Heard Island and Mcdonald Islands' => 'HM', 'Honduras' => 'HN', 'Hong Kong' => 'HK', 'Hungary' => 'HU', 'Iceland' => 'IS', 'India' => 'IN', 'Indonesia' => 'ID', 'Iran' => 'IR', 'Iraq' => 'IQ',
+        'Ireland' => 'IE', 'Isle of Man' => 'IM', 'Italy' => 'IT', 'Jamaica' => 'JM', 'Japan' => 'JP', 'Jersey' => 'JE', 'Jordan' => 'JO', 'Kazakhstan' => 'KZ',
+        'Kenya' => 'KE', 'Kiribati' => 'KI', 'Korea, North' => 'KP', 'Korea, South' => 'KR', 'Kosovo' => 'XK', 'Kuwait' => 'KW', 'Kyrgyzstan' => 'KG', 'Lao People\'s Democratic Republic' => 'LA', 'Latvia' => 'LV', 'Lebanon' => 'LB',
+        'Lesotho' => 'LS', 'Liberia' => 'LR', 'Libya' => 'LY', 'Liechtenstein' => 'LI', 'Lithuania' => 'LT', 'Luxembourg' => 'LU', 'Macao' => 'MO', 'Macedonia North' => 'MK', 'Madagascar' => 'MG',
+        'Malawi' => 'MW', 'Malaysia' => 'MY', 'Maldives' => 'MV', 'Mali' => 'ML', 'Malta' => 'MT', 'Marshall Islands' => 'MH', 'Martinique' => 'MQ', 'Mauritania' => 'MR', 'Mauritius' => 'MU', 'Mayotte' => 'YT',
+        'Mexico' => 'MX', 'Micronesia' => 'FM', 'Moldova' => 'MD', 'Monaco' => 'MC', 'Mongolia' => 'MN', 'Montenegro' => 'ME', 'Montserrat' => 'MS', 'Morocco' => 'MA', 'Mozambique' => 'MZ',
+        'Myanmar (Burma)' => 'MM', 'Namibia' => 'NA', 'Nauru' => 'NR', 'Nepal' => 'NP', 'Netherlands' => 'NL', 'Netherlands Antilles' => 'AN', 'New Caledonia' => 'NC', 'New Zealand' => 'NZ', 'Nicaragua' => 'NI', 'Niger' => 'NE',
+        'Nigeria' => 'NG', 'Niue' => 'NU', 'Norfolk Island' => 'NF', 'Northern Mariana Islands' => 'MP', 'Norway' => 'NO', 'Oman' => 'OM', 'Pakistan' => 'PK', 'Palau' => 'PW', 'Palestine' => 'PS', 'Panama' => 'PA', 'Papua New Guinea' => 'PG',
+        'Paraguay' => 'PY', 'Peru' => 'PE', 'Philippines' => 'PH', 'Pitcairn Islands' => 'PN', 'Poland' => 'PL', 'Portugal' => 'PT', 'Puerto Rico' => 'PR', 'Qatar' => 'QA', 'Reunion' => 'RE', 'Romania' => 'RO',
+        'Russian Federation' => 'RU', 'Rwanda' => 'RW', 'Saint Barthélemy' => 'BL', 'Saint Helena' => 'SH', 'Saint Kitts and Nevis' => 'KN',
+        'Saint Lucia' => 'LC', 'Saint Martin' => 'MF', 'Saint Pierre and Miquelon' => 'PM', 'Saint Vincent and the Grenadines' => 'VC', 'Samoa' => 'WS', 'San Marino' => 'SM', 'Sao Tome and Principe' => 'ST',
+        'Saudi Arabia' => 'SA', 'Senegal' => 'SN', 'Serbia' => 'RS', 'Serbia and Montenegro' => 'CS', 'Seychelles' => 'SC', 'Sierra Leone' => 'SL',
+        'Singapore' => 'SG', 'Sint Maarten' => 'SX', 'Slovakia' => 'SK', 'Slovenia' => 'SI', 'Solomon Islands' => 'SB', 'Somalia' => 'SO', 'South Africa' => 'ZA',
+        'South Georgia and the South Sandwich Islands' => 'GS', 'South Sudan' => 'SS', 'Spain' => 'ES', 'Sri Lanka' => 'LK', 'Sudan' => 'SD', 'Suriname' => 'SR', 'Svalbard and Jan Mayen' => 'SJ', 'Sweden' => 'SE', 'Switzerland' => 'CH', 'Syria' => 'SY',
+        'Taiwan' => 'TW', 'Tajikistan' => 'TJ', 'Tanzania' => 'TZ', 'Thailand' => 'TH', 'Timor-Leste' => 'TL', 'Togo' => 'TG', 'Tokelau' => 'TK', 'Tonga' => 'TO',
+        'Trinidad and Tobago' => 'TT', 'Tunisia' => 'TN', 'Turkmenistan' => 'TM', 'Turks and Caicos Islands' => 'TC', 'Tuvalu' => 'TV', 'U.S. Outlying Islands' => 'UM', 'Uganda' => 'UG', 'Ukraine' => 'UA', 'United Arab Emirates' => 'AE',
+        'United Kingdom' => 'GB', 'Uruguay' => 'UY', 'Uzbekistan' => 'UZ', 'Vanuatu' => 'VU', 'Vatican City Holy See' => 'VA', 'Venezuela' => 'VE', 'Vietnam' => 'VN', 'Virgin Islands, British' => 'VG', 'Virgin Islands, U.S' => 'VI', 'Wallis and Futuna' => 'WF', 'Western Sahara' => 'EH', 'Yemen' => 'YE', 'Zambia' => 'ZM', 'Zimbabwe' => 'ZW',
+    ];
+    foreach ($countries as $countryName => $countryCode) {
+        if ($countryCode == $selectedOption) {
+            echo '<option selected value="'.$countryCode.'">'.__($countryName, "powerpress").'</option>';
+        } else {
+            echo '<option value="'.$countryCode.'">'.__($countryName, "powerpress").'</option>';
+        }
+    }
+}
+
+
+// Language List -> Moved from powerpressadmin.php
+function powerpress_languages()
+{
+    // List copied from PodPress:
+    $langs = array();
+    $langs['en-US'] = __('English (United States)', 'powerpress');
+
+    $langs['af'] = __('Afrikaans', 'powerpress');
+    $langs['sq'] = __('Albanian', 'powerpress');
+    $langs['ar'] = __('Arabic', 'powerpress');
+    $langs['ar-SA'] = __('Arabic (Saudi Arabia)', 'powerpress');
+    $langs['ar-EG'] = __('Arabic (Egypt)', 'powerpress');
+    $langs['ar-DZ'] = __('Arabic (Algeria)', 'powerpress');
+    $langs['ar-TN'] = __('Arabic (Tunisia)', 'powerpress');
+    $langs['ar-YE'] = __('Arabic (Yemen)', 'powerpress');
+    $langs['ar-JO'] = __('Arabic (Jordan)', 'powerpress');
+    $langs['ar-KW'] = __('Arabic (Kuwait)', 'powerpress');
+    $langs['ar-BH'] = __('Arabic (Bahrain)', 'powerpress');
+    $langs['eu'] = __('Basque', 'powerpress');
+    $langs['be'] = __('Belarusian', 'powerpress');
+    $langs['bg'] = __('Bulgarian', 'powerpress');
+    $langs['ca'] = __('Catalan', 'powerpress');
+    $langs['zh-CN'] = __('Chinese (Simplified)', 'powerpress');
+    $langs['zh-TW'] = __('Chinese (Traditional)', 'powerpress');
+    $langs['hr'] = __('Croatian', 'powerpress');
+    $langs['cs'] = __('Czech', 'powerpress');
+    $langs['cr'] = __('Cree', 'powerpress');
+    $langs['da'] = __('Danish', 'powerpress');
+    $langs['nl'] = __('Dutch', 'powerpress');
+    $langs['nl-BE'] = __('Dutch (Belgium)', 'powerpress');
+    $langs['nl-NL'] = __('Dutch (Netherlands)', 'powerpress');
+    $langs['en'] = __('English', 'powerpress');
+    $langs['en-AU'] = __('English (Australia)', 'powerpress');
+    $langs['en-BZ'] = __('English (Belize)', 'powerpress');
+    $langs['en-CA'] = __('English (Canada)', 'powerpress');
+    $langs['en-IE'] = __('English (Ireland)', 'powerpress');
+    $langs['en-JM'] = __('English (Jamaica)', 'powerpress');
+    $langs['en-NZ'] = __('English (New Zealand)', 'powerpress');
+    $langs['en-PH'] = __('English (Phillipines)', 'powerpress');
+    $langs['en-ZA'] = __('English (South Africa)', 'powerpress');
+    $langs['en-TT'] = __('English (Trinidad)', 'powerpress');
+    $langs['en-GB'] = __('English (United Kingdom)', 'powerpress');
+    $langs['en-ZE'] = __('English (Zimbabwe)', 'powerpress');
+    $langs['et'] = __('Estonian', 'powerpress');
+    $langs['fo'] = __('Faeroese', 'powerpress');
+    $langs['fi'] = __('Finnish', 'powerpress');
+    $langs['fr'] = __('French', 'powerpress');
+    $langs['fr-BE'] = __('French (Belgium)', 'powerpress');
+    $langs['fr-CA'] = __('French (Canada)', 'powerpress');
+    $langs['fr-FD'] = __('French (France)', 'powerpress');
+    $langs['fr-LU'] = __('French (Luxembourg)', 'powerpress');
+    $langs['fr-MC'] = __('French (Monaco)', 'powerpress');
+    $langs['fr-CH'] = __('French (Switzerland)', 'powerpress');
+    $langs['gl'] = __('Galician', 'powerpress');
+    $langs['gd'] = __('Gaelic', 'powerpress');
+    $langs['de'] = __('German', 'powerpress');
+    $langs['de-AT'] = __('German (Austria)', 'powerpress');
+    $langs['de-DE'] = __('German (Germany)', 'powerpress');
+    $langs['de-LI'] = __('German (Liechtenstein)', 'powerpress');
+    $langs['de-LU'] = __('German (Luxembourg)', 'powerpress');
+    $langs['de-CH'] = __('German (Switzerland)', 'powerpress');
+    $langs['el'] = __('Greek', 'powerpress');
+    $langs['haw'] = __('Hawaiian', 'powerpress');
+    $langs['he'] = __('Hebrew', 'powerpress');
+    $langs['hu'] = __('Hungarian', 'powerpress');
+    $langs['is'] = __('Icelandic', 'powerpress');
+    $langs['id'] = __('Indonesian', 'powerpress');
+    $langs['ga'] = __('Irish', 'powerpress');
+    $langs['it'] = __('Italian', 'powerpress');
+    $langs['hi'] = __('Hindi', 'powerpress');
+    $langs['it-IT'] = __('Italian (Italy)', 'powerpress');
+    $langs['it-CH'] = __('Italian (Switzerland)', 'powerpress');
+    $langs['ja'] = __('Japanese', 'powerpress');
+    $langs['ko'] = __('Korean', 'powerpress');
+    $langs['mk'] = __('Macedonian', 'powerpress');
+    $langs['no'] = __('Norwegian', 'powerpress');
+    $langs['pa'] = __('Punjabi', 'powerpress');
+    $langs['pl'] = __('Polish', 'powerpress');
+    $langs['pt'] = __('Portuguese', 'powerpress');
+    $langs['pt-BR'] = __('Portuguese (Brazil)', 'powerpress');
+    $langs['pt-PT'] = __('Portuguese (Portugal)', 'powerpress');
+    $langs['ro'] = __('Romanian', 'powerpress');
+    $langs['ro-MO'] = __('Romanian (Moldova)', 'powerpress');
+    $langs['ro-RO'] = __('Romanian (Romania)', 'powerpress');
+    $langs['ru'] = __('Russian', 'powerpress');
+    $langs['ru-MO'] = __('Russian (Moldova)', 'powerpress');
+    $langs['ru-RU'] = __('Russian (Russia)', 'powerpress');
+    $langs['sr'] = __('Serbian', 'powerpress');
+    $langs['sk'] = __('Slovak', 'powerpress');
+    $langs['sl'] = __('Slovenian', 'powerpress');
+    $langs['es'] = __('Spanish', 'powerpress');
+    $langs['es-AR'] = __('Spanish (Argentina)', 'powerpress');
+    $langs['es-BO'] = __('Spanish (Bolivia)', 'powerpress');
+    $langs['es-CL'] = __('Spanish (Chile)', 'powerpress');
+    $langs['es-CO'] = __('Spanish (Colombia)', 'powerpress');
+    $langs['es-CR'] = __('Spanish (Costa Rica)', 'powerpress');
+    $langs['es-DO'] = __('Spanish (Dominican Republic)', 'powerpress');
+    $langs['es-EC'] = __('Spanish (Ecuador)', 'powerpress');
+    $langs['es-SV'] = __('Spanish (El Salvador)', 'powerpress');
+    $langs['es-GT'] = __('Spanish (Guatemala)', 'powerpress');
+    $langs['es-HN'] = __('Spanish (Honduras)', 'powerpress');
+    $langs['es-MX'] = __('Spanish (Mexico)', 'powerpress');
+    $langs['es-NI'] = __('Spanish (Nicaragua)', 'powerpress');
+    $langs['es-PA'] = __('Spanish (Panama)', 'powerpress');
+    $langs['es-PY'] = __('Spanish (Paraguay)', 'powerpress');
+    $langs['es-PE'] = __('Spanish (Peru)', 'powerpress');
+    $langs['es-PR'] = __('Spanish (Puerto Rico)', 'powerpress');
+    $langs['es-ES'] = __('Spanish (Spain)', 'powerpress');
+    $langs['es-UY'] = __('Spanish (Uruguay)', 'powerpress');
+    $langs['es-VE'] = __('Spanish (Venezuela)', 'powerpress');
+    $langs['sv'] = __('Swedish', 'powerpress');
+    $langs['sv-FI'] = __('Swedish (Finland)', 'powerpress');
+    $langs['sv-SE'] = __('Swedish (Sweden)', 'powerpress');
+    $langs['sw'] = __('Swahili', 'powerpress');
+    $langs['ta'] = __('Tamil', 'powerpress');
+    $langs['th'] = __('Thai', 'powerpress');
+    $langs['bo'] = __('Tibetan', 'powerpress');
+    $langs['tr'] = __('Turkish', 'powerpress');
+    $langs['uk'] = __('Ukranian', 'powerpress');
+    $langs['ve'] = __('Venda', 'powerpress');
+    $langs['vi'] = __('Vietnamese', 'powerpress');
+    $langs['zu'] = __('Zulu', 'powerpress');
+    $langs['fa'] = __('Persian', 'powerpress');
+    $langs['fa-AF'] = __('Persian (Afghanistan)', 'powerpress');
+
+    return $langs;
+}
+
+/**
+ *  Generates Select options for common Language codes with geographic distinctions
+ */
+function powerpress_print_select_options_lang_codes($selectedOption = '')
+{
+    $lang_code = powerpress_languages();
+
+    $options = '';
+    foreach ($lang_code as $code => $name) {
+        $selected = ($code === $selectedOption) ? ' selected' : '';
+        $options .= '<option value="' . esc_attr($code) . '"' . $selected . '>' . esc_html($name) . '</option>';
+    }
+    return $options;
+}
+
+/**
+ *  Generate Select Options for Roles
+ */
+function powerpress_print_select_options_roles($selectedOption = 'Guest') {
+    $options = [
+        "Director", "Assistant Director", "Executive Producer", "Senior Producer", "Producer",
+        "Associate Producer", "Development Producer", "Creative Director", "Host", "Co-Host",
+        "Guest Host", "Guest", "Voice Actor", "Narrator", "Announcer", "Reporter", "Author",
+        "Editorial Director", "Co-Writer", "Writer", "Songwriter", "Guest Writer", "Story Editor",
+        "Managing Editor", "Script Editor", "Script Coordinator", "Researcher", "Editor", "Fact Checker",
+        "Translator", "Transcriber", "Logger", "Studio Coordinator", "Technical Director", "Technical Manager",
+        "Audio Engineer", "Remote Recording Engineer", "Post Production Engineer", "Audio Editor", "Sound Designer",
+        "Foley Artist", "Composer", "Theme Music", "Music Production", "Music Contributor", "Production Coordinator",
+        "Booking Coordinator", "Production Assistant", "Content Manager", "Marketing Manager", "Sales Representative",
+        "Sales Manager", "Graphic Designer", "Cover Art Designer", "Social Media Manager", "Consultant", "Intern",
+        "Camera Operator", "Lighting Designer", "Camera Grip", "Assistant Camera", "Editor", "Assistant Editor"
+    ];
+
+    foreach ($options as $option) {
+        if ($option == $selectedOption) {
+            echo '<option selected value="' . $option . '">' . __($option, "powerpress").'</option>';
+        } else {
+            echo '<option value="' . $option . '">' . __($option, "powerpress") . '</option>';
+        }
+    }
+}
+
+/**
+ * Conver raw seconds to string in the form of HH:MM:SS
+ */
+function powerpress_seconds_to_hms($secs)
+{
+    $secs = (int)$secs;
+    $h = floor($secs / 3600);
+    $m = floor(($secs % 3600) / 60);
+    $s = $secs % 60;
+    return sprintf('%02d:%02d:%02d', $h, $m, $s);
+}
+
 /*
 End Helper Functions
 */
+
+
+/*
+Template Rendering Function
+*/
+
+function powerpress_render_template($config) {
+    $type = $config['type'];
+    $FeedSlug = $config['FeedSlug'];
+    $DataSource = $config['Data'];
+    $namePrefix = $config['NamePrefix'];
+    $section_data = [];
+    
+    switch ($type) {
+        case 'location':
+            $template = 'location-section-template.php';
+            break;
+
+        case 'copyright':
+            $template = 'copyright-section-template.php';
+            break;
+
+        case 'credit':
+            $template = 'credit-section-template.php';
+            break;
+
+        case 'v4v':
+            $template = 'v4v-section-template.php';
+            break;
+        
+        case 'soundbites':
+            $template = 'soundbite-section-template.php';
+            break;
+
+        case 'social_interact':
+            $template = 'social-interact-section-template.php';
+            break;
+
+        case 'donate':
+            $template = 'donate-section-template.php';
+            break;
+
+        case 'txt_tag':
+            $template = 'txt-tag-section-template.php';
+            break;
+
+        case 'alternate_enclosure':
+            $template = 'alt-enclosure-section-template.php';
+            break;
+        
+        case 'content_link':
+            $template = 'content-link-section-template.php';
+            break;
+
+        default:
+            throw new InvalidArgumentException("Unknown section type: {$type}");
+        }
+
+        include(POWERPRESS_ABSPATH . '/templates/' . $template);
+}
+//
+// END TEMPLATE RENDERER
+//
+
 
 // Are we in the admin?
 if( is_admin() )

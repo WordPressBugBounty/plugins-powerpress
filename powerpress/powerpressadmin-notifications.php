@@ -29,7 +29,7 @@ class PowerPress_Notification {
 		$html = '<div class="powerpress-notice notice is-dismissible ' . esc_attr( $this->settings['type'] ) . '" id="powerpress-notice-'. esc_attr( $this->settings['id'] ) .'">'; 
 		$html .= wpautop( $this->settings['content'] );
 			
-		if( version_compare($GLOBALS['wp_version'], 4.2, '<' ) ) {
+		if( version_compare($GLOBALS['wp_version'], '4.2', '<' ) ) {
 			$html .= '<p>&nbsp; <a style="float:right;" href="#" class="notice-dismiss-link">'. __('Dismiss', 'powerpress') .'</a></p>';
 		}
 		$html .= '</div>' . PHP_EOL;
@@ -96,7 +96,7 @@ class PowerPress_Notification_Manager {
 	{
 		if( count($this->notifications) > 0 ) // If there are notices to print, then lets also put in the ajax to clear them
 		{
-			if( version_compare($GLOBALS['wp_version'], 4.2, '>=' ) ) {
+			if( version_compare($GLOBALS['wp_version'], '4.2', '>=' ) ) {
 ?>
 <script type="text/javascript"><!--
 

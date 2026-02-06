@@ -4,98 +4,105 @@
  *
  * @package WordPress
  */
- 
-	function powerpress_get_the_content_feed($feed_type, $no_filters = false)
-	{
-		if( $no_filters == false )
-			return get_the_content_feed($feed_type);
-	
-		if ( post_password_required() ) {
-			return __( 'There is no content because this is a protected post.' );
-		}
-		
-		global $post;
-		$content = $post->post_content;
-		if( function_exists('do_blocks') )
-			$content = do_blocks($content);
-		$content = wptexturize($content);
-		$content = wpautop($content);
-		$content = shortcode_unautop($content); // Why do we do this?
-		$content = prepend_attachment($content);
-		if( function_exists('wp_filter_content_tags') )
-			$content = wp_filter_content_tags($content);
-		
+
+function powerpress_get_the_content_feed($feed_type, $no_filters = false)
+{
+    if( $no_filters == false )
+        return get_the_content_feed($feed_type);
+
+    if ( post_password_required() ) {
+        return __( 'There is no content because this is a protected post.' );
+    }
+
+    global $post, $powerpress_feed;
+    $content = $post->post_content;
+    if( function_exists('do_blocks') )
+        $content = do_blocks($content);
+    if( empty($powerpress_feed['disable_wptexturize']) ) // disable smart typography
+        $content = wptexturize($content);
+    $content = wpautop($content);
+    $content = shortcode_unautop($content);
+    $content = prepend_attachment($content);
+    if( function_exists('wp_filter_content_tags') )
+        $content = wp_filter_content_tags($content);
+
+    $shortcodesTemp = $GLOBALS['shortcode_tags'];
+    $GLOBALS['shortcode_tags']['skipto'] = 'powerpress_shortcode_skipto';
+    $content = do_shortcode($content);
+    $GLOBALS['shortcode_tags'] = $shortcodesTemp;
+
+    $content = capital_P_dangit($content);
+
+    $content = convert_smilies($content);
+
+    $content = strip_shortcodes( $content );
+    $content = str_replace(']]>', ']]&gt;', $content);
+
+    // convert named HTML entities to numeric for XML compatibility (e.g. &copy; → &#169;)
+    $content = convert_chars( ent2ncr( $content ) );
+
+    if( function_exists('_oembed_filter_feed_content') ) // WP 4.4+
+        return ( _oembed_filter_feed_content( $content ) );
+
+	if( function_exists('wp_encode_emoji') ) // WP 4.2+
+		return wp_encode_emoji( $content );
+
+    return $content;
+}
+
+
+function powerpress_get_the_excerpt_rss($no_filters = true)
+{
+	if( $no_filters == false ) {
+		$output = get_the_excerpt();
+		return apply_filters( 'the_excerpt_rss', $output );
+	}
+
+	global $post;
+
+	if ( post_password_required() ) {
+		return __( 'There is no excerpt because this is a protected post.' );
+	}
+	$output = strip_tags($post->post_excerpt);
+	if ( $output == '') {
+		$output = $post->post_content;
 		$shortcodesTemp = $GLOBALS['shortcode_tags'];
 		$GLOBALS['shortcode_tags']['skipto'] = 'powerpress_shortcode_skipto';
-		$content = do_shortcode($content);
+		$output = do_shortcode($output);
 		$GLOBALS['shortcode_tags'] = $shortcodesTemp;
-		
-		$content = capital_P_dangit($content);
-		
-		$content = convert_smilies($content);
-		
-		$content = strip_shortcodes( $content );
-		$content = str_replace(']]>', ']]&gt;', $content);
-		
-		if( function_exists('_oembed_filter_feed_content') ) // WP 4.4+
-			return ( _oembed_filter_feed_content( $content ) );
-			
-		//if( function_exists('wp_encode_emoji') ) { // WP 4.2+
-		//	return wp_encode_emoji( $content );
-		//}
+		$output = strip_shortcodes( $output );
+		$output = str_replace(']]>', ']]&gt;', $output);
+		$output = strip_tags($output);
+	}
 
-		return $content;
-	}
- 
-	function powerpress_get_the_excerpt_rss($no_filters = true)
-	{
-		if( $no_filters == false ) {
-			$output = get_the_excerpt();
-			return apply_filters( 'the_excerpt_rss', $output );
-		}
-		
-		global $post;
-		
-		if ( post_password_required() ) {
-			return __( 'There is no excerpt because this is a protected post.' );
-		}
-		$output = strip_tags($post->post_excerpt);
-		if ( $output == '') {
-			$output = $post->post_content;
-			$shortcodesTemp = $GLOBALS['shortcode_tags'];
-			$GLOBALS['shortcode_tags']['skipto'] = 'powerpress_shortcode_skipto';
-			$output = do_shortcode($output);
-			$GLOBALS['shortcode_tags'] = $shortcodesTemp;
-			$output = strip_shortcodes( $output );
-			$output = str_replace(']]>', ']]&gt;', $output);
-			$output = strip_tags($output);
-		}
-		
-		return convert_chars( ent2ncr( $output ) );
-	}
-	
-	function powerpress_the_generator() {
-		echo '<generator>https://wordpress.org/?v=' . get_bloginfo_rss( 'version' ) . '</generator>';
-	}
-	
- 
-	$GeneralSettings = get_option('powerpress_general');
-	$iTunesOrderNumber = 0;
-	$FeaturedPodcastID = 0;
-	
-	if( !empty($GeneralSettings['new_episode_box_feature_in_itunes']) ) {
-		$iTunesFeatured = get_option('powerpress_itunes_featured');
-		$feed_slug = get_query_var('feed');
-		if( !empty($iTunesFeatured[ $feed_slug ]) )
-		{
-			if( get_post_type() == 'post' )
-			{
-				$FeaturedPodcastID = $iTunesFeatured[ $feed_slug ];
-				$GLOBALS['powerpress_feed']['itunes_feature'] = true; // So any custom order value is not used when looping through the feeds.
-				$iTunesOrderNumber = 2; // One reserved for featured episode
-			}
-		}
- }
+	return convert_chars( ent2ncr( $output ) );
+}
+
+function powerpress_the_generator() {
+	echo '<generator>https://wordpress.org/?v=' . get_bloginfo_rss( 'version' ) . '</generator>';
+}
+
+
+$GeneralSettings = get_option('powerpress_general');
+//    For Deprecated Apple Order Tag / Featured episode
+//    $iTunesOrderNumber = 0;
+//    $FeaturedPodcastID = 0;
+//
+//
+//
+//    if( !empty($GeneralSettings['new_episode_box_feature_in_itunes']) ) {
+//        $iTunesFeatured = get_option('powerpress_itunes_featured');
+//        $feed_slug = get_query_var('feed');
+//        if( !empty($iTunesFeatured[ $feed_slug ]) )
+//        {
+//            if( get_post_type() == 'post' )
+//            {
+//                $FeaturedPodcastID = $iTunesFeatured[ $feed_slug ];
+//                $GLOBALS['powerpress_feed']['itunes_feature'] = true; // So any custom order value is not used when looping through the feeds.
+//                $iTunesOrderNumber = 2; // One reserved for featured episode
+//            }
+//        }
+//    }
 
 
 
@@ -122,7 +129,7 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'."\n"; 
 	<?php do_action('rss2_ns'.$FeedActionHook); ?>
 >
 <channel>
-	<title><?php if( version_compare($GLOBALS['wp_version'], 4.4, '<' ) ) { bloginfo_rss('name'); } wp_title_rss(); ?></title>
+	<title><?php if( version_compare($GLOBALS['wp_version'], '4.4', '<' ) ) { bloginfo_rss('name'); } wp_title_rss(); ?></title>
 	<atom:link href="<?php self_link(); ?>" rel="self" type="application/rss+xml" />
 	<link><?php bloginfo_rss('url') ?></link>
 	<description><?php bloginfo_rss("description") ?></description>
@@ -173,78 +180,72 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'."\n"; 
 		the_post();
 		//else
 		//	$GLOBALS['post'] = $GLOBALS['wp_query']->next_post(); // Use this rather than the_post() that way we do not add additional queries to the database
+
 ?>
 	<item>
-		<title><?php the_title_rss() ?></title>
-		<link><?php the_permalink_rss() ?></link>
+		<title><?php the_title_rss(); ?></title>
+		<link><?php the_permalink_rss(); ?></link>
 		<pubDate><?php echo mysql2date('D, d M Y H:i:s +0000', get_post_time('Y-m-d H:i:s', true), false); ?></pubDate>
 		<guid isPermaLink="false"><?php the_guid(); ?></guid>
 <?php
-		if( empty($GLOBALS['powerpress_feed']['feed_maximizer_on']) ) // If feed maximizer off
-		{
-			
-			if( empty($GeneralSettings['feed_accel']) ) {
-		?>
-		<comments><?php comments_link_feed(); ?></comments>
-		<wfw:commentRss><?php echo esc_url( get_post_comments_feed_link(null, 'rss2') ); ?></wfw:commentRss>
-		<slash:comments><?php echo get_comments_number(); ?></slash:comments>
-<?php } // end powerpress feed comments  
+		// If feed maximizer off
+		if (empty($GLOBALS['powerpress_feed']['feed_maximizer_on'])) {
+			if (empty($GeneralSettings['feed_accel'])) {
+				// feed comments
+				echo "\t\t<comments>"; comments_link_feed(); echo "</comments>\n";
+				echo "\t\t<wfw:commentRss>" . esc_url(get_post_comments_feed_link(null, 'rss2')) . "</wfw:commentRss>\n";
+				echo "\t\t<slash:comments>" . get_comments_number() . "</slash:comments>\n";
+				// category
+				the_category_rss('rss2');
+			}
 
-	if( empty($GeneralSettings['feed_accel']) ) {
-		the_category_rss('rss2');
-	}
-				if (get_option('rss_use_excerpt')) { ?>
-		<description><?php echo powerpress_format_itunes_value( powerpress_get_the_excerpt_rss( !empty($GeneralSettings['feed_action_hook']) ), 'description' ); ?></description>
-<?php } else { // else no rss_use_excerpt ?>
-		<description><?php echo powerpress_format_itunes_value( powerpress_get_the_excerpt_rss( !empty($GeneralSettings['feed_action_hook']) ), 'description' ); ?></description>
-<?php $content = powerpress_get_the_content_feed('rss2', !empty($GeneralSettings['feed_action_hook']) ); ?>
-<?php if ( strlen( $content ) > 0 ) { ?>
-		<content:encoded><![CDATA[<?php echo $content; ?>]]></content:encoded>
-<?php } else { //  else strlen( $post->post_content ) <= 0 ?>
-		<content:encoded><![CDATA[<?php echo powerpress_get_the_excerpt_rss( !empty($GeneralSettings['feed_action_hook']) ); ?>]]></content:encoded>
-<?php 		} // end else strlen( $post->post_content ) <= 0 ?>
-<?php } // end else no rss_use_excerpt ?>
-		<?php
-		} // feed maximizer off
-		else // If feed maximizer on
-		{
-		?>
-		<description><?php echo powerpress_format_itunes_value( powerpress_get_the_excerpt_rss( !empty($GeneralSettings['feed_action_hook']) ), 'description' ); ?></description>
-		<?php
+			if (get_option('rss_use_excerpt')) {
+				echo "\t\t<description>" . powerpress_format_itunes_value(powerpress_get_the_excerpt_rss(!empty($GeneralSettings['feed_action_hook'])), 'description') . "</description>\n";
+			} else { // else no rss_use_excerpt
+				$content = powerpress_get_the_content_feed('rss2', !empty($GeneralSettings['feed_action_hook']));
+				if (strlen($content) > 0) {
+					echo "\t\t<description><![CDATA[" . rtrim($content) . "]]></description>\n";
+				} else {
+					echo "\t\t<description><![CDATA[" . rtrim(powerpress_get_the_excerpt_rss(!empty($GeneralSettings['feed_action_hook']))) . "]]></description>\n";
+				}
+			} // end else no rss_use_excerpt
 		}
-		?>
-<?php rss_enclosure(); ?>
-<?php apply_filters('rss2_item'.$FeedActionHook, ''); ?>
-	<?php
-	if( $iTunesOrderNumber > 0 )
-	{
-		echo "\t<itunes:order>";
-		if( $FeaturedPodcastID == get_the_ID() )
-		{
-			echo '1';
-			$FeaturedPodcastID = 0;
+		// If feed maximizer on
+		else {
+			echo "\t\t<description>" . powerpress_format_itunes_value(powerpress_get_the_excerpt_rss(!empty($GeneralSettings['feed_action_hook'])), 'description') . "</description>\n";
 		}
-		else // Print of 2, 3, ...
-		{
-			echo $iTunesOrderNumber;
-			$iTunesOrderNumber++;
-		}
-		echo "</itunes:order>\n";
-	}
-	
-	// Decide based on count if we want to flip on the feed maximizer...
-	$ItemCount++;
-
-	if( empty($GLOBALS['powerpress_feed']['feed_maximizer_on']) && $ItemCount >= 10 && !empty($GLOBALS['powerpress_feed']['maximize_feed']) )
-	{
-		$GLOBALS['powerpress_feed']['feed_maximizer_on'] = true; // All future items will be minimized in order to maximize episode count
-	}
-	?>
-</item>
-<?php
-    endwhile;
+		rss_enclosure();
+		apply_filters('rss2_item'.$FeedActionHook, '');
+//  itunes:order deprecated by Apple
+//
+//
+//        if( $iTunesOrderNumber > 0 )
+//        {
+//            echo "\t<itunes:order>";
+//            if( $FeaturedPodcastID == get_the_ID() )
+//            {
+//                echo '1';
+//                $FeaturedPodcastID = 0;
+//            }
+//            else // Print of 2, 3, ...
+//            {
+//                echo $iTunesOrderNumber;
+//                $iTunesOrderNumber++;
+//            }
+//            echo "</itunes:order>\n";
+//        }
+//
+//        // Decide based on count if we want to flip on the feed maximizer...
+//        $ItemCount++;
+//
+//        if( empty($GLOBALS['powerpress_feed']['feed_maximizer_on']) && $ItemCount >= 10 && !empty($GLOBALS['powerpress_feed']['maximize_feed']) )
+//        {
+//            $GLOBALS['powerpress_feed']['feed_maximizer_on'] = true; // All future items will be minimized in order to maximize episode count
+//        }
 ?>
-<?php 
+	</item>
+<?php
+    endwhile; 
 	if( !empty($FeaturedPodcastID) )
 	{
 		query_posts( array('p'=>$FeaturedPodcastID) );
@@ -265,9 +266,10 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'."\n"; 
 <?php rss_enclosure(); ?>
 	<?php do_action('rss2_item'.$FeedActionHook); ?>
 	<?php
-	echo "\t<itunes:order>";
-	echo 1;
-	echo "</itunes:order>\n";
+    // Order Deprecated - https://github.com/Podcast-Standards-Project/PSP-1-Podcast-RSS-Specification/issues/13
+	//echo "\t<itunes:order>";
+	//echo 1;
+	//echo "</itunes:order>\n";
 	?>
 	</item>
 <?php 

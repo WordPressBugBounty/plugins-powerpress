@@ -3,8 +3,8 @@ Contributors: amandato, blubrry
 Tags: podcast, apple podcasts, podcast rss feed, spotify, podcast publishing
 Requires at least: 3.6
 Requires PHP: 5.2
-Tested up to: 6.8
-Stable tag: 11.13.12
+Tested up to: 6.9
+Stable tag: 11.15.12
 Donate link: https://blubrry.com/services/podcast-hosting/
 License: GPLv2 or later
 
@@ -164,6 +164,82 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 
 
 == Changelog ==
+
+= 11.15.12 =
+* Released on 2/3/26
+* Update: Cache invalidation logic
+
+= 11.15.11 =
+* Released on 1/21/26
+* Bugfix: Security Updates
+* Bugfix: Array iteration bug causing fatal error
+
+= 11.15.10 =
+* Released on 1/9/26
+* Bugfix: Variable incorrectly reset on title save, fixed fallback
+
+= 11.15.9 = 
+* Released on 1/7/26
+* Bugfix: PHP 8 compatibility warning and error fixes
+* Bugfix: Publishing flow error display
+* Bugfix: Filename extraction logic centralized to helper
+* Bugfix: Host URL detection logic updated
+* Bugfix: Pocast Optimization section mobile styling
+* Bugfix: Non-Oauth API Endpoint fix
+* Feature: New setting to disable smart typography conversion
+
+= 11.15.8 =
+* Released on 12/23/25
+* Bugfix: Remove externally introduced WS + \n's in RSS feeds via output buffering
+* Bugfix: PHP 8 compatibility fix, added is_array() check before count() in cURL path
+* Bugfix: Destinations sync not working for basic auth users, separated destination json from api response
+* Bugfix: Manual "Set Online" in Blubrry publisher detected before publish API call
+
+= 11.15.7 =
+* Released on 12/11/25
+* Bugfix: VTS not outputting to feed when no v4v recipients are included
+* Bugfix: RSS output formatting adjustment
+
+= 11.15.6 =
+* Released on 12/9/25
+* Bugfix: Transcript + Chapter generation TypeError
+* Bugfix: Blubrry Hosting File handling error fix
+
+= 11.15.5 =
+* Released on 12/2/25
+* Bugfix: Chapters pipeline fix 
+* Bugfix: powerpress_subscribe shortcode feed url output variable typo
+* Bugfix: Alternate Enclosure template producing `blubrry_hosting does not exist` warning
+
+= 11.15.4 =
+* Released on 11/25/25
+* Bugfix: Show full Episode descriptions in podcast apps
+
+= 11.15.3 =
+* Released on 11/24/25
+* Bugfix: Fixed vsprintf call in api handler to only modify the expected string, fixes transcript generation error
+
+= 11.15.2 =
+* Released on 11/20/2025
+* Bugfix: Location as a string was not being caught in normalizer
+* Bugfix: Deletion bug in feed settings fixed by adding else clause to save flow
+
+= 11.15.1 =
+* Released on 11/19/2025
+* Bugfix for enclosure verification
+
+= 11.15 =
+* Released on 11/18/2025
+* Podcast2.0 Updates + UI overhaul of advanced tab in episode box
+
+= 11.14.1 =
+* Released on 10/29/2025
+* Bugfix for adding shows to groups in the network section
+
+= 11.14 =
+* Released on 10/21/2025
+* Security update
+
 = 11.13.12 =
 * Released on 09/03/2025
 * Security update

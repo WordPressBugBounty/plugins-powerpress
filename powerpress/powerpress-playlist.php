@@ -54,9 +54,9 @@ function powerpress_get_program_title_by_taxonomy($term_id, $taxonomy = 'categor
 				{
 					if( !empty($query_in) )
 							$query_in .= ',';
-						$query_in .= $tt_id;
+						$query_in .= intval($tt_id); // sanitize for sql
 				}
-				
+
 				if( !empty($query_in) )
 				{
 					$terms = $wpdb->get_results("SELECT term_taxonomy_id, term_id, taxonomy FROM {$wpdb->term_taxonomy} WHERE term_taxonomy_id IN ($query_in)",  ARRAY_A);

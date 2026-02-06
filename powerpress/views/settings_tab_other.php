@@ -10,7 +10,7 @@
 	if( !isset($FeedSettings['redirect2']) )
 		$FeedSettings['redirect2'] = '';
  	
-	if( !empty($FeedAttribs['type']) && ( ($FeedAttribs['type'] == 'ttid' && version_compare($GLOBALS['wp_version'], 4.5, '>=' ) ) || $FeedAttribs['type'] == 'category' || ($FeedAttribs['type'] == 'channel') || ($FeedAttribs['type'] == 'post_type') )  )
+	if( !empty($FeedAttribs['type']) && ( ($FeedAttribs['type'] == 'ttid' && version_compare($GLOBALS['wp_version'], '4.5', '>=' ) ) || $FeedAttribs['type'] == 'category' || ($FeedAttribs['type'] == 'channel') || ($FeedAttribs['type'] == 'post_type') )  )
 	{
 		
 ?>

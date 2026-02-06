@@ -98,8 +98,8 @@ function powerpress_admin_editfeed($type='', $type_value = '', $feed_slug = fals
 			
 		}; break;
 		case 'ttid': {
-			$term_taxonomy_id = $type_value;
-			$FeedAttribs['term_taxonomy_id'] = $type_value;
+			$term_taxonomy_id = intval($type_value); // sanitize for sql
+			$FeedAttribs['term_taxonomy_id'] = $term_taxonomy_id;
 			$FeedSettings = powerpress_get_settings('powerpress_taxonomy_'.$term_taxonomy_id);
 			$FeedSettings = powerpress_default_settings($FeedSettings, 'editfeed_custom');
 
@@ -156,6 +156,8 @@ function powerpress_admin_editfeed($type='', $type_value = '', $feed_slug = fals
 	}
 
     wp_enqueue_script('powerpress-admin', powerpress_get_root_url() . 'js/admin.js', array(), POWERPRESS_VERSION );
+    $suffix = (defined('WP_DEBUG') && WP_DEBUG) ? '' : '.min';
+    wp_enqueue_script('powerpress-podcast2.0-managers', powerpress_get_root_url() . "js/powerpressadmin-metabox{$suffix}.js", array(), POWERPRESS_VERSION);
 	
 ?>
     <div id="powerpress_settings_page" class="powerpress_tabbed_content">
@@ -622,6 +624,8 @@ function powerpressadmin_edit_feed_settings($FeedSettings, $General, $FeedAttrib
 		$FeedSettings['posts_per_rss'] = '';
 	if( !isset($FeedSettings['copyright']) )
 		$FeedSettings['copyright'] = '';
+    if (!isset($FeedSettings['copyright_url']) )
+        $FeedSettings['copyright_url'] = '';
     if( !isset($FeedSettings['email']) )
         $FeedSettings['email'] = '';
 	if( !isset($FeedSettings['title']) )
@@ -798,9 +802,18 @@ if( isset($Languages[ $rss_language ]) )
 </div>
 
 <div class="pp-settings-section">
-    <h2><?php echo __('Copyright', 'powerpress'); ?></h2>
-    <label for="Feed[copyright]" class="pp-settings-label"><?php echo __('Copyright text', 'powerpress'); ?></label>
-    <input class="pp-settings-text-input" type="text" name="Feed[copyright]" value="<?php echo esc_attr($FeedSettings['copyright']); ?>" maxlength="255" />
+    <h2><?php echo __('Copyright', 'powerpress'); ?></h2> 
+            <?php
+            powerpress_render_template([
+                'type' => 'copyright',
+                'context' => 'channel',
+                'FeedSlug' => $FeedAttribs['feed_slug'],
+                'Data' => $FeedSettings,
+                'NamePrefix' => "Feed",
+                'hide_section_header' => true,
+                'show_inherit_checkbox' => false
+            ]);
+            ?>
 </div>
 
 <div class="pp-settings-section">
@@ -852,6 +865,7 @@ if( isset($Languages[ $rss_language ]) )
             <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                 <input type="hidden" id="podcast-guid" class="form-control" >
                 <input type="hidden" id="podcast-link" class="form-control" >
+                <input type="hidden" id="podcast-medium" class="form-control">
                 <input type="text" id="search-podcasts" class="pp-settings-text-input" style="width: 90%;" placeholder="Search for a show">
                 <span id="search-for-show" class="input-group-text" style="cursor: pointer; color: #1976d2; font-weight: bold;">
                     <?php echo __("Search", "powerpress"); ?>
@@ -896,14 +910,16 @@ if( isset($Languages[ $rss_language ]) )
                 <?php foreach($existingPodrollItems as $item) { ?>
                     <div id="remote-item-<?php echo $item['feed_guid'];?>">
                         <div class="row pl-3 pr-2" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd;">
-                            <h4 style="margin: 0; padding-left: 5%;" class="list-result">
-                                <?php echo __(htmlspecialchars($item['item_title']) ?? 'RemoteItem', "powerpress"); ?>
+                            <h4 style="margin: 0; padding-left: 5%; width: 80%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;" class="list-result">
+                                <?php echo esc_html($item['item_title'] ?? 'RemoteItem'); ?>
                             </h4>
-                            <input type="hidden" name="Feed[remoteItems][podroll][<?php echo $item['feed_guid']; ?>][]" value="<?php echo htmlspecialchars($item['item_title']); ?>" />
+                            <input type="hidden" name="Feed[remoteItems][podroll][<?php echo $item['feed_guid']; ?>][item_title]" value="<?php echo htmlspecialchars($item['item_title']); ?>" />
                             <input type="hidden" name="Feed[remoteItems][podroll][<?php echo $item['feed_guid']; ?>][link]" value="<?php echo htmlspecialchars($item['item_link']); ?>" />
-                            <div style="height: 100%; width: 10%; display: flex; align-items:center; justify-content: center;; display: flex; align-items:center; justify-content: center;">
-                                <a href="<?php echo htmlspecialchars($item['item_link']); ?>" target="_blank">
-                                    <?php echo __("Visit", "powerpress"); ?>
+                            <input type="hidden" name="Feed[remoteItems][podroll][<?php echo $item['feed_guid']; ?>][medium]" value="<?php echo htmlspecialchars($item['medium'] ?? 'podcast'); ?>" />
+                            <input type="hidden" name="Feed[remoteItems][podroll][<?php echo $item['feed_guid']; ?>][title]" value="<?php echo htmlspecialchars($item['title'] ?? ''); ?>" />
+                            <div style="height: 100%; width: 10%; display: flex; align-items: center; justify-content: center;">
+                                <a href="<?php echo htmlspecialchars($item['item_link']); ?>" target="_blank" style="text-decoration: none;">
+                                    <span class="dashicons dashicons-rss"></span>
                                 </a>
                             </div>
                             <button type="button" style="width: 10%; border: none; background: inherit; color: red; font-size: 25px; cursor: pointer;" id="remove-remote-item-<?php echo $item['feed_guid']; ?>">&times;</button>
@@ -913,21 +929,23 @@ if( isset($Languages[ $rss_language ]) )
             </div>
         </div>
         <div class="col-md-6">
-            <h3 style="font-weight: bold;">RSS Feed
+            <h3 style="font-weight: bold;">
                 <?php echo __("RSS Feed", "powerpress"); ?>
             </h3>
             <div class="col" style="border-radius: 5px; border: 1px solid #E2E2E2;" id="feed-list-col">
                 <?php foreach($existingFeedItems as $item) { ?>
                     <div id="remote-item-<?php echo $item['feed_guid'];?>">
                         <div class="row pl-3 pr-2" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd;">
-                            <h4 style="margin: 0; padding-left: 5%;" class="list-result">
-                                <?php echo __(htmlspecialchars($item['item_title']), "powerpress"); ?>
+                            <h4 style="margin: 0; padding-left: 5%; width: 80%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;" class="list-result">
+                                <?php echo esc_html($item['item_title']); ?>
                             </h4>
-                            <input type="hidden" name="Feed[remoteItems][feed][<?php echo $item['feed_guid']; ?>][<?php echo $item['item_guid']; ?>]" value="<?php echo htmlspecialchars($item['item_title']); ?>" />
+                            <input type="hidden" name="Feed[remoteItems][feed][<?php echo $item['feed_guid']; ?>][item_title]" value="<?php echo htmlspecialchars($item['item_title']); ?>" />
+                            <input type="hidden" name="Feed[remoteItems][feed][<?php echo $item['feed_guid']; ?>][item_guid]" value="<?php echo htmlspecialchars($item['item_guid'] ?? ''); ?>" />
                             <input type="hidden" name="Feed[remoteItems][feed][<?php echo $item['feed_guid']; ?>][link]" value="<?php echo htmlspecialchars($item['item_link']); ?>" />
-                            <div style="height: 100%; width: 10%; display: flex; align-items:center; justify-content: center;">
-                                <a href="<?php echo htmlspecialchars($item['item_link']); ?>" target="_blank">
-                                    <?php echo __("Visit", "powerpress"); ?>
+                            <input type="hidden" name="Feed[remoteItems][feed][<?php echo $item['feed_guid']; ?>][medium]" value="<?php echo htmlspecialchars($item['medium'] ?? 'podcast'); ?>" />
+                            <div style="height: 100%; width: 10%; display: flex; align-items: center; justify-content: center;">
+                                <a href="<?php echo htmlspecialchars($item['item_link']); ?>" target="_blank" style="text-decoration: none;">
+                                    <span class="dashicons dashicons-rss"></span>
                                 </a>
                             </div>
                             <button type="button" style="width: 10%; border: none; background: inherit; color: red; font-size: 25px; cursor: pointer;" id="remove-remote-item-<?php echo $item['feed_guid']; ?>">&times;</button>
@@ -950,10 +968,25 @@ if( isset($Languages[ $rss_language ]) )
 
 <div class="pp-settings-section">
     <h2><?php echo __('Txt Tag', 'powerpress'); ?></h2>
-    <p style="margin-top: 1em;" class="pp-settings-text"><?php echo __('You may be asked by a third party like Apple, Google, Spotify, or others to place a code in your podcast feed. This will often be used to verify ownership of your podcast. This is usually temporary; you copy the code for a day or two and then remove it.', 'powerpress'); ?></p>
-    <label for="Feed[txt_tag]" class="pp-settings-label"><?php echo __('TxT Tag Value', 'powerpress'); ?></label>
-    <input class="pp-settings-text-input" type="text" name="Feed[txt_tag]" value="<?php echo isset($FeedSettings['txt_tag']) ? esc_attr($FeedSettings['txt_tag']) : ""; ?>" maxlength="255" />
+            <?php
+            powerpress_render_template([
+                'type' => 'txt_tag',
+                'context' => 'channel',
+                'FeedSlug' => $FeedAttribs['feed_slug'],
+                'Data' => $FeedSettings,
+                'NamePrefix' => "Feed",
+                'hide_section_header' => true,
+                'show_inherit_checkbox' => false
+            ]);
+            ?>
 </div>
+<script defer>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initTxtTagManager('<?php echo $FeedAttribs['feed_slug']; ?>');
+    });
+
+</script>
 
 <div class="pp-settings-section">
     <h2>
@@ -1019,6 +1052,17 @@ if( isset($Languages[ $rss_language ]) )
 <script>
     let currentEpisodeList = [];
 
+    /**
+     * escape html special characters to prevent xss and html parsing issues
+     * @param {string} text - text to escape
+     * @returns {string} html-escaped text
+     */
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     function searchList(searchId, resultsId) {
         // Declare variables
         var input, filter, ul, li, a, i, txtValue;
@@ -1057,6 +1101,7 @@ if( isset($Languages[ $rss_language ]) )
             let showGUID = jQuery('#podcast-guid').val();
             let showLink = jQuery('#podcast-link').val();
             let showTitle = jQuery('#search-podcasts').val();
+            let medium = jQuery('#podcast-medium').val();
 
             if (!showGUID || showGUID === '') {
                 jQuery('#remote-item-error').text("You do not currently have a show selected to add.");
@@ -1066,23 +1111,26 @@ if( isset($Languages[ $rss_language ]) )
                 newHTML += '<div class="row" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd;">';
 
                 if (jQuery('[name=podroll]:checked').val() == 1) { // podroll
-                    newHTML += '<h4 style="margin: 0; padding-left: 5%;" class="list-result">' + showTitle + '</h4>';
-                    newHTML += '<input type="hidden" name="Feed[remoteItems][podroll]['+showGUID+'][]" value="' + showTitle + '" />';
-                    newHTML += '<input type="hidden" name="Feed[remoteItems][podroll]['+showGUID+'][link]" value="' + showLink + '" />';
+                    newHTML += '<h4 style="margin: 0; padding-left: 5%; width: 80%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;" class="list-result">' + escapeHtml(showTitle) + '</h4>';
+                    newHTML += '<input type="hidden" name="Feed[remoteItems][podroll][' + showGUID + '][item_title]" value="' + escapeHtml(showTitle) + '" />';
+                    newHTML += '<input type="hidden" name="Feed[remoteItems][podroll][' + showGUID + '][link]" value="' + escapeHtml(showLink) + '" />';
+                    newHTML += '<input type="hidden" name="Feed[remoteItems][podroll][' + showGUID + '][medium]" value="' + escapeHtml(medium) + '" />';
                 } else { // feed
                     let itemGUID = jQuery('#item-guid').val();
                     let episodeTitle = jQuery('#search-episodes').val();
                     if (episodeTitle != '') {
-                        newHTML += '<h4 style="margin: 0; padding-left: 5%;" class="list-result">' + episodeTitle + '</h4>';
-                        newHTML += '<input type="hidden" name="Feed[remoteItems][feed]['+showGUID+'][' + itemGUID + ']" value="'+episodeTitle+'" />';
+                        newHTML += '<h4 style="margin: 0; padding-left: 5%; width: 80%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;" class="list-result">' + escapeHtml(episodeTitle) + '</h4>';
+                        newHTML += '<input type="hidden" name="Feed[remoteItems][feed][' + showGUID + '][item_title]" value="' + escapeHtml(episodeTitle) + '" />';
+                        newHTML += '<input type="hidden" name="Feed[remoteItems][feed][' + showGUID + '][item_guid]" value="' + escapeHtml(itemGUID) + '" />';
                     } else {
-                        newHTML += '<h4 style="margin: 0; padding-left: 5%;" class="list-result">' + showTitle + '</h4>';
-                        newHTML += '<input type="hidden" name="Feed[remoteItems][feed]['+showGUID+'][none]" value="'+showTitle+'" />';
+                        newHTML += '<h4 style="margin: 0; padding-left: 5%; width: 80%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;" class="list-result">' + escapeHtml(showTitle) + '</h4>';
+                        newHTML += '<input type="hidden" name="Feed[remoteItems][feed][' + showGUID + '][item_title]" value="' + escapeHtml(showTitle) + '" />';
                     }
-                    newHTML += '<input type="hidden" name="Feed[remoteItems][feed]['+showGUID+'][link]" value="'+showLink+'" />';
+                    newHTML += '<input type="hidden" name="Feed[remoteItems][feed][' + showGUID + '][link]" value="' + escapeHtml(showLink) + '" />';
+                    newHTML += '<input type="hidden" name="Feed[remoteItems][feed][' + showGUID + '][medium]" value="' + escapeHtml(medium) + '" />';
                 }
-                newHTML += '<div style="height: 100%; width: 10%; display: flex; align-items:center; justify-content: center;"><a href="' + showLink + '" target="_blank">Visit</a></div>';
-                newHTML += '<button type="button" style="width: 10%; border: none; background: inherit; color: red; font-size: 25px; cursor: pointer;" id="remove-remote-item-'+showGUID+'">&times;</button>';
+                newHTML += '<div style="height: 100%; width: 10%; display: flex; align-items: center; justify-content: center;"><a href="' + escapeHtml(showLink) + '" target="_blank" style="text-decoration: none;"><span class="dashicons dashicons-rss"></span></a></div>';
+                newHTML += '<button type="button" style="width: 10%; border: none; background: inherit; color: red; font-size: 25px; cursor: pointer;" id="remove-remote-item-' + showGUID + '">&times;</button>';
                 newHTML += '</div>';
                 newHTML += '</div>';
 
@@ -1097,6 +1145,7 @@ if( isset($Languages[ $rss_language ]) )
                 jQuery('#item-guid').val('');
                 jQuery('#search-podcasts').val('');
                 jQuery('#search-episodes').val('');
+                jQuery('#podcast-medium').val('');
                 jQuery('#episode-search-container').hide();
             }
         });
@@ -1106,6 +1155,16 @@ if( isset($Languages[ $rss_language ]) )
 
             if (value == '') {
                 jQuery('#feed-search-results').empty();
+            }
+        });
+
+        /**
+         * enter key handler to trigger podcast search in PodRoll table
+         */
+        document.getElementById('search-podcasts').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.which === 13) {
+                e.preventDefault();
+                document.getElementById('search-for-show').click();
             }
         });
 
@@ -1134,9 +1193,17 @@ if( isset($Languages[ $rss_language ]) )
                             jQuery.each(feeds, function(key, val) {
                                 let showID = val.id;
                                 let showName = val.title;
-                                let showLink = val.link;
+                                let showLink = val.url || val.link; // url gives rss feed, use site link as fallback
                                 let showGUID = val.podcastGuid;
-                                let newHTML = '<li class="search-result" id="feed-result-' + showID + '"><a>' + showName + '</a><p style="display: none;">'+showGUID+'</p><p style="display: none;">'+showLink+'</p></li>';
+                                let medium = val.medium;
+                                
+                                let newHTML = '<li class="search-result" id="feed-result-' + showID + '">' +
+                                    '<a>' + showName + '</a>' +
+                                    '<p style="display: none;" class="guid-data">' + showGUID + '</p>' +
+                                    '<p style="display: none;" class="link-data">' + showLink + '</p>' +
+                                    '<p style="display: none;" class="medium-data">' + medium + '</p>' +
+                                    '<p style="display: none;" class="original-title-data">' + showName + '</p>' +
+                                    '</li>';
                                 jQuery('#feed-search-results').append(newHTML);
                             });
                         } else {
@@ -1151,6 +1218,7 @@ if( isset($Languages[ $rss_language ]) )
                 }
             });
         });
+
 
         jQuery(document).on('click',"[id*='item-result-']", function (e) {
             let guid = jQuery(this).children('p').text();
@@ -1171,6 +1239,7 @@ if( isset($Languages[ $rss_language ]) )
             let pChildren = jQuery(this).children('p');
             let guid = jQuery(jQuery(this).children('p')[0]).text()
             let link = jQuery(jQuery(this).children('p')[1]).text()
+            let medium = jQuery(jQuery(this).children('p')[2]).text()
 
             jQuery.ajax( {
                 type: 'POST',
@@ -1206,6 +1275,7 @@ if( isset($Languages[ $rss_language ]) )
 
             jQuery('#podcast-guid').val(guid);
             jQuery('#podcast-link').val(link);
+            jQuery('#podcast-medium').val(medium);
             jQuery('#search-podcasts').val(jQuery(this).children('a').text())
             jQuery('#feed-search-results').empty();
 
@@ -1259,13 +1329,14 @@ function powerpressadmin_edit_itunes_feed($FeedSettings, $General, $FeedAttribs 
 	$cat_ID = $FeedAttribs['category_id'];
 	
 	$SupportUploads = powerpressadmin_support_uploads();
-	if( !isset($FeedSettings['itunes_subtitle']) )
-		$FeedSettings['itunes_subtitle'] = '';
-	if( !isset($FeedSettings['itunes_summary']) )
-		$FeedSettings['itunes_summary'] = '';
-	if( !isset($FeedSettings['itunes_keywords']) )
-		$FeedSettings['itunes_keywords'] = '';	
-	if( !isset($FeedSettings['itunes_cat_1']) )
+// itunes:subtitle and itunes:summary deprecated
+//    if( !isset($FeedSettings['itunes_subtitle']) )
+//        $FeedSettings['itunes_subtitle'] = '';
+//    if( !isset($FeedSettings['itunes_summary']) )
+//        $FeedSettings['itunes_summary'] = '';
+//    if( !isset($FeedSettings['itunes_keywords']) )
+//        $FeedSettings['itunes_keywords'] = '';
+    if( !isset($FeedSettings['itunes_cat_1']) )
 		$FeedSettings['itunes_cat_1'] = '';
 	if( !isset($FeedSettings['itunes_cat_2']) )
 		$FeedSettings['itunes_cat_2'] = '';
@@ -1289,10 +1360,12 @@ function powerpressadmin_edit_itunes_feed($FeedSettings, $General, $FeedAttribs 
 		$FeedSettings['itunes_new_feed_url'] = '';
 	if( !isset($FeedSettings['itunes_type']) )
 		$FeedSettings['itunes_type'] = '';
-		
-	$AdvancediTunesSettings = !empty($FeedSettings['itunes_summary']);
-	if( !empty($FeedSettings['itunes_subtitle']) )
-		$AdvancediTunesSettings = true;
+
+//  itunes:subtitle deprecated by Apple
+//    $AdvancediTunesSettings = !empty($FeedSettings['itunes_summary']);
+//    if( !empty($FeedSettings['itunes_subtitle']) )
+//        $AdvancediTunesSettings = true;
+
     //Logic to convert old iTunes categories to 2019 ones.
     $CatArray = array('cat_1' => $FeedSettings['itunes_cat_1'], 'cat_2' => $FeedSettings['itunes_cat_2'], 'cat_3' => $FeedSettings['itunes_cat_3']);
     $mappings = array('01-00' => '01-00', '01-01' => '01-02', '01-02' => '01-03', '01-03' => '01-04', '01-04' => '01-01',
@@ -1340,45 +1413,46 @@ function powerpressadmin_edit_itunes_feed($FeedSettings, $General, $FeedAttribs 
 <p class="pp-settings-text">
     <?php echo __('The following settings will affect the display of your podcast\'s listing on Apple Podcasts, or when/how your podcast appears in Apple Search results.','powerpress'); ?>
 </p>
-<div class="pp-settings-section">
-    <h2><?php echo __('Program Subtitle', 'powerpress'); ?> <br /></h2>
-    <input type="text" class="pp-settings-text-input" name="Feed[itunes_subtitle]"  value="<?php echo esc_attr($FeedSettings['itunes_subtitle']); ?>" maxlength="255" />
-</div>
 
-<div class="pp-settings-section">
-    <h2><?php echo __('Program Summary', 'powerpress'); ?></h2>
-    <p class="pp-main"><?php echo __('Your summary cannot exceed 4,000 characters in length and should not include HTML, except for hyperlinks', 'powerpress'); ?></p>
-    <textarea name="Feed[itunes_summary]" class="pp-settings-text-input" rows="5" ><?php echo esc_textarea($FeedSettings['itunes_summary']); ?></textarea>
-    <input type="hidden" name="General[itunes_cdata]" value="0" />
-    <input type="checkbox" class="pp-settings-checkbox" name="General[itunes_cdata]" value="1" <?php echo ( !empty($General['itunes_cdata'])?'checked ':''); ?>/>
-    <div class="pp-settings-subsection" style="border: none;">
-        <p class="pp-sub"><?php echo __('Wrap summary values with &lt;![CDATA[ ... ]]&gt; tags', 'powerpress'); ?></p>
+    <!--    itunes:subtitle and itunes:summary deprecated
+    <div class="pp-settings-section">
+        <h2><?php echo __('Program Subtitle', 'powerpress'); ?> <br /></h2>
+        <input type="text" class="pp-settings-text-input" name="Feed[itunes_subtitle]"  value="<?php echo esc_attr($FeedSettings['itunes_subtitle']); ?>" maxlength="255" />
     </div>
-</div>
 
-<div class="pp-settings-section">
-    <h2><?php echo __('Episode Summary', 'powerpress'); ?></h2>
-    <input type="checkbox" class="pp-settings-checkbox" name="Feed[enhance_itunes_summary]" value="1" <?php echo ( !empty($FeedSettings['enhance_itunes_summary'])?'checked ':''); ?>/>
-    <div class="pp-settings-subsection">
-        <p class="pp-main"><?php echo __('Optimize iTunes Summary from Blog Posts', 'powerpress'); ?></p>
-        <p class="pp-sub"><?php echo __('Creates a friendlier view of your post/episode content.', 'powerpress'); ?></p>
+    <div class="pp-settings-section">
+        <h2><?php echo __('Program Summary', 'powerpress'); ?></h2>
+        <p class="pp-main"><?php echo __('Your summary cannot exceed 4,000 characters in length and should not include HTML, except for hyperlinks', 'powerpress'); ?></p>
+        <textarea name="Feed[itunes_summary]" class="pp-settings-text-input" rows="5" ><?php echo esc_textarea($FeedSettings['itunes_summary']); ?></textarea>
+        <input type="hidden" name="General[itunes_cdata]" value="0" />
+        <input type="checkbox" class="pp-settings-checkbox" name="General[itunes_cdata]" value="1" <?php echo ( !empty($General['itunes_cdata'])?'checked ':''); ?>/>
+        <div class="pp-settings-subsection" style="border: none;">
+            <p class="pp-sub"><?php echo __('Wrap summary values with &lt;![CDATA[ ... ]]&gt; tags', 'powerpress'); ?></p>
+        </div>
     </div>
-</div>
 
-
+    <div class="pp-settings-section">
+        <h2><?php echo __('Episode Summary', 'powerpress'); ?></h2>
+        <input type="checkbox" class="pp-settings-checkbox" name="Feed[enhance_itunes_summary]" value="1" <?php echo ( !empty($FeedSettings['enhance_itunes_summary'])?'checked ':''); ?>/>
+        <div class="pp-settings-subsection">
+            <p class="pp-main"><?php echo __('Optimize iTunes Summary from Blog Posts', 'powerpress'); ?></p>
+            <p class="pp-sub"><?php echo __('Creates a friendlier view of your post/episode content.', 'powerpress'); ?></p>
+        </div>
+    </div>
+    -->
 <?php
-		if( !empty($FeedSettings['itunes_keywords']) )
-		{
-?>
-<div class="pp-settings-section">
-    <h2><?php echo __('Program Keywords', 'powerpress'); ?></h2>
-    <input type="text" class="pp-settings-text-input" name="Feed[itunes_keywords]" style="width: 60%;"  value="<?php echo esc_attr($FeedSettings['itunes_keywords']); ?>" maxlength="255" />
-    <p><?php echo __('Feature Deprecated by Apple. Keywords above are for your reference only.', 'powerpress'); ?></p>
-</div>
-<?php
-		} // End iTunes keywords
+    // itunes:keywords deprecated
+    // if( !empty($FeedSettings['itunes_keywords']) )
+    //{ ?>
+     <!--   <div class="pp-settings-section">
+            <h2><?php // echo __('Program Keywords', 'powerpress'); ?></h2>
+            <input type="text" class="pp-settings-text-input" name="Feed[itunes_keywords]" style="width: 60%;"  value="<?php // echo esc_attr($FeedSettings['itunes_keywords']); ?>" maxlength="255" />
+            <p><?php // echo __('Feature Deprecated by Apple. Keywords above are for your reference only.', 'powerpress'); ?></p>
+        </div> -->
+        <?php
+    // } // End iTunes keywords
 
-$MoreCategories = false;
+    $MoreCategories = false;
 if( !empty($FeedSettings['itunes_cat_2']) )
 	$MoreCategories = true;
 else if( !empty($FeedSettings['itunes_cat_3']) )

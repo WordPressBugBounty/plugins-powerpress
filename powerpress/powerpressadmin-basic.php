@@ -15,20 +15,20 @@ function powerpress_admin_basic()
 
     $FeedAttribs = array('type'=>'general', 'feed_slug'=>'', 'category_id'=>0, 'term_taxonomy_id'=>0, 'term_id'=>0, 'taxonomy_type'=>'', 'post_type'=>'');
 	// feed_slug = channel
-	
+
 	$General = powerpress_get_settings('powerpress_general');
 	$General = powerpress_default_settings($General, 'basic');
-	
+
 	$FeedSettings = powerpress_get_settings('powerpress_feed');
 	$FeedSettings = powerpress_default_settings($FeedSettings, 'editfeed');
-	
+
 	$CustomFeed = get_option('powerpress_feed_'.'podcast', array()); // Get the custom podcast feed settings saved in the database
 	if( !empty($CustomFeed) ) // If they enabled custom podast channels...
 	{
 		$FeedSettings = powerpress_merge_empty_feed_settings($CustomFeed, $FeedSettings);
 		$FeedAttribs['channel_podcast'] = true;
 	}
-	
+
 	$MultiSiteServiceSettings = false;
 	if( is_multisite() )
 	{
@@ -39,7 +39,9 @@ function powerpress_admin_basic()
 		}
 	}
 
+    $suffix = (defined('WP_DEBUG') && WP_DEBUG) ? '' : '.min';
     wp_enqueue_script('powerpress-admin', powerpress_get_root_url() . 'js/admin.js', array(), POWERPRESS_VERSION );
+    wp_enqueue_script('powerpress-podcast2.0-managers', powerpress_get_root_url() . "js/powerpressadmin-metabox{$suffix}.js", array(), POWERPRESS_VERSION);
 
 ?>
 <script type="text/javascript">
@@ -509,7 +511,7 @@ function powerpressadmin_live_item_options($Feed)
     </style>
     <div style="margin-left: 10px;">
         <button style="display: none;" id="live-item-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'live-item-all')"><img class="pp-nav-icon" style="width: 22px;" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/rss-symbol.svg"><?php echo htmlspecialchars(__('Hidden button', 'powerpress')); ?></button>
-        <div id="live-item-all" class="pp-sidenav-tab active">
+        <div id="live-item-all" class="pp-sidenav-tab active" style="width: 100%;">
             <h1 class="pp-heading"><?php echo __('Live Item Tag', 'powerpress'); ?></h1>
             <?php if ($litError) {
                 ?>
@@ -780,6 +782,19 @@ function goToPodcastSEO() {
             </div>
 		</div>
 		<div>
+			<input type="hidden" name="General[disable_wptexturize]" value="0" />
+			<input class="pp-settings-checkbox" style="margin-top: 3em;" type="checkbox" name="General[disable_wptexturize]" value="1" <?php echo ( !empty($General['disable_wptexturize']) ?' checked':''); ?> />
+            <div class="pp-settings-subsection" style="border-bottom: none; margin-top: 2em;">
+                <div style="display: flex; align-items: center;">
+                    <p class="pp-main" style="margin: 0;"><?php echo __('Disable Smart Typography', 'powerpress'); ?></p>
+                    <div class="pp-tooltip-right" style="height: 16px; width: 16px; margin-left: 5px;">i
+                        <span class="text-pp-tooltip" style="top: -50%; min-width: 250px;"><?php echo esc_html(__('PowerPress uses a WordPress feature which automatically converts straight quotes into "smart" punctuation. Some publishers require plain ASCII characters, so this option disables that behavior in podcast feeds.', 'powerpress')); ?></span>
+                    </div>
+                </div>
+                <p class="pp-sub"><?php echo __('Keeps quotes and punctuation exactly as you entered them in RSS feeds. Helpful if you submit content to syndication partners that don\'t allow "smart" punctuation (e.g., AP, NYT).', 'powerpress'); ?></p>
+            </div>
+		</div>
+		<div>
 			<input type="hidden" name="General[channels]" value="0" />
 			<input class="pp-settings-checkbox" style="margin-top: 3em;" type="checkbox" name="General[channels]" value="1" <?php echo ( !empty($General['channels']) ?' checked':''); echo $ChannelsCheckbox; ?> />
             <div class="pp-settings-subsection" style="border-bottom: none; margin-top: 2em;">
@@ -888,197 +903,12 @@ function goToPodcastSEO() {
 <?php
 }
 
-function powerpressadmin_experimental_options($General, $link_account = false)
+function powerpressadmin_experimental_options($General, $feed_slug = 'podcast', $link_account = false)
 {
-    $lightning = isset($General['value_lightning']) ? $General['value_lightning'] : array("");
-    $splits = isset($General['value_split']) ? $General['value_split'] : array("");
-    $pubKeys = isset($General['value_pubkey']) ? $General['value_pubkey'] : array("");
-    $customKeys = isset($General['value_custom_key']) ? $General['value_custom_key'] : array("");
-    $customValues = isset($General['value_custom_value']) ? $General['value_custom_value'] : array("");
-
-    $currentPersonCount = count($pubKeys);
-    if (empty($General['value_pubkey']))
-        $currentPersonCount = 0;
-
     $valueError = isset($General['value_error']) ? $General['value_error'] : "no";
     $valueError = $valueError == "yes";
-
     $valueErrorMsg = isset($General['value_error_message']) ? $General['value_error_message'] : "";
     ?>
-    <script>
-        let currentPersonCount = <?php echo $currentPersonCount; ?>;
-        jQuery(document).ready(function() {
-            jQuery(document).on('click',"[name*='remove-person-']",function (e) {
-                let personNum = this.id[this.id.length - 1];
-                jQuery("#person-" + personNum + "-container").css({"visibility": "hidden", "position": "absolute"});
-                jQuery("[name='person-" + personNum + "-pubkey']").val("");
-                jQuery("[name='person-" + personNum + "-split']").val("");
-            });
-
-            jQuery("[name='newperson']").click(function (e) {
-                jQuery("#newperson").css({"display": "none"});
-                let tempCount = currentPersonCount + 1;
-                let newHTML = '<div class="col mt-4 pl-0 pr-0" id="person-select-' + tempCount + '">' +
-                    '<div class="row" style="font-size: 110%; font-weight: bold; margin-bottom: 5px;" id="person-head">' +
-                    '<div class="col-lg-11 pl-0">' + tempCount + '. ' + ' </div><div class="col-lg-1"><button class="value-btn float-right pl-0" type="button" style="border: none; background: inherit; color: red; font-size: 25px;" id="cancel-btn" name="cancel-btn">&times;</button></div>' +
-                    '</div>' +
-                    '<div class="row" style="margin-bottom: 5px;">' +
-                    '<div class="col-lg-3 pl-0">' +
-                    '<label style="font-size: 110%; font-weight: bold;" for="value-select"><?php echo __('Wallet Service', 'powerpress'); ?></label>' +
-                    '</div>' +
-                    '<div class="col-lg-8 pl-0">' +
-                    '<label style="font-size: 110%; font-weight: bold;" for="person-' + tempCount + '-select-lightning"><?php echo __('Lightning Address', 'powerpress'); ?></label>' +
-                    '</div>' +
-                    '<div class="col-lg-1 pl-0">' +
-                    '</div>' +
-                    '</div>' +
-                    '<div class="row">' +
-                    '<div class="col-lg-3 pl-0">' +
-                    '<select name="value-select" id="value-select" class="pp-settings-select" style="width: 100% !important;">' +
-                    '<option selected value="getalby"><?php echo __('Alby', 'powerpress'); ?></option>' +
-                    '<option value="fountain"><?php echo __('Fountain', 'powerpress'); ?></option>' +
-                    '<option value="manual"><?php echo __('Manual Entry', 'powerpress'); ?></option>' +
-                    '</select>' +
-                    '</div>' +
-                    '<div class="col-lg-8 pl-0">' +
-                    '<input class="pp-settings-text-input" type="text" id="person-' + tempCount + '-select-lightning" name="person-' + tempCount + '-select-lightning" />' +
-                    '</div>' +
-                    '<div class="col-lg-1 pl-0" style="display: flex; alight-items: center;">' +
-                    '<button class="value-btn pl-0" type="button" style="border: none; background: inherit; font-size: 40px;" id="next-btn" name="next-btn">&#8594</button>' +
-                    '</div>' +
-                    '</div>' +
-                    '</div>';
-
-                if (currentPersonCount == 0) {
-                    jQuery(newHTML).insertBefore("#add-person-container");
-                } else {
-                    let prevId = '#person-' + (currentPersonCount) + '-container';
-                    jQuery(newHTML).insertAfter(prevId);
-                }
-            });
-
-            jQuery("#recipient-container").on("change", "#value-select", function (e) {
-                let selectedType = jQuery("[name='value-select']").val();
-
-                if (selectedType === "manual") {
-                    jQuery("#next-btn").click();
-                }
-            });
-
-            jQuery("#recipient-container").on("click", "#cancel-btn", function (e) {
-                let tempCount = currentPersonCount + 1;
-                jQuery("#person-select-"+tempCount).remove();
-                jQuery("#newperson").css({"display": "block"});
-            });
-
-            jQuery("#recipient-container").on("click", "#next-btn", function (e) {
-                currentPersonCount += 1;
-
-                let selectedType = jQuery("[name='value-select']").val();
-                let defaultLightning = "";
-                let defaultPubKey = "";
-                let defaultCustomKey = "";
-                let defaultCustomValue = "";
-                let error = false;
-
-                if (selectedType !== "manual") {
-                    defaultLightning = jQuery("#person-" + currentPersonCount + "-select-lightning").val().replace(/\s/g,'');
-                    let trimmedLightning = defaultLightning.substring(0, defaultLightning.indexOf("@"));
-                    switch (selectedType) {
-                        case "getalby":
-                            jQuery.ajax({
-                                async: false,
-                                type: 'GET',
-                                url: "https://getalby.com/.well-known/keysend/"+trimmedLightning,
-                                success: function(data) {
-                                    defaultPubKey = data['pubkey'];
-                                    defaultCustomKey = data['customData'][0]['customKey'];
-                                    defaultCustomValue = data['customData'][0]['customValue'];
-                                },
-                            }).fail(function () {
-                                error = true;
-                            });
-                            break;
-                        case "fountain":
-                            jQuery.ajax({
-                                async: false,
-                                type: 'GET',
-                                url: "https://api.fountain.fm/v1/lnurlp/"+trimmedLightning+"/keysend",
-                                success: function(data) {
-                                    if (data["status"] == "Not Found") {
-                                        error = true;
-                                    } else {
-                                        defaultPubKey = data['pubkey'];
-                                        defaultCustomKey = data['customData'][0]['customKey'];
-                                        defaultCustomValue = data['customData'][0]['customValue'];
-                                    }
-                                },
-                            }).fail(function () {
-                                error = true;
-                            });
-                    }
-                }
-
-                if (!error) {
-                    jQuery("#person-select-"+currentPersonCount).remove();
-                    let newHTML = '<div class="row mt-4" id="person-' + currentPersonCount + '-container" style="display: flex; align-items: center;">' +
-                        '<div class="col">' +
-                        '<div class="row" style="font-size: 110%; font-weight: bold;">' +
-                        '<div class="col-lg-11 pl-0">' + currentPersonCount + '.  </div>' +
-                        '<div class="col-lg-1"><button class="value-btn float-right pl-0" type="button" style="border: none; background: inherit; color: red; font-size: 25px;" id="remove-person-' + currentPersonCount + '" name="remove-person-' + currentPersonCount + '">&times;</button></div>' +
-                        '</div>' +
-                        '<div class="row pl-0">' +
-                        '<div class="col-lg-4 pl-0">' +
-                        '<label style="font-size: 110%; font-weight: bold;" for="person-' + currentPersonCount + '-lightning"><?php echo __('Lightning Address / Name', 'powerpress'); ?></label>' +
-                        '<br />' +
-                        '<br />' +
-                        '<input class="pp-settings-text-input" type="text" id="person-' + currentPersonCount + '-lightning" name="person-' + currentPersonCount + '-lightning" value="' + defaultLightning + '" />' +
-                        '</div>' +
-                        '<div class="col-lg-4 pl-0">' +
-                        '<label style="font-size: 110%; font-weight: bold;" for="person-' + currentPersonCount + '-customkey"><?php echo __('Custom Key', 'powerpress'); ?></label>' +
-                        '<br />' +
-                        '<br />' +
-                        '<input class="pp-settings-text-input" type="text" id="person-' + currentPersonCount + '-customkey" name="person-' + currentPersonCount + '-customkey" value="' + defaultCustomKey + '" />' +
-                        '</div>' +
-                        '<div class="col-lg-4 pl-0">' +
-                        '<label style="font-size: 110%; font-weight: bold;" for="person-' + currentPersonCount + '-customvalue"><?php echo __('Custom Value', 'powerpress'); ?></label>' +
-                        '<br />' +
-                        '<br />' +
-                        '<input class="pp-settings-text-input" type="text" id="person-' + currentPersonCount + '-customvalue" name="person-' + currentPersonCount + '-customvalue" value="' + defaultCustomValue + '" />' +
-                        '</div>' +
-                        '</div>' +
-                        '<div class="row pl-0" style="margin-top: 20px;">' +
-                        '<div class="col-lg-8 pl-0">' +
-                        '<label style="font-size: 110%; font-weight: bold;" for="person-' + currentPersonCount + '-pubkey"><?php echo __('PubKey', 'powerpress'); ?></label>' +
-                        '<br />' +
-                        '<br />' +
-                        '<input class="pp-settings-text-input" type="text" id="person-' + currentPersonCount + '-pubkey" name="person-' + currentPersonCount + '-pubkey" value="' + defaultPubKey + '" />' +
-                        '</div>' +
-                        '<div class="col-lg-4 pl-0">' +
-                        '<label style="font-size: 110%; font-weight: bold;" for="person-' + currentPersonCount + '-split"><?php echo __('Split', 'powerpress'); ?></label>' +
-                        '<br />' +
-                        '<br />' +
-                        '<input class="pp-settings-text-input" type="number" id="person-' + currentPersonCount + '-split" name="person-' + currentPersonCount + '-split" />' +
-                        '</div>' +
-                        '</div>' +
-                        '</div>' +
-                        '</div>';
-
-                    if (currentPersonCount == 1) {
-                        jQuery(newHTML).insertBefore("#add-person-container");
-                    } else {
-                        let prevId = '#person-' + (currentPersonCount - 1) + '-container';
-                        jQuery(newHTML).insertAfter(prevId);
-                    }
-                    jQuery("#newperson").css({"display": "block"});
-                } else {
-                    currentPersonCount -= 1;
-                    let newHTML = '<div class="alert alert-danger" role="alert"><span><?php echo __("We were unable to locate wallet information for lightning address: ", 'powerpress'); ?>'+defaultLightning+'. <?php echo __("Please double check your entry and try again.", 'powerpress'); ?></span></div>';
-                    jQuery(newHTML).insertBefore("#person-head");
-                }
-            });
-        });
-    </script>
     <style>
         .value-btn:hover {
             cursor: pointer;
@@ -1086,11 +916,12 @@ function powerpressadmin_experimental_options($General, $link_account = false)
     </style>
     <div style="margin-left: 10px;">
         <button style="display: none;" id="experimental-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'experimental-all')"><img class="pp-nav-icon" style="width: 22px;" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/rss-symbol.svg"><?php echo htmlspecialchars(__('Hidden button', 'powerpress')); ?></button>
-        <div id="experimental-all" class="pp-sidenav-tab active">
+        <div id="experimental-all" class="pp-sidenav-tab active" style="width: 100%;">
             <div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center;">
                 <h1 class="pp-heading"><?php echo __('Value4Value (V4V)', 'powerpress'); ?></h1>
                 <a href="https://blubrry.com/support/podcasting-2-0-introduction/" style="color: inherit; text-decoration: none;" target="_blank"><div class="pp-tooltip-right" style="height: 20px; width: 20px; margin: 1ch 0 0 1ch;">i</div></a>
             </div>
+
             <?php
             if ($valueError) {
             ?>
@@ -1129,85 +960,29 @@ function powerpressadmin_experimental_options($General, $link_account = false)
                     <?php echo __('For those entering the data manually, you should check with your vendor on the valid entries for each field.', 'powerpress'); ?>
                 </p>
             </div>
-            <div class="col" id="recipient-container">
+
+            <!-- 
+            Value4Value Template Renderer
+            -->
             <?php
-            if ($currentPersonCount > 0) {
-                for ($i = 0; $i < count($pubKeys); $i++) {
-                $personNum = $i + 1;
-                ?>
-                <div class="row mt-4" id="person-<?php echo $personNum ?>-container" style="display: flex; align-items: center;">
-                    <div class="col-12">
-                        <div class="row" style="font-size: 110%; font-weight: bold; height: 39.5px;">
-                            <div class="col-lg-11 pl-0" id="person-<?php echo $personNum; ?>-header">
-                                <?php echo $personNum ?>. <?php echo htmlspecialchars($lightning[$i]) ?>
-                            </div>
-                            <div class="col-lg-1">
-                                <button class="value-btn float-right pl-0" type="button" style="border: none; background: inherit; color: red; font-size: 25px;" id="remove-person-<?php echo $personNum; ?>" name="remove-person-<?php echo $personNum; ?>">&times;</button>
-                            </div>
-                        </div>
-                        <div class="row pl-0">
-                            <div class="col-lg-4 pl-0">
-                                <label style="font-size: 110%; font-weight: bold;">
-                                    <?php echo __('Lightning Address / Name', 'powerpress'); ?>
-                                    <?php if ($personNum == 1) {?>
-                                        <div class="pp-tooltip-right" style="height: 16px; width: 16px;">i
-                                            <span class="text-pp-tooltip" style="top: -50%; min-width: 200px;"><?php echo esc_html(__('This can be your Alby address or a lightning address from another wallet provider. If you do not have a lightning address, you may just enter a name (e.g., John Smith).', 'powerpress')); ?></span>
-                                        </div>
-                                    <?php }?>
-                                </label>
-                                <br />
-                                <br />
-                                <input class="pp-settings-text-input" type="text" id="person-<?php echo $personNum; ?>-lightning" name="person-<?php echo $personNum; ?>-lightning" value="<?php echo htmlspecialchars($lightning[$i]) ?>" />
-                            </div>
-                            <div class="col-lg-4 pl-0">
-                                <label style="font-size: 110%; font-weight: bold;" for="person-<?php echo $personNum; ?>-customkey">
-                                    <?php echo __('Custom Key', 'powerpress'); ?>
-                                </label>
-                                <br />
-                                <br />
-                                <input class="pp-settings-text-input" type="text" id="person-<?php echo $personNum; ?>-customkey" name="person-<?php echo $personNum; ?>-customkey" value="<?php echo htmlspecialchars($customKeys[$i]) ?>" />
-                            </div>
-                            <div class="col-lg-4 pl-0">
-                                <label style="font-size: 110%; font-weight: bold;" for="person-<?php echo $personNum; ?>-customvalue">
-                                    <?php echo __('Custom Value', 'powerpress'); ?>
-                                </label>
-                                <br />
-                                <br />
-                                <input class="pp-settings-text-input" type="text" id="person-<?php echo $personNum; ?>-customvalue" name="person-<?php echo $personNum; ?>-customvalue" value="<?php echo htmlspecialchars($customValues[$i]) ?>" />
-                            </div>
-                        </div>
-                        <div class="row pl-0" style="margin-top: 20px;">
-                            <div class="col-lg-8 pl-0">
-                                <label style="font-size: 110%; font-weight: bold;" for="person-<?php echo $personNum; ?>-pubkey">
-                                    <?php echo __('PubKey', 'powerpress'); ?>
-                                </label>
-                                <br />
-                                <br />
-                                <input class="pp-settings-text-input" type="text" id="person-<?php echo $personNum; ?>-pubkey" name="person-<?php echo $personNum; ?>-pubkey" value="<?php echo htmlspecialchars($pubKeys[$i]) ?>" />
-                            </div>
-                            <div class="col-lg-4 pl-0">
-                                <label style="font-size: 110%; font-weight: bold;" for="person-<?php echo $personNum; ?>-split">
-                                    <?php echo __('Split', 'powerpress'); ?>
-                                </label>
-                                <br />
-                                <br />
-                                <input class="pp-settings-text-input" type="number" id="person-<?php echo $personNum; ?>-split" name="person-<?php echo $personNum; ?>-split" value="<?php echo htmlspecialchars($splits[$i]) ?>" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            <?php }
-            }?>
-                <div class="row pr-4" style="margin-top: 20px;" id="add-person-container">
-                    <div class="col-lg-12" style="display: flex; justify-content: flex-end;">
-                        <button class="value-btn" type="button" style="border: none; background: inherit; color: #1976D2;" id="newperson" name="newperson"><?php echo __('+ Add Person', 'powerpress'); ?></button>
-                    </div>
-                </div>
-            </div>
-            <hr />
+            powerpress_render_template([
+                'type' => 'v4v',
+                'context' => 'channel',
+                'FeedSlug' => $feed_slug,
+                'Data' => $General,
+                'NamePrefix' => "Feed",
+                'hide_section_header' => true,
+                'show_inherit_checkbox' => false
+            ]);
+            ?>
             <?php powerpress_settings_tab_footer(); ?>
         </div>
     </div>
+    <script defer>
+        document.addEventListener('DOMContentLoaded', function() {
+            initValueRecipientManager( '<?php echo $feed_slug; ?>');
+        });
+    </script>
 
     <?php
 }
@@ -1690,111 +1465,47 @@ function powerpressadmin_edit_funding($FeedSettings = false, $feed_slug='podcast
 		$FeedSettings['donate_url'] = '';
 	if( !isset($FeedSettings['donate_label']) )
 		$FeedSettings['donate_label'] = '';
-
-    if( !isset($FeedSettings['location']) )
-        $FeedSettings['location'] = [''];
-    if( !isset($FeedSettings['pci_geo']) )
-        $FeedSettings['pci_geo'] = [''];
-    if( !isset($FeedSettings['pci_osm']) )
-        $FeedSettings['pci_osm'] = [''];
-    if( !isset($FeedSettings['pci_rel']) )
-        $FeedSettings['pci_rel'] = [''];
-    if( !isset($FeedSettings['frequency']) )
-        $FeedSettings['frequency'] = '';
     ?>
-    <style>
-        #search-results, #feed-search-results, #episode-search-results {
-            /* Remove default list styling */
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .search-result {
-            border: 1px solid #ddd; /* Add a border to all links */
-            background-color: #f6f6f6; /* Grey background color */
-            display: flex; /* Make it into a block element to fill the whole list */
-            align-items: center;
-            height: calc(1.5em + 0.75em + 2px);
-        }
-
-        .search-result a {
-            text-decoration: none; /* Remove default text underline */
-            font-size: 1rem; /* Increase the font-size */
-            color: black; /* Add a black text color */
-            margin-left: 5%;
-            margin-right: 5%;
-            cursor: pointer;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            width: 90%;
-            display: block;
-        }
-
-        .list-result {
-            width: 80%;
-            display: block;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
-
-        .search-result:hover:not(.header) {
-            background-color: #eee; /* Add a hover effect to all links, except for headers */
-        }
-    </style>
     <h1 class="pp-heading"><?php echo __('Basic Show Information', 'powerpress'); ?></h1>
-    <div class="pp-settings-section">
+
+    <!--
+            Location Template Renderer      
+    -->
+    <div id="location-header" class="pp-settings-section">
         <h2><?php echo __('Location', 'powerpress'); ?></h2>
+
         <?php
-        if (!is_array($FeedSettings['location'])) {
-            $FeedSettings['location'] = [$FeedSettings['location']];
-            $FeedSettings['pci_geo'] = [$FeedSettings['pci_geo']];
-            $FeedSettings['pci_osm'] = [$FeedSettings['pci_osm']];
-            $FeedSettings['pci_rel'] = [1];
-        }
+        powerpress_render_template([
+            'type' => 'location',
+            'context' => 'channel',
+            'FeedSlug' => $feed_slug,
+            'Data' => $FeedSettings,
+            'NamePrefix' => "Feed",
+            'hide_section_header' => true,
+        ]);
         ?>
 
-        <?php for ($i = 0; $i < count($FeedSettings['location']); $i++) { ?>
-        <div class="mb-2">
-        <div class="row ml-0 mr-0">
-            <div class="col-11">
-                <div class="row">
-                    <input class="pp-settings-text-input" type="text" name="Feed[location][]" oninput="powerpress_locationInput(event)" value="<?php echo esc_attr($FeedSettings['location'][$i]); ?>" maxlength="50" />
-                </div>
-            </div>
-            <div class="col-1">
-                <div class="row" style="height: 100%; display: flex; align-items: center; justify-content: center;">
-                    <button class="float-left pl-0 remove-location" type="button" style="border: none; background: inherit; color: red; font-size: 25px;">×</button>
-                </div>
+    </div>
+
+    <div class="pp-settings-section col-12">
+        <h2><?php echo __('Episode Frequency', 'powerpress'); ?></h2>
+        <div class="row d-flex flex-row align-items-center justify-content-between">
+            <div class="form-group col-lg-5 mb-3">
+                <label for="dtstart" class="pp-settings-label">
+                    <?php echo __('Start Date', 'powerpress')?>
+                </label>
+                <input class="pp-settings-text-input" type="date" name="Feed[dtstart]" id="dtstart" value="<?php echo htmlspecialchars($FeedSettings['dtstart']) ?? ''; ?>">
             </div>
 
+            <div class="form-check col-lg-5 mb-3">
+                <input type="hidden" name="Feed[is_complete]" value="false">
+                <input class="form-check-input" type="checkbox" name="Feed[is_complete]" id="complete" value="true" <?php echo !empty($FeedSettings['is_complete']) && $FeedSettings['is_complete'] === 'true' ? 'checked' : '' ?>>
+                <label class="form-check-label" for="complete" style="color: black; font-size: 1rem;">
+                    <?php echo __("Mark Show Complete", "powerpress"); ?>
+                </label>
+            </div>
         </div>
-        <label for="Feed[location]" class="pp-settings-label-under"><?php echo __('e.g. Cleveland, Ohio', 'powerpress'); ?></label>
-        <div id="pp-location-details" class="pp-settings-subsection" <?php if (empty($FeedSettings['location'])) { echo "style=\"display: none;\""; } ?>>
-            <!-- Two text inputs for geo and osm, even listener on input for location so that pp-location-details appears when there is an input -->
-            <label for="Feed[pci_geo]" class="pp-settings-label"><?php echo __('Geo', 'powerpress'); ?></label>
-            <input class="pp-settings-text-input" type="text" name="Feed[pci_geo][]" value="<?php echo esc_attr($FeedSettings['pci_geo'][$i]); ?>" maxlength="50" />
-            <label for="Feed[pci_geo]" class="pp-settings-label-under"><?php echo __('e.g. geo:-27.86159,153.3169', 'powerpress'); ?></label>
-            <br />
-            <label for="Feed[pci_osm]" class="pp-settings-label"><?php echo __('OSM', 'powerpress'); ?></label>
-            <input class="pp-settings-text-input" type="text" name="Feed[pci_osm][]" value="<?php echo esc_attr($FeedSettings['pci_osm'][$i]); ?>" maxlength="50" />
-            <label for="Feed[pci_osm]" class="pp-settings-label-under"><?php echo __('e.g. W43678282', 'powerpress'); ?></label>
-            <br />
-            <label for="Feed[pci_rel]" class="pp-settings-label"><?php echo __('Rel', 'powerpress'); ?></label>
-            <select class="pp-settings-select" name="Feed[pci_rel][]">
-                <option value="1" <?php echo !isset($FeedSettings['pci_rel'][$i]) || $FeedSettings['pci_rel'][$i] == 1 ? 'selected' : ''; ?>>Subject</option>
-                <option value="2" <?php echo isset($FeedSettings['pci_rel'][$i]) && $FeedSettings['pci_rel'][$i] == 2 ? 'selected' : ''; ?>>Creator</option>
-            </select>
-        </div>
-        </div>
-        <?php } ?>
-        <div id="location-end"></div>
-        <button type="button" style="border: none; background: inherit; color: #1976D2;" id="newlocation" name="newlocation">+ Add Location</button>
-    </div>
-    <div class="pp-settings-section">
-        <h2><?php echo __('Episode Frequency', 'powerpress'); ?></h2>
+
         <div class="row ml-0 mr-0">
             <div class="form-check mr-4">
                 <input class="form-check-input" type="radio" name="Feed[update_frequency]" id="daily" value="1" <?php echo !empty($FeedSettings['update_frequency']) && $FeedSettings['update_frequency'] == '1' ? 'checked' : '' ?>>
@@ -1845,93 +1556,33 @@ function powerpressadmin_edit_funding($FeedSettings = false, $feed_slug='podcast
                    name="Feed[update_frequency_month]" id="update_frequency_month" type="number" />
         </div>
     </div>
-    <div class="pp-settings-section">
-        <h2>
-            <?php echo __('Credits', 'powerpress'); ?>
+
+    <div class="pp-settings-section col-12">
+        <div class="row d-flex justify-content-start align-items-center">
+            <h2>
+                <?php echo __('Credits', 'powerpress'); ?>
+            </h2>
             <div class="pp-tooltip-right" style="height: 20px; width: 20px; margin: 1ch 0 0 1ch;">i
                 <span class="text-pp-tooltip" style="top: -50%; min-width: 200px;"><?php echo esc_html(__('You can document your permanent host, co-host, engineer at the show level, etc. You should not duplicate credits at the episode level.', 'powerpress')); ?></span>
             </div>
-        </h2>
-        <div class="row mt-2 mb-3">
-            <div class="col-lg-12">
-                <?php
-                $currentPersonCount = 0;
-                $personNames = isset($FeedSettings['person_names']) ? $FeedSettings['person_names'] : array("");
-                $personRoles = isset($FeedSettings['person_roles']) ? $FeedSettings['person_roles'] : array("Host");
-                $personURLs = isset($FeedSettings['person_urls']) ? $FeedSettings['person_urls'] : array("");
-                $linkURLs = isset($FeedSettings['link_urls']) ? $FeedSettings['link_urls'] : array("");
-
-                for($i=0;$i<count($personNames); $i++) {
-                    $currentPersonCount = $i + 1;
-                    ?>
-                    <div id="role-<?php echo $currentPersonCount; ?>-container">
-                        <div class="row">
-                            <div class="col-lg-3">
-                                <label for="role-<?php echo $currentPersonCount; ?>-name" style="margin: 0;"><?php echo __("Person", "powerpress"); ?></label>
-                            </div>
-                            <div class="col-lg-2" style="padding: 0;">
-                                <label for="role-<?php echo $currentPersonCount; ?>-role" style="margin: 0;">
-                                    <?php echo __("Role", "powerpress"); ?>
-                                </label>
-                            </div>
-                            <div class="col-lg-3">
-                                <label for="role-<?php echo $currentPersonCount; ?>-personurl" style="margin: 0;">
-                                    <?php echo __("Person Image URL", "powerpress"); ?>
-                                    <?php if ($currentPersonCount == 1) { ?>
-                                        <div class="pp-tooltip-right" style="height: 16px; width: 16px;">i
-                                            <span class="text-pp-tooltip" style="top: -50%; min-width: 200px;"><?php echo esc_html(__('This should link to a physical picture .jpeg, .jpg, .png of the individual credit.', 'powerpress')); ?></span>
-                                        </div>
-                                    <?php } ?>
-                                </label>
-                            </div>
-                            <div class="col-lg-3">
-                                <label for="role-<?php echo $currentPersonCount; ?>-linkurl" style="margin: 0;">
-                                    <?php echo __("Link URL", "powerpress"); ?>
-                                    <?php if ($currentPersonCount == 1) { ?>
-                                        <div class="pp-tooltip-right" style="height: 16px; width: 16px;">i
-                                            <span class="text-pp-tooltip" style="top: -50%; min-width: 200px;"><?php echo esc_html(__('This should be the link to an information page about the person getting the credit, aka a LinkedIn page or a profile page on a website.', 'powerpress')); ?></span>
-                                        </div>
-                                    <?php } ?>
-                                </label>
-                            </div>
-                            <div class="col-lg-1"></div>
-                        </div>
-                        <div class="row" style="display: flex; align-items: center;">
-                            <div class="col">
-                                <div class="row" style="display: flex; align-items: center; margin-bottom: 15px;">
-                                    <div class="col-lg-3">
-                                        <input type="text" value="<?php echo htmlspecialchars($personNames[$i]); ?>" name="role-<?php echo $currentPersonCount; ?>-name" class="pp-settings-text-input" />
-                                    </div>
-                                    <div class="col-lg-2" style="padding: 0;">
-                                        <select name="role-<?php echo $currentPersonCount; ?>-role" class="pp-settings-select" style="width: 100% !important;" aria-label="Default select example" >
-                                            <?php printSelectOptionsRoles($personRoles[$i]) ?>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-3">
-                                        <input type="text" value="<?php echo htmlspecialchars($personURLs[$i]); ?>" name="role-<?php echo $currentPersonCount; ?>-personurl" class="pp-settings-text-input"  />
-                                    </div>
-                                    <div class="col-lg-3">
-                                        <input type="text" value="<?php echo htmlspecialchars($linkURLs[$i]); ?>" name="role-<?php echo $currentPersonCount; ?>-linkurl" class="pp-settings-text-input"  />
-                                    </div>
-                                    <div class="col-lg-1 pl-0">
-                                        <?php if ($currentPersonCount > 1) {
-                                            ?>
-                                            <button class="float-left pl-0" type="button" style="border: none; background: inherit; color: red; font-size: 25px;" id="remove-role-<?php echo $currentPersonCount; ?>" name="remove-role-<?php echo $currentPersonCount; ?>">&times;</button>
-                                            <?php
-                                        }
-                                        ?>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <?php
-                }?>
-                <button type="button" style="border: none; background: inherit; color: #1976D2;" id="newrole" name="newrole"><?php echo __("+ Add Role", "powerpress"); ?></button>
-            </div>
         </div>
+        <!-- 
+        Credit Template Renderer
+         -->
+        <?php 
+            powerpress_render_template([
+                'type' => 'credit',
+                'context' => 'channel',
+                'FeedSlug' => $feed_slug,
+                'Data' => $FeedSettings,
+                'NamePrefix' => "Feed",
+                'hide_section_header' => true,
+                'show_inherit_checkbox' => false
+            ]);
+            ?>
     </div>
-    <div class="pp-settings-section">
+
+    <div class="pp-settings-section col-12">
         <h2>
             <?php echo __("Block", "powerpress"); ?>
         </h2>
@@ -2006,15 +1657,28 @@ function powerpressadmin_edit_funding($FeedSettings = false, $feed_slug='podcast
 	        <p class="pp-main"><?php echo __('Syndicate a donate link with your podcast. Create your own crowdfunding page with PayPal donate buttons, or link to a service such as Patreon.', 'powerpress'); ?></p>
         </div>
         <br />
-	    <label for="donate_url" class="pp-settings-label"><?php echo __('Donate URL', 'powerpress'); ?></label>
-        <input class="pp-settings-text-input" type="text" id="donate_url" value="<?php echo esc_attr($FeedSettings['donate_url']); ?>" name="Feed[donate_url]" />
-	    <label for="donate_label" class="pp-settings-label"><?php echo __('Donate Label', 'powerpress'); ?></label>
-        <input class="pp-settings-text-input" type="text" id="donate_label" value="<?php echo esc_attr($FeedSettings['donate_label']); ?>" name="Feed[donate_label]" />
-        <label for="donate_label" class="pp-settings-label-under"><?php echo __('optional', 'powerpress'); ?></label>
+        <!-- 
+        Donate Template Renderer
+         -->
+        <?php 
+            powerpress_render_template([
+                'type' => 'donate',
+                'context' => 'channel',
+                'FeedSlug' => $feed_slug,
+                'Data' => $FeedSettings,
+                'NamePrefix' => "Feed",
+                'hide_section_header' => true,
+                'show_inherit_checkbox' => false
+            ]);
+            ?>
 	    <p class="pp-settings-text" style="margin-top: 1em;"><a href="https://blubrry.com/support/powerpress-documentation/syndicating-a-donate-link-in-your-podcast/" target="_blank"><?php echo __('Learn more about syndicating donate links for podcasting', 'powerpress'); ?></a></p>
     </div>
-    <script>
-        let currentRoleCount = <?php echo $currentPersonCount; ?>;
+    <script defer>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initLocationManager('<?php echo $feed_slug; ?>');
+            initCreditsManager( '<?php echo $feed_slug; ?>');
+        });
 
         <?php
         $blockListStr = '[';
@@ -2136,108 +1800,6 @@ function powerpressadmin_edit_funding($FeedSettings = false, $feed_slug='podcast
                 if (value < 1)
                     this.value = 1;
             });
-
-            jQuery(document).on('click',"[name*='remove-role-']",function (e) {
-                currentRoleCount -= 1;
-                let roleNum = this.id[this.id.length - 1];
-                jQuery("#role-" + roleNum + "-container").css({"visibility": "hidden", "position": "absolute"});
-                jQuery("[name='role-" + roleNum + "-name']").val("");
-            });
-
-            jQuery(document).on('click', '.remove-location', function(e) {
-                jQuery(this).parent().parent().parent().parent().remove();
-            });
-
-            jQuery(document).on('click', '#newlocation', function(e) {
-                let newHTMl = `<div class="mb-2 mt-3">
-                    <div class="row ml-0 mr-0">
-                        <div class="col-11">
-                            <div class="row">
-                                <input class="pp-settings-text-input" type="text" name="Feed[location][]" oninput="powerpress_locationInput(event)" value="" maxlength="50" />
-                            </div>
-                        </div>
-                        <div class="col-1">
-                            <div class="row" style="height: 100%; display: flex; align-items: center; justify-content: center;">
-                                <button class="float-left pl-0 remove-location" type="button" style="border: none; background: inherit; color: red; font-size: 25px;">×</button>
-                            </div>
-                        </div>
-
-                    </div>
-                    <label for="Feed[location]" class="pp-settings-label-under"><?php echo __('e.g. Cleveland, Ohio', 'powerpress'); ?></label>
-                    <div id="pp-location-details" class="pp-settings-subsection">
-                        <!-- Two text inputs for geo and osm, even listener on input for location so that pp-location-details appears when there is an input -->
-                        <label for="Feed[pci_geo]" class="pp-settings-label"><?php echo __('Geo', 'powerpress'); ?></label>
-                        <input class="pp-settings-text-input" type="text" name="Feed[pci_geo][]" value="" maxlength="50" />
-                        <label for="Feed[pci_geo]" class="pp-settings-label-under"><?php echo __('e.g. geo:-27.86159,153.3169', 'powerpress'); ?></label>
-                        <br />
-                        <label for="Feed[pci_osm]" class="pp-settings-label"><?php echo __('OSM', 'powerpress'); ?></label>
-                        <input class="pp-settings-text-input" type="text" name="Feed[pci_osm][]" value="" maxlength="50" />
-                        <label for="Feed[pci_osm]" class="pp-settings-label-under"><?php echo __('e.g. W43678282', 'powerpress'); ?></label>
-                        <br />
-                        <label for="Feed[pci_rel]" class="pp-settings-label"><?php echo __('Rel', 'powerpress'); ?></label>
-                        <select class="pp-settings-select" name="Feed[pci_rel][]">
-                            <option value="1" selected>Subject</option>
-                            <option value="2">Creator</option>
-                        </select>
-                    </div>
-                    </div>`;
-
-                jQuery(newHTMl).insertBefore('#location-end');
-            });
-
-            jQuery("[name='newrole']").click(function (e) {
-                currentRoleCount += 1;
-
-                if (jQuery("[name='role-" + currentRoleCount + "-name']").length) {
-                    jQuery("[name='role-" + currentRoleCount + "-name']").val("");
-                    jQuery("[name='role-" + currentRoleCount + "-personurl']").val("");
-                    jQuery("[name='role-" + currentRoleCount + "-linkurl']").val("");
-                    jQuery("#role-"+currentRoleCount+"-container").css({"visibility": "visible", "position": "static"});
-                } else {
-                    let newHTML = '<div id="role-' + currentRoleCount + '-container">' +
-                        '<div class="row">' +
-                        '<div class="col-lg-3">' +
-                        '<label for="role-' + currentRoleCount + '-name" style="margin: 0;"><?php echo __("Author/Artist", "powerpress"); ?></label>' +
-                        '</div>' +
-                        '<div class="col-lg-2" style="padding: 0;">' +
-                        '<label for="role-' + currentRoleCount + '-role" style="margin: 0;"><?php echo __("Role", "powerpress"); ?></label>' +
-                        '</div>' +
-                        '<div class="col-lg-3">' +
-                        '<label for="role-' + currentRoleCount + '-personurl" style="margin: 0;"><?php echo __("Person Image URL", "powerpress"); ?></label>' +
-                        '</div>' +
-                        '<div class="col-lg-3">' +
-                        '<label for="role-' + currentRoleCount + '-linkurl" style="margin: 0;"><?php echo __("Link URL", "powerpress"); ?></label>' +
-                        '</div>' +
-                        '<div class="col-lg-1"></div>' +
-                        '</div>' +
-                        '<div class="row" style="display: flex; align-items: center;">' +
-                        '<div class="col">' +
-                        '<div class="row" style="display: flex; align-items: center; margin-bottom: 15px;">' +
-                        '<div class="col-lg-3">' +
-                        '<input type="text" value="" name="role-' + currentRoleCount + '-name" class="pp-settings-text-input" />' +
-                        '</div>' +
-                        '<div class="col-lg-2" style="padding: 0;">' +
-                        '<select name="role-' + currentRoleCount + '-role" class="pp-settings-select" style="width: 100% !important;" aria-label="Default select example">' +
-                        '<?php printSelectOptionsRoles("Host");  ?>' +
-                        '</select>' +
-                        '</div>' +
-                        '<div class="col-lg-3">' +
-                        '<input type="text" value="" name="role-' + currentRoleCount + '-personurl" class="pp-settings-text-input"/>' +
-                        '</div>' +
-                        '<div class="col-lg-3">' +
-                        '<input type="text" value="" name="role-' + currentRoleCount + '-linkurl" class="pp-settings-text-input"/>' +
-                        '</div>' +
-                        '<div class="col-lg-1 pl-0">' +
-                        '<button class="float-left pl-0" type="button" style="border: none; background: inherit; color: red; font-size: 25px;" id="remove-role-' + currentRoleCount + '" name="remove-role-' + currentRoleCount + '">&times;</button>' +
-                        '</div>' +
-                        '</div>' +
-                        '</div>' +
-                        '</div>' +
-                        '</div>';
-                    let prevId = '#role-' + (currentRoleCount - 1) + '-container';
-                    jQuery(newHTML).insertAfter(prevId)
-                }
-            });
         });
     </script>
 <?php
@@ -2246,30 +1808,6 @@ function powerpressadmin_edit_funding($FeedSettings = false, $feed_slug='podcast
 function getBlockTaxonomy() {
     $options = ["acast","amazon","anchor","apple","audible","audioboom","backtracks","bitcoin","blubrry","buzzsprout","captivate","castos","castopod","facebook","fireside","fyyd","google","gpodder","hypercatcher","kasts","libsyn","mastodon","megafono","megaphone","omnystudio","overcast","paypal","pinecast","podbean","podcastaddict","podcastguru","podcastindex","podcasts","podchaser","podcloud","podfriend","podiant","podigee","podnews","podomatic","podserve","podverse","redcircle","relay","resonaterecordings","rss","shoutengine","simplecast","slack","soundcloud","spotify","spreaker","tiktok","transistor","twitter","whooshkaa","youtube","zencast"];
     return $options;
-}
-
-function printSelectOptionsRoles($selectedOption) {
-    $options = [
-            "Director", "Assistant Director", "Executive Producer", "Senior Producer", "Producer",
-            "Associate Producer", "Development Producer", "Creative Director", "Host", "Co-Host",
-            "Guest Host", "Guest", "Voice Actor", "Narrator", "Announcer", "Reporter", "Author",
-            "Editorial Director", "Co-Writer", "Writer", "Songwriter", "Guest Writer", "Story Editor",
-            "Managing Editor", "Script Editor", "Script Coordinator", "Researcher", "Editor", "Fact Checker",
-            "Translator", "Transcriber", "Logger", "Studio Coordinator", "Technical Director", "Technical Manager",
-            "Audio Engineer", "Remote Recording Engineer", "Post Production Engineer", "Audio Editor", "Sound Designer",
-            "Foley Artist", "Composer", "Theme Music", "Music Production", "Music Contributor", "Production Coordinator",
-            "Booking Coordinator", "Production Assistant", "Content Manager", "Marketing Manager", "Sales Representative",
-            "Sales Manager", "Graphic Designer", "Cover Art Designer", "Social Media Manager", "Consultant", "Intern",
-            "Camera Operator", "Lighting Designer", "Camera Grip", "Assistant Camera", "Editor", "Assistant Editor"
-    ];
-
-    foreach ($options as $option) {
-        if ($option == $selectedOption) {
-            echo '<option selected value="'.$option.'">'.__($option, "powerpress").'</option>';
-        } else {
-            echo '<option value="'.$option.'">'.__($option, "powerpress").'</option>';
-        }
-    }
 }
 
 function powerpressadmin_edit_tv($FeedSettings = false, $feed_slug='podcast', $cat_ID=false)

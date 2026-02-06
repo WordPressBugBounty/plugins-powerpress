@@ -78,20 +78,21 @@ if( !function_exists('add_action') )
 			foreach( $results_data as $null => $row )
 			{
 				//$return = $row;
-				$podpress_data = @unserialize($row['meta_value']);
+				// allowed_classes => false prevents php object injection via crafted serialized data
+				$podpress_data = @unserialize($row['meta_value'], ['allowed_classes' => false]);
 				if( !$podpress_data )
 				{
 					$podpress_data_serialized = powerpress_repair_serialize( $row['meta_value'] );
-					$podpress_data = @unserialize($podpress_data_serialized);
+					$podpress_data = @unserialize($podpress_data_serialized, ['allowed_classes' => false]);
 					if( !is_array($podpress_data) && is_string($podpress_data) )
 					{
-						$podpress_data_two = @unserialize($podpress_data);
+						$podpress_data_two = @unserialize($podpress_data, ['allowed_classes' => false]);
 						if( !is_array($podpress_data_two)  )
 						{
 							$podpress_data_serialized = powerpress_repair_serialize($podpress_data);
-							$podpress_data_two = @unserialize($podPressMedia);
+							$podpress_data_two = @unserialize($podpress_data_serialized, ['allowed_classes' => false]);
 						}
-						
+
 						if( is_array($podpress_data_two)  )
 							$podpress_data = $podpress_data_two;
 					}
@@ -99,13 +100,13 @@ if( !function_exists('add_action') )
 				else if( is_string($podpress_data) )
 				{
 					// May have been double serialized...
-					$podpress_unserialized = @unserialize($podpress_data);
+					$podpress_unserialized = @unserialize($podpress_data, ['allowed_classes' => false]);
 					if( !$podpress_unserialized )
 					{
 						$podpress_data_serialized = powerpress_repair_serialize( $podpress_data );
-						$podpress_unserialized = @unserialize($podpress_data_serialized);
+						$podpress_unserialized = @unserialize($podpress_data_serialized, ['allowed_classes' => false]);
 					}
-					
+
 					$podpress_data = $podpress_unserialized;
 				}
 				
@@ -568,11 +569,11 @@ function select_all(index,value)
 					echo '<td '.$class.'><strong>';
 					if ( current_user_can( 'edit_post', $post_id ) )
 					{
-					?><a class="row-title" href="<?php echo $edit_link; ?>" title="<?php echo esc_attr(sprintf(__('Edit "%s"', 'powerpress'), $import_data['post_title'])); ?>"><?php echo $import_data['post_title'] ?></a><?php
+					?><a class="row-title" href="<?php echo $edit_link; ?>" title="<?php echo esc_attr(sprintf(__('Edit "%s"', 'powerpress'), $import_data['post_title'])); ?>"><?php echo esc_html($import_data['post_title']) ?></a><?php
 					}
 					else
 					{
-						echo $import_data['post_title'];
+						echo esc_html($import_data['post_title']);
 					}
 					
 					echo '</strong><br />';

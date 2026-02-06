@@ -121,7 +121,7 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
 				$Settings['title'] = get_bloginfo_rss('name'); // Get blog title, best we can do
 			if( !empty($Settings['feed_redirect_url']) )
 				$Settings['feed_url'] = $Settings['feed_redirect_url'];
-			else if( !empty($General['cat_casting_podcast_feeds']) )
+			else if( !empty($GeneralSettings['cat_casting_podcast_feeds']) )
 				$Settings['feed_url'] = get_category_feed_link($category_id, 'podcast');
 			else
 				$Settings['feed_url'] = get_category_feed_link( $category_id ); // Get category feed URL
@@ -198,7 +198,8 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
 		{
 			$term_ID = '';
 			$taxonomy_type = '';
-			$Settings = get_option('powerpress_taxonomy_'. intval($taxonomy_term_id), array() );
+			$taxonomy_term_id = intval($taxonomy_term_id); // sanitize for sql
+			$Settings = get_option('powerpress_taxonomy_'. $taxonomy_term_id, array() );
 			if( !empty($Settings) ) {
 				global $wpdb;
 				$term_info = $wpdb->get_results("SELECT term_id, taxonomy FROM {$wpdb->term_taxonomy} WHERE term_taxonomy_id = {$taxonomy_term_id} LIMIT 1",  ARRAY_A);
@@ -213,7 +214,7 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
 			
 			if( !empty($Settings['feed_redirect_url']) )
 				$Settings['feed_url'] = $Settings['feed_redirect_url'];
-			if( empty($General['feed_url']) )
+			if( empty($GeneralSettings['feed_url']) )
 				$Settings['feed_url'] = get_term_feed_link($term_ID, $taxonomy_type, 'rss2');
 			
 			$Settings['subscribe_page_url'] = powerpresssubscribe_get_subscribe_page($Settings);

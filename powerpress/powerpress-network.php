@@ -535,10 +535,10 @@ class PowerPressNetwork
                             $props = $this->apiBus->removeSpecificProgramInNetwork($apiUrl, $creds, $networkInfo, true);
                         }
                     } else if ($_POST['requestAction'] == 'save') {
-                        $props = $this->apiBus->updateProgramsInSpecificList($apiUrl, $creds, $networkInfo, htmlspecialchars($_POST['program']));
+                        $props = $this->apiBus->updateProgramsInSpecificList($apiUrl, $creds, $networkInfo, $_POST['program']);
                     } else if ($_POST['requestAction'] == 'add' && $_POST['list_id'] ) {
                         $networkInfo['list_id'] = $_POST['list_id'];
-                        $props = $this->apiBus->addProgramToList($apiUrl, $creds, $networkInfo, htmlspecialchars($_POST['program']));
+                        $props = $this->apiBus->addProgramToList($apiUrl, $creds, $networkInfo, $_POST['program']);
                     }
                 }
 
