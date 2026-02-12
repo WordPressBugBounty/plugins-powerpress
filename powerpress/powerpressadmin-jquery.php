@@ -2302,8 +2302,6 @@ function powerpress_admin_jquery_account_header($title, $jquery = false, $no_exi
 if( !defined('WP_ADMIN') )
 	require_once(ABSPATH . 'wp-admin/includes/admin.php');
 
-wp_admin_css( 'css/global' );
-wp_admin_css();
 if( $jquery )
 	wp_enqueue_script('utils');
 
@@ -2370,8 +2368,6 @@ function powerpress_admin_jquery_header($title, $jquery = false)
 if( !defined('WP_ADMIN') )
 	require_once(ABSPATH . 'wp-admin/includes/admin.php');
 
-wp_admin_css( 'css/global' );
-wp_admin_css();
 if( $jquery )
 	wp_enqueue_script('utils');
 

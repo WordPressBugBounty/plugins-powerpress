@@ -168,7 +168,7 @@ function powerpress_shortcode_handler( $attributes, $content = null )
         }
         $EpisodeData = powerpress_get_enclosure_data($post_id, $channel);
 		if( !empty($EpisodeData['embed']) )
-			$return = $EpisodeData['embed'];
+			$return = SanitizeEmbed($EpisodeData['embed']);
 		
 		// Shortcode over-ride settings:
 		if( !empty($image) )
@@ -266,7 +266,7 @@ function powerpress_shortcode_handler( $attributes, $content = null )
                     continue;
 
                 if (!empty($EpisodeData['embed']))
-                    $return .= $EpisodeData['embed'];
+                    $return .= SanitizeEmbed($EpisodeData['embed']);
 
                 // Shortcode over-ride settings:
                 if (!empty($image))
@@ -1103,7 +1103,7 @@ body { font-size: 13px; font-family: Arial, Helvetica, sans-serif; /* width: 100
 	}
 	else if( !empty($EpisodeData['embed']) )
 	{
-		echo $EpisodeData['embed'];
+		echo SanitizeEmbed($EpisodeData['embed']);
 	}
 	else //  if( !isset($EpisodeData['no_player']) ) // Even if there is no player set, if the play in new window option is enabled then it should play here...
 	{

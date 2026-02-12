@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.15.13
+Version: 11.15.14
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -134,7 +134,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.15.13' );
+define('POWERPRESS_VERSION', '11.15.14' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -408,7 +408,7 @@ function powerpress_content($content)
                         $AddDefaultPlayer = empty($EpisodeData['no_player']);
 
                         if ($EpisodeData && !empty($EpisodeData['embed'])) {
-                            $new_content .= trim($EpisodeData['embed']);
+                            $new_content .= SanitizeEmbed(trim($EpisodeData['embed']));
                             if (!empty($GeneralSettings['embed_replace_player']))
                                 $AddDefaultPlayer = false;
                         }
@@ -606,6 +606,69 @@ function powerpress_rss2_ns()
     {
         echo 'xmlns:rawvoice="https://blubrry.com/developer/rawvoice-rss/"'.PHP_EOL;
     }
+}
+
+function SanitizeEmbed($html) {
+    $dom = new DOMDocument();
+    libxml_use_internal_errors(true);
+    // force UTF-8 encoding
+    $html_encoded = '<?xml encoding="UTF-8"><div>' . $html . '</div>';
+    $dom->loadHTML($html_encoded, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+    $allowed_tags = ['iframe', 'div'];
+    $allowed_attrs = ['src', 'width', 'height', 'frameborder', 'allow', 'sandbox', 'referrerpolicy', 'loading', 'allowfullscreen', 'title', 'scrolling', 'alt'];
+
+    $xpath = new DOMXPath($dom);
+    $nodes = $xpath->query('//*');
+
+    for ($i = $nodes->length - 1; $i >= 0; $i--) {
+        $node = $nodes->item($i);
+        // remove unauthorized tags
+        if (!in_array($node->nodeName, $allowed_tags)) {
+            $node->parentNode->removeChild($node);
+            continue;
+        }
+
+        // clean attributes
+        if ($node->hasAttributes()) {
+            $attrsToRemove = [];
+            foreach ($node->attributes as $attr) {
+                // remove unauthorized attributes
+                if (!in_array($attr->name, $allowed_attrs)) {
+                    $attrsToRemove[] = $attr->name;
+                    continue;
+                }
+
+                // remove any attributes with xss
+                $bad_schemes = [
+                    'javascript:',
+                    'vbscript:',
+                    'data:',
+                    'file:',
+                    'mhtml:'
+                ];
+                foreach ($bad_schemes as $scheme) {
+                    if (stripos($attr->value, $scheme) !== false) {
+                        $attrsToRemove[] = $attr->name;
+                        continue 2;
+                    }
+                }
+            }
+            // Remove the bad attributes we found
+            foreach ($attrsToRemove as $attrName) {
+                $node->removeAttribute($attrName);
+            }
+        }
+    }
+
+    // remove the wrapper
+    $container = $dom->getElementsByTagName('div')->item(0);
+    $output = '';
+    if ($container) {
+        foreach ($container->childNodes as $child) {
+            $output .= $dom->saveHTML($child);
+        }
+    }
+    return $output;
 }
 
 
@@ -4162,7 +4225,7 @@ function get_the_powerpress_content()
 
                     if( $EpisodeData && !empty($EpisodeData['embed']) )
                     {
-                        $new_content .=  trim($EpisodeData['embed']);
+                        $new_content .=  SanitizeEmbed(trim($EpisodeData['embed']));
                         if( !empty($GeneralSettings['embed_replace_player']) )
                             $AddDefaultPlayer = false;
                     }
@@ -5493,7 +5556,7 @@ function get_the_powerpress_all_players($slug = false, $no_link=false)
             $AddDefaultPlayer = true;
             if( !empty($EpisodeData['embed']) )
             {
-                $recipienteturn .= $EpisodeData['embed'];
+                $recipienteturn .= SanitizeEmbed($EpisodeData['embed']);
                 if( !empty($GeneralSettings['embed_replace_player']) )
                     $AddDefaultPlayer = false;
             }

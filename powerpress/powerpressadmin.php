@@ -6902,7 +6902,7 @@ function powerpressadmin_community_news($items=4, $pp_settings=false)
 					$embed = preg_replace('/width="(\d{1,4})"/i', 'width="100%"', $embed );
 					
 					echo '<div class="powerpressNewsPlayer">';
-					echo $embed;
+					echo SanitizeEmbed($embed);
 					echo '</div>';
 				}
 				else if( $first_item )
