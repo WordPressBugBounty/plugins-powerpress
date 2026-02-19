@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.15.14
+Version: 11.15.15
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -134,7 +134,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.15.14' );
+define('POWERPRESS_VERSION', '11.15.15' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -3666,7 +3666,7 @@ function powerpress_load_general_feed_settings()
                     $powerpress_feed['itunes_talent_name'] = $Feed['itunes_talent_name'];
                 else
                     $powerpress_feed['itunes_talent_name'] = get_wp_title_rss();
-                $powerpress_feed['enhance_itunes_summary'] = $Feed['enhance_itunes_summary'];
+                $powerpress_feed['enhance_itunes_summary'] = $Feed['enhance_itunes_summary'] ?? 0;
                 if( !empty($GeneralSettings['seo_itunes']) )
                     $powerpress_feed['enhance_itunes_summary'] = 1;
                 if( !empty($GeneralSettings['disable_wptexturize']) )
@@ -3733,7 +3733,7 @@ function powerpress_load_general_feed_settings()
                             $powerpress_feed['itunes_talent_name'] = $Feed['itunes_talent_name'];
                         else
                             $powerpress_feed['itunes_talent_name'] = get_wp_title_rss();
-                        $powerpress_feed['enhance_itunes_summary'] = $Feed['enhance_itunes_summary'];
+                        $powerpress_feed['enhance_itunes_summary'] = $Feed['enhance_itunes_summary'] ?? 0;
                         if( !empty($GeneralSettings['seo_itunes']) )
                             $powerpress_feed['enhance_itunes_summary'] = 1;
                         if( !empty($GeneralSettings['disable_wptexturize']) )
@@ -3815,7 +3815,7 @@ function powerpress_load_general_feed_settings()
                         $powerpress_feed['itunes_talent_name'] = $Feed['itunes_talent_name'];
                     else
                         $powerpress_feed['itunes_talent_name'] = get_wp_title_rss();
-                    $powerpress_feed['enhance_itunes_summary'] = $Feed['enhance_itunes_summary'];
+                    $powerpress_feed['enhance_itunes_summary'] = $Feed['enhance_itunes_summary'] ?? 0;
                     if( !empty($GeneralSettings['seo_itunes']) )
                         $powerpress_feed['enhance_itunes_summary'] = 1;
                     if( !empty($GeneralSettings['disable_wptexturize']) )

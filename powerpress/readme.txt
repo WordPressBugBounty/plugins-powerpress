@@ -4,7 +4,7 @@ Tags: podcast, apple podcasts, podcast rss feed, spotify, podcast publishing
 Requires at least: 3.6
 Requires PHP: 5.2
 Tested up to: 6.9
-Stable tag: 11.15.14
+Stable tag: 11.15.15
 Donate link: https://blubrry.com/services/podcast-hosting/
 License: GPLv2 or later
 
@@ -164,6 +164,10 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 
 
 == Changelog ==
+
+= 11.15.15 =
+* Released on 2/19/26
+* Bugfix: Undefined array key access
 
 = 11.15.14 =
 * Released on 2/12/26
