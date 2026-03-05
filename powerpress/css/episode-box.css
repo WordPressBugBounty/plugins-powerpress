@@ -373,7 +373,7 @@ div[class^="metamark-preview-"] {
 }
 
 div[id^="explicit-switch-base"] {
-    display: inline-block;
+    display: flex;
     padding: 5px;
     background-color: #e6e6e6;
     width: 100%;
@@ -391,10 +391,8 @@ div[id^="explicit-switch-base"] {
 }
 
 .pp-explicit-option, .explicit-selected {
-    border-collapse: collapse;
     font-weight: bold;
-    display: inline-block;
-    width: 49%;
+    flex: 1;
     padding-top: 1ch;
     padding-bottom: 1ch;
     text-align: center;
@@ -869,11 +867,7 @@ input[id^="powerpress_episode_season"]:disabled {
 }
 
 div[id^="pp-explicit-container"] {
-    display:inline-block;
-    width: 35%;
-    float: right;
-    max-height: 30px;
-    margin-right: 1em;
+    margin-bottom: 1em;
 }
 
 div[id^="apple-title-container"] {
@@ -922,9 +916,6 @@ div[id^="ep-box-min-blubrry-connect-"] {
     .details-auto-detect, .details-specify {
         width: 48%
     }
-    div[id^="pp-explicit-container"] {
-        width: 40%;
-    }
     div[id^="feature-container"] {
         width: 100%;
     }
@@ -954,11 +945,6 @@ div[id^="ep-box-min-blubrry-connect-"] {
     }
     .pp-detail-section {
         margin: 2ch 1em 2ch 1em;
-    }
-    div[id^="pp-explicit-container"] {
-        width: 98%;
-        margin: 1em 0 3em 0;
-        float: left;
     }
     div[id^="apple-title-container"] {
         width: 100%;
@@ -1075,19 +1061,8 @@ div[id^="ep-box-min-blubrry-connect-"] {
     .classic-editor .details-auto-detect, .classic-editor .details-specify {
         width: 48%
     }
-    .classic-editor div[id^="pp-explicit-container"] {
-        width: 40%;
-    }
     .classic-editor div[id^="feature-container"] {
         width: 100%;
-    }
-}
-
-@media (max-width: 1350px) {
-    .classic-editor div[id^="pp-explicit-container"] {
-        width: 98%;
-        margin: 1em 0 3em 0;
-        float: left;
     }
 }
 

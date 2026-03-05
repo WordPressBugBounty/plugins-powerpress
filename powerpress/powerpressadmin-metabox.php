@@ -559,36 +559,33 @@ function seo_tab($FeedSlug, $ExtraData, $iTunesExplicit, $seo_feed_title, $Gener
         <?php if ($AppleOpt) { ?>
             <div id="apple-podcast-opt-<?php echo $FeedSlug; ?>" class="pp-section-container" style="background: #e3f2fd; border-left: 4px solid #1976d2; border-radius: 10px;">
                 <div class="pp-section-container">
-                    <h4 class="pp-section-title"><?php echo esc_html(__("Podcast Optimization (Optional)", 'powerpress')); ?></h4>
-                    <div class="pp-tooltip-right">i
-                        <span class="text-pp-tooltip"><?php echo esc_html(__('Fill this section out thoroughly to optimize the exposure that your podcast gets on Apple.', 'powerpress')); ?></span>
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h4 class="pp-section-title" style="float: none; display: inline-block;"><?php echo esc_html(__("Podcast Optimization (Optional)", 'powerpress')); ?></h4>
+                            <div class="pp-tooltip-right">i
+                                <span class="text-pp-tooltip"><?php echo esc_html(__('Fill this section out thoroughly to optimize the exposure that your podcast gets on Apple.', 'powerpress')); ?></span>
+                            </div>
+                        </div>
+                        <?php
+                        $show_explicit = !isset($GeneralSettings['new_episode_box_explicit']) || $GeneralSettings['new_episode_box_explicit'] == 1;
+                        if ($show_explicit) { ?>
+                            <div id="pp-explicit-container-<?php echo $FeedSlug; ?>" class="col-12 col-lg-4">
+                                <input type="number" style="display: none" id="powerpress_explicit_<?php echo $FeedSlug; ?>" name="Powerpress[<?php echo $FeedSlug; ?>][explicit]" value="<?php echo $iTunesExplicit ? $iTunesExplicit : 0; ?>">
+                                <label class="pp-ep-box-label" style="display: block; padding-bottom: 10px;" for="explicit-switch-base-<?php echo $FeedSlug; ?>"><?php echo esc_html(__("Explicit Setting", "powerpress")); ?></label>
+                                <div id="explicit-switch-base-<?php echo $FeedSlug; ?>">
+                                    <div id="clean-<?php echo $FeedSlug; ?>" title="<?php echo esc_attr(__("Clean content", "powerpress")); ?>" onclick="powerpress_changeExplicitSwitch(this)"
+                                        <?php echo $iTunesExplicit == 2 ? '' : ' style="border-right: 1px solid #b3b3b3;"' ?> class="<?php echo $iTunesExplicit == 2 || $iTunesExplicit == 0 ? 'explicit-selected' : 'pp-explicit-option' ?>">
+                                            <?php echo esc_html(__('CLEAN', 'powerpress')); ?></div>
+                                    <div id="explicit-<?php echo $FeedSlug; ?>" title="<?php echo esc_attr(__("Explicit content", "powerpress")); ?>" onclick="powerpress_changeExplicitSwitch(this)"
+                                        <?php echo $iTunesExplicit == 2 ? ' style="border-left: 1px solid #b3b3b3;"' : '' ?> class="<?php echo $iTunesExplicit == 1 ? 'explicit-selected' : 'pp-explicit-option' ?>">
+                                            <?php echo esc_html(__('EXPLICIT', 'powerpress')); ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php } ?>
                     </div>
 
                     <?php
-                    // FIELD VISIBILITY CONFIGURATION
-                    $show_explicit = !isset($GeneralSettings['new_episode_box_explicit']) || $GeneralSettings['new_episode_box_explicit'] == 1;
-                    ?>
-
-                    <?php if ($show_explicit) { ?>
-                        <div id="pp-explicit-container-<?php echo $FeedSlug; ?>">
-                            <input type="number" style="display: none" id="powerpress_explicit_<?php echo $FeedSlug; ?>" name="Powerpress[<?php echo $FeedSlug; ?>][explicit]" value="<?php echo $iTunesExplicit ? $iTunesExplicit : 0; ?>">
-                            <label class="pp-ep-box-label" style="padding-bottom: 10px;" for="explicit-switch-base-<?php echo $FeedSlug; ?>"><?php echo esc_html(__("Explicit Setting", "powerpress")); ?></label>
-                            <div id="explicit-switch-base-<?php echo $FeedSlug; ?>">
-                                <div id="clean-<?php echo $FeedSlug; ?>" title="<?php echo esc_attr(__("Clean content", "powerpress")); ?>" onclick="powerpress_changeExplicitSwitch(this)" 
-                                    <?php echo $iTunesExplicit == 2 ? '' : ' style="border-right: 1px solid #b3b3b3;"' ?> class="<?php echo $iTunesExplicit == 2 || $iTunesExplicit == 0 ? 'explicit-selected' : 'pp-explicit-option' ?>">
-                                        <?php echo esc_html(__('CLEAN', 'powerpress')); ?></div>
-                                <div id="explicit-<?php echo $FeedSlug; ?>" title="<?php echo esc_attr(__("Explicit content", "powerpress")); ?>" onclick="powerpress_changeExplicitSwitch(this)" 
-                                    <?php echo $iTunesExplicit == 2 ? ' style="border-left: 1px solid #b3b3b3;"' : '' ?> class="<?php echo $iTunesExplicit == 1 ? 'explicit-selected' : 'pp-explicit-option' ?>">
-                                        <?php echo esc_html(__('EXPLICIT', 'powerpress')); ?>
-                                </div>
-                            </div>
-                        </div>
-                    <?php } ?>
-                </div>
-                <br>
-                <div class="pp-section-container">
-                    <?php
-                    // FIELD VISIBILITY CONFIGURATION
                     $show_title = !isset($GeneralSettings['new_episode_box_itunes_title']) || $GeneralSettings['new_episode_box_itunes_title'] == 1;
                     $show_episode = !isset($GeneralSettings['new_episode_box_itunes_nst']) || $GeneralSettings['new_episode_box_itunes_nst'] == 1;
                     ?>

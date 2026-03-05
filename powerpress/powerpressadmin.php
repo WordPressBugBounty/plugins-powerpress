@@ -1815,6 +1815,18 @@ if (!function_exists('powerpress_save_settings')) {
             if( $field == 'powerpress_general' && !isset($Settings['timestamp']) )
                 $Settings['timestamp'] = time();
 
+            if (isset($Settings['value_recipients'])) {
+                unset(
+                    $Settings['value_pubkey'],
+                    $Settings['value_split'], 
+                    $Settings['value_lightning'],
+                    $Settings['value_custom_key'], 
+                    $Settings['value_custom_value'],
+                    $Settings['value_is_fee'], 
+                    $Settings['value_fee']
+                );
+            }
+
             // Special case fields, if they are empty, we can delete them., this will keep the Settings array uncluttered
             if( isset($Settings['feed_links']) && $Settings['feed_links'] == 0 ) // If set to default value, no need to save it in the database
                 unset($Settings['feed_links']);
@@ -6730,7 +6742,7 @@ function powerpress_get_media_info_local($media_file, $content_type='', $file_si
 
 function powerpress_add_error($error, $debug = [])
 {
-	$error = esc_html($error); // escape to prevent xss
+	$error = wp_kses($error, ['a' => ['href' => [], 'target' => [], 'rel' => []]]); // sanitize but allow links
 
 	// if debug context provided, build expandable details
 	if (!empty($debug)) {
