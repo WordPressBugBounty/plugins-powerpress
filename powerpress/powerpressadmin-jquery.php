@@ -42,6 +42,7 @@ function powerpress_strip_redirect_urls($url)
 
 function powerpress_admin_jquery_init()
 {
+
 	$Settings = false; // Important, never remove this
 	$Settings = get_option('powerpress_general', array());
 	$creds = get_option('powerpress_creds');
@@ -58,11 +59,26 @@ function powerpress_admin_jquery_init()
 	if( !$action )
 		return;
 
+
+
+
+
 	$DeleteFile = false;
 	switch($action)
 	{
-	    case 'powerpress-jquery-migrate-queue': {
 
+        case 'powerpress-jquery-add-show-to-network':{
+            mail('grant.galinger@rawvoice.com', 'ajax action', $action);
+
+			check_admin_referer('powerpress-jquery-add-show-to-network');
+
+            ?>
+
+
+            <?php
+        }
+
+	    case 'powerpress-jquery-migrate-queue': {
 			check_admin_referer('powerpress-jquery-migrate-queue');
             powerpress_admin_jquery_header('powerpress/powerpressadmin_migrate.php');
             require_once( POWERPRESS_ABSPATH .'/powerpressadmin-migrate.php');
@@ -2399,7 +2415,6 @@ if( $other ) echo $other; ?>
 <p style="display: none; text-align: right; position: absolute; top: 5px; right: 5px; margin: 0; padding: 0;"><a href="#" onclick="self.parent.tb_remove();" title="<?php echo __('Cancel', 'powerpress'); ?>"><img src="<?php echo admin_url(); ?>/images/no.png" /></a></p>
 <?php
 }
-
 
 function powerpress_admin_jquery_footer($jquery = false)
 {

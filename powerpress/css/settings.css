@@ -1,34 +1,43 @@
-/* Style the tab */
+/* Style the tab - horizontal scrolling on mobile */
 .pp-tab {
-    font-size: 16px;
-    overflow: hidden;
-    background-color: white;
-    border-bottom: 1px solid #ddd;
+    font-size: var(--pp-font-size-md, 16px);
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    background-color: var(--pp-color-white, #fff);
+    border-bottom: 1px solid var(--pp-color-gray-300, #ddd);
     box-shadow: 0 1px 0 0 #EAEDF3, 0 1px 3px 0 rgba(0,0,0,0.05);
     width: 100%;
     padding: 0;
+}
+.pp-tab::-webkit-scrollbar {
+    display: none;
 }
 
 /* Style the buttons that are used to open the tab content */
 .pp-tab button {
     background-color: inherit;
-    float: left;
+    flex-shrink: 0;
     border: none;
     outline: none;
     cursor: pointer;
-    padding: 3vh 3%;
+    padding: 1.5vh 2%;
     transition: 0.3s;
     width: auto;
+    white-space: nowrap;
 }
 
 /* Change background color of buttons on hover */
 .pp-tab button:hover {
-    background-color: #ddd;
+    background-color: var(--pp-color-gray-300, #ddd);
 }
 
 /* Create an active/current tablink class */
 .pp-tab button.active {
-    border-bottom: 3px solid #1a6deb;
+    border-bottom: 3px solid var(--pp-color-accent, #1a6deb);
     font-weight: bold;
 }
 
@@ -76,7 +85,7 @@
     text-decoration: underline;
 }
 
-#pp-welcome-artwork-link, #pp-welcome-applesubmit-link, .program-status-link, .program-dest-welcome-link, p[class="pp-settings-status-text"] {
+#pp-welcome-artwork-link, #pp-welcome-applesubmit-link, p[class="pp-settings-status-text"] {
     margin-top: 0;
     margin-bottom: 1em;
     font-family: Roboto, sans-serif;
@@ -103,109 +112,29 @@
     cursor: pointer;
 }
 
-.pp-news-image {
-    vertical-align: top;
-    float: left;
-    margin-right: 1em;
-    max-height: 95%;
-    max-width: 40%;
-    width: auto;
-    height: auto;
-}
-
-.pp-settings-welcome-text img {
-    height: 50px;
-    width: 50px;
-}
-
-.pp-news-item {
-    padding: 0 2em 2ch 0;
-    border-bottom: 1px solid #ddd;
-    height: 17vh;
-}
-
-.powerpress-welcome-news  .rss-date {
-    font-size: 80%;
-}
-.powerpress-welcome-news .rsswidget {
-    font-size: 110%;
-    color: black;
-    text-decoration: underline;
-}
-
-.pp-news-image-container {
-    max-width: 33%;
-    overflow: hidden;
-}
-
-.pp-news-details-container {
-    height: 100%;
-    width: auto;
-    overflow: hidden;
-}
-
-.program-dest-welcome-link {
-    text-decoration: underline;
-    color: #0073aa;
-}
-
-.program-status-link {
-    color: #d21919;
-}
+/* news widget styles moved to css/components/news-widget.css */
 
 .pp-settings-program-summary {
     margin-bottom: 4em;
 }
 
-.prog-sum-head, .prog-sum-contents {
+.prog-sum-head {
     display: inline-block;
     vertical-align: middle;
-}
-
-.prog-sum-head {
-    width: 72%;
-}
-
-.prog-sum-contents {
-    width: 23%;
-    height: 100%;
-    position: absolute;
-    margin-left: 2em;
-}
-
-.pp-settings-podcast-status {
-    margin-top: 2ch;
-}
-
-.pp-settings-recent-post, .pp-settings-num-episodes, .pp-settings-podcast-status {
-    display: inline-block;
-    vertical-align: top;
-}
-
-.pp-settings-recent-post {
-    width: 70%;
+    width: 100%;
 }
 
 .pp-settings-num-episodes {
-    width: 16%;
-    margin-left: 3em;
-}
-
-.pp-settings-welcome-text {
     display: inline-block;
     vertical-align: top;
-    width: 65%;
-    margin-left: 1ch;
+    width: 16%;
+    margin-left: 3em;
 }
 
 #welcome-preview-image {
     width: 30%;
     height: auto;
     display: inline-block;
-}
-
-.destinations-side-text {
-    line-height: 36px;
 }
 
 .directory-summary-head {
@@ -347,9 +276,6 @@ div[id^=destinations].pp-sidenav-tab {
 .mb-4 {
     margin-bottom: 1.5rem;
 }
-.mb-5 {
-    margin-bottom: 3rem;
-}
 .mt-3 {
     margin-top: 1rem;
 }
@@ -361,9 +287,6 @@ div[id^=destinations].pp-sidenav-tab {
 }
 .align-top {
     vertical-align: top;
-}
-.d-inline-block {
-    display: inline-block;
 }
 .d-flex {
     display: flex;
@@ -509,18 +432,6 @@ span[id^="youtube-icon"] {
     opacity: 1.0;
 }
 
-.pp-sidenav-container {
-    display: inline-block;
-}
-
-.pp-sidenav-hidden {
-    display: none;
-}
-
-.toggle-sidenav {
-    display: none;
-}
-
 /* Style the tab content */
 .pp-sidenav-tab {
     background-color: #ffffff;
@@ -570,11 +481,6 @@ span[id^="youtube-icon"] {
     border-left: 2px solid #1a6deb;
     color: #1665D8;
     background-color: #F6F9FD;
-}
-
-#powerpress_settings_page {
-    min-height: 100vh;
-    margin-top: 1em;
 }
 
 #connect-blubrry-services {
@@ -710,46 +616,46 @@ span[id^="youtube-icon"] {
     }
 }
 
-@media (max-width: 600px) {
-
-
-    .player-options .customize-box-section {
-        width: 80%;
+@media (max-width: 768px) {
+    /* stack layout on mobile, no sidebar column */
+    .pp-tabcontent {
+        padding: 0;
     }
-}
-@media (min-width: 651px) {
-    .pp-sidenav-toggle-container {
-        width: 23%;
-    }
-}
-@media (max-width: 650px) {
-    .pp-sidenav {
-        width: 100%;
-        overflow: visible;
-    }
-    .pp-sidenav-tab {
-        border-left: none;
-    }
-    .toggle-sidenav {
-        color: #1a6deb;
-        font-weight: bold;
-        font-size: 24px;
-        cursor: pointer;
-        padding: 0.5ch;
+    .pp-tabcontent.active {
         display: block;
     }
-    .player-options .video-player-text, .player-options .video-player-text.html5 {
+
+    .pp-tab button {
+        padding: var(--pp-spacing-md, 12px) var(--pp-spacing-lg, 16px);
+        font-size: var(--pp-font-size-base, 14px);
+    }
+
+    .player-options .video-player-text,
+    .player-options .video-player-text.html5 {
         display: block;
         width: 100%;
         max-width: 100%;
     }
-
     .player-options .video-player-sample {
         width: 100%;
     }
 }
-@media (max-width: 1250px) {
-    #settings-destinations .pp-sidenav-toggle-container, #settings-experimental .pp-sidenav-toggle-container, #settings-advanced .pp-sidenav-toggle-container {
+
+@media (max-width: 600px) {
+    .player-options .customize-box-section {
+        width: 80%;
+    }
+}
+
+@media (min-width: 769px) {
+    .pp-sidenav-toggle-container {
+        width: 23%;
+    }
+}
+@media (min-width: 769px) and (max-width: 1250px) {
+    #settings-destinations .pp-sidenav-toggle-container,
+    #settings-experimental .pp-sidenav-toggle-container,
+    #settings-advanced .pp-sidenav-toggle-container {
         width: 35%;
     }
 }
@@ -914,15 +820,6 @@ input.pp-settings-checkbox:checked:before {
     margin: -3px 0 0 -4px;
 }
 
-input.pp-settings-checkbox:checked + label.pp-checkbox-label {
-    color: #0c74d5;
-}
-
-.pp-checkbox-label {
-    font-size: 13px;
-    font-family: Roboto, sans-serif;
-}
-
 .round-checkbox {
     border-radius: 8px;
 }
@@ -940,38 +837,70 @@ input.round-checkbox:checked:before {
 input[class="pp-settings-radio"] {
     width: 22px;
     height: 22px;
-    border: 2px solid #B1B1B1;
-    margin-bottom: 3.5em;
+    border: 2px solid var(--pp-color-gray-400, #B1B1B1);
 }
 
 input[class="pp-settings-radio"]:checked {
-    border: 2px solid #0c74d5;
+    border: 2px solid var(--pp-color-secondary, #0c74d5);
 }
 
 input[class="pp-settings-radio"]:checked:before {
     width: 12px;
     height: 12px;
     margin: 3px;
-    background-color: #0c74d5;
+    background-color: var(--pp-color-secondary, #0c74d5);
 }
 
 input[class="pp-settings-radio-small"] {
     width: 16px;
     height: 16px;
     margin-right: 8px;
-    background-color: #d8dce6;
+    background-color: var(--pp-color-gray-200, #d8dce6);
 }
 
 input[class="pp-settings-radio-small"]:checked {
-    border: 2px solid #0c74d5;
-    background-color: #0c74d5;
+    border: 2px solid var(--pp-color-secondary, #0c74d5);
+    background-color: var(--pp-color-secondary, #0c74d5);
 }
 
 input[class="pp-settings-radio-small"]:checked:before {
     width: 6px;
     height: 6px;
     margin: 3px;
-    background-color: #d8dce6;
+    background-color: var(--pp-color-gray-200, #d8dce6);
+}
+
+/* radio/checkbox row layout - flex containers for li only */
+li:has(> input.pp-settings-radio),
+li:has(> input.pp-settings-checkbox) {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-bottom: 1em;
+}
+
+li > input.pp-settings-radio,
+li > input.pp-settings-checkbox {
+    flex-shrink: 0;
+}
+
+li > input.pp-settings-radio + .pp-settings-subsection,
+li > input.pp-settings-checkbox + .pp-settings-subsection {
+    flex: 1;
+}
+
+/* inline checkbox/radio + subsection (not in li) */
+input.pp-settings-checkbox,
+input.pp-settings-radio-small {
+    vertical-align: top;
+}
+
+input.pp-settings-checkbox + .pp-settings-subsection,
+input.pp-settings-radio-small + .pp-settings-subsection-no-border {
+    display: inline-block;
+    vertical-align: top;
+    width: calc(100% - 40px);
+    margin-left: 0.5em;
 }
 
 input.pp-settings-text-input, textarea.pp-settings-text-input, input.pp-settings-text-input:focus, textarea.pp-settings-text-input:focus {
@@ -1048,6 +977,57 @@ select.pp-settings-select-inline {
     margin-bottom: 3ch;
 }
 
+@media (max-width: 782px) {
+    select[class^='pp-settings-select'],
+    select.pp-settings-select-inline {
+        width: 100%;
+    }
+
+    /* larger touch targets for mobile */
+    li:has(> input.pp-settings-radio),
+    li:has(> input.pp-settings-checkbox) {
+        align-items: center;
+    }
+
+    input.pp-settings-checkbox {
+        height: 36px;
+        width: 36px;
+    }
+
+    input.pp-settings-checkbox:checked:before {
+        height: 39px;
+        width: 39px;
+        margin: -3px 0 0 -4px;
+    }
+
+    input[class="pp-settings-radio"] {
+        width: 36px;
+        height: 36px;
+    }
+
+    input[class="pp-settings-radio"]:checked:before {
+        width: 20px;
+        height: 20px;
+        margin: 6px;
+    }
+
+    input[class="pp-settings-radio-small"] {
+        width: 32px;
+        height: 32px;
+    }
+
+    input[class="pp-settings-radio-small"]:checked:before {
+        width: 16px;
+        height: 16px;
+        margin: 6px;
+    }
+
+    .destinations-link {
+        flex: 0 0 calc(100% / 4 - 10px);
+        max-width: calc(100% / 4 - 10px);
+    }
+}
+
 .pp-settings-button {
     box-sizing: border-box;
     display: inline-block;
@@ -1063,14 +1043,6 @@ select.pp-settings-select-inline {
     margin: 0 10px;
     width: 18px;
     height: 18px;
-}
-
-.pp-settings-icon-small {
-    margin: 0 5px 0 0;
-    width: 16px;
-    height: 18px;
-    display: inline-block;
-    vertical-align: middle;
 }
 
 .pp-settings-button-label, .pp-settings-icon {

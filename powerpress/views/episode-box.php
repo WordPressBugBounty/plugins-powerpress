@@ -9,20 +9,23 @@ require_once(POWERPRESS_ABSPATH . '/powerpress-metamarks.php');
 function powerpress_admin_enqueue_scripts($hook)
 {
     if ('post-new.php' === $hook || 'post.php' === $hook) {
-        // minified files in prod, regular files in debug mode
-        $suffix = (defined('WP_DEBUG') && WP_DEBUG) ? '' : '.min';
-        
-        // register and enqueue styles
-        wp_register_style('powerpress-episode-box', powerpress_get_root_url() . "css/episode-box{$suffix}.css", array(), POWERPRESS_VERSION);
-        wp_register_style('powerpress-grid', powerpress_get_root_url() . "css/bootstrap-grid{$suffix}.css", array(), POWERPRESS_VERSION);
-        
-        // register and enqueue scripts
-        wp_enqueue_script('powerpress-admin', powerpress_get_root_url() . "js/admin{$suffix}.js", array(), POWERPRESS_VERSION);
-        wp_enqueue_script('powerpress-podcast2.0-managers', powerpress_get_root_url() . "js/powerpressadmin-metabox{$suffix}.js", array(), POWERPRESS_VERSION);
-                
-        // enqueue registered styles
-        wp_enqueue_style('powerpress-episode-box');
-        wp_enqueue_style('powerpress-grid');
+        powerpress_enqueue_assets([
+            'powerpress-episode-box' => [
+                'path' => 'css/episode-box',
+            ],
+            'powerpress-grid' => [
+                'path' => 'css/bootstrap-grid',
+            ],
+            'powerpress-admin' => [
+                'type' => 'script',
+                'path' => 'js/admin',
+            ],
+            'powerpress-post' => [
+                'type' => 'script',
+                'path' => 'js/post',
+                'module' => true,
+            ],
+        ]);
     }
 }
 add_action('admin_enqueue_scripts', 'powerpress_admin_enqueue_scripts');
@@ -68,7 +71,6 @@ function powerpress_meta_box($object, $box)
     $GooglePlayBlock = '';
     $iTunesAuthor = '';
     $iTunesExplicit = '';
-    $iTunesCC = false;
     $iTunesOrder = false;
     $FeedAlways = false;
     $PCITranscript = false;
@@ -137,16 +139,6 @@ function powerpress_meta_box($object, $box)
                 if (isset($ExtraData['embed']))
                     $Embed = $ExtraData['embed'];
 
-// itunes:keywords, itunes:subtitle, itunes:summary, itunes:order deprecated by Apple
-//                if (isset($ExtraData['keywords']))
-//                    $iTunesKeywords = $ExtraData['keywords'];
-//                if (isset($ExtraData['subtitle']))
-//                    $iTunesSubtitle = $ExtraData['subtitle'];
-//                if (isset($ExtraData['summary']))
-//                    $iTunesSummary = $ExtraData['summary'];
-//                if (isset($ExtraData['order']))
-//                    $iTunesOrder = $ExtraData['order'];
-
                 if (isset($ExtraData['gp_desc']))
                     $GooglePlayDesc = $ExtraData['gp_desc'];
                 if (isset($ExtraData['gp_explicit']))
@@ -161,8 +153,6 @@ function powerpress_meta_box($object, $box)
                     $NoLinks = $ExtraData['no_links'];
                 if (isset($ExtraData['explicit']))
                     $iTunesExplicit = $ExtraData['explicit'];
-                if (isset($ExtraData['cc']))
-                    $iTunesCC = $ExtraData['cc'];
                 if (isset($ExtraData['always']))
                     $FeedAlways = $ExtraData['always'];
                 if (isset($ExtraData['block']))
@@ -246,7 +236,7 @@ function powerpress_meta_box($object, $box)
 
     echo "<div id=\"powerpress_podcast_box_$FeedSlug\" class=\"$editor\">";
     // if no enclosure url AND no other podcast metadata, this is a branch new post
-    if (!$EnclosureURL && empty($ExtraData['itunes_image']) && empty($ExtraData['category']) && empty($ExtraData['episode_title']) && empty($ExtraData['feed_title']) && empty($ExtraData['summary']) && empty($ExtraData['subtitle'])) {
+    if (!$EnclosureURL && empty($ExtraData['itunes_image']) && empty($ExtraData['category']) && empty($ExtraData['episode_title']) && empty($ExtraData['feed_title']) && empty($ExtraData['summary']) && empty($ExtraData['subtitle']) && empty(trim($ExtraData['show_notes'] ?? ''))) {
         echo '<input type="hidden" name="Powerpress['. $FeedSlug .'][new_podcast]" value="1" />'.PHP_EOL;
     } else {
         echo "<div>";
@@ -257,12 +247,12 @@ function powerpress_meta_box($object, $box)
     episode_box_top($EnclosureURL, $FeedSlug, $ExtraData, $GeneralSettings, $EnclosureLength, $DurationHH, $DurationMM, $DurationSS, $PCITranscriptURL);
     echo "<div id=\"tab-container-$FeedSlug\" style=\"$style\">";
     echo "<div class=\"pp-tab\">";
-    $titles = array("info" => esc_attr(__("Episode Info", "powerpress")), "artwork" => esc_attr(__("Episode Artwork", "powerpress")), "website" => esc_attr(__("Website Display", "powerpress")), "advanced" => esc_attr(__("Advanced", "powerpress")), 'chapters' => esc_attr(__("Chapter Builder", "powerpress")), 'vts' => esc_attr(__("Value Time Splits", "powerpress")));
+    $titles = array("info" => esc_attr(__("Episode Info", "powerpress")), "artwork" => esc_attr(__("Episode Artwork", "powerpress")), "website" => esc_attr(__("Website Display", "powerpress")), "advanced" => esc_attr(__("Advanced", "powerpress")), 'chapters' => esc_attr(__("Chapters & Transcript", "powerpress")), 'vts' => esc_attr(__("Value Time Splits", "powerpress")));
     echo "<button class=\"tablinks active\" id=\"0$FeedSlug\" title='{$titles['info']}' onclick=\"powerpress_openTab(event, 'seo-$FeedSlug')\" id=\"defaultOpen-$FeedSlug\">" . esc_html(__('Episode Info', 'powerpress')) . "</button>";
     echo "<button class=\"tablinks\" id=\"1$FeedSlug\" title='{$titles['artwork']}' onclick=\"powerpress_openTab(event, 'artwork-$FeedSlug')\">" . esc_html(__('Episode Artwork', 'powerpress')) . "</button>";
     echo "<button class=\"tablinks\" id=\"2$FeedSlug\" title='{$titles['website']}' onclick=\"powerpress_openTab(event, 'display-$FeedSlug')\">" . esc_html(__('Website Display', 'powerpress')) . "</button>";
     echo "<button class=\"tablinks\" id=\"3$FeedSlug\" title='{$titles['advanced']}' onclick=\"powerpress_openTab(event, 'notes-$FeedSlug')\">" . esc_html(__('Advanced', 'powerpress')) . "</button>";
-    echo "<button class=\"tablinks\" id=\"4$FeedSlug\" title='{$titles['chapters']}' onclick=\"powerpress_openTab(event, 'chapters-$FeedSlug')\">" . esc_html(__('Chapter Builder', 'powerpress')) . "</button>";
+    echo "<button class=\"tablinks\" id=\"4$FeedSlug\" title='{$titles['chapters']}' onclick=\"powerpress_openTab(event, 'chapters-$FeedSlug')\">" . esc_html(__('Chapters & Transcript', 'powerpress')) . "</button>";
     echo "<button class=\"tablinks\" id=\"5$FeedSlug\" title='{$titles['vts']}' onclick=\"powerpress_openTab(event, 'vts-$FeedSlug')\">" . esc_html(__('Value Time Splits', 'powerpress')) . "</button>";
     echo "</div>";
     seo_tab($FeedSlug, $ExtraData, $iTunesExplicit, $seo_feed_title, $GeneralSettings, $iTunesAuthor, $iTunesBlock, $object);
@@ -272,8 +262,28 @@ function powerpress_meta_box($object, $box)
     chapters_tab($EnclosureURL, $FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITranscriptURL, $PCIChapters, $PCIChaptersManual, $PCIChaptersURL, $PCISoundbites, $ExtraData);
     vts_tab($FeedSlug, $object, $GeneralSettings, $PCITranscript, $PCITranscriptURL, $PCIChapters, $PCIChaptersManual, $PCIChaptersURL, $PCISoundbites, $ExtraData);
 
-    echo "</div>";
-    echo "</div>";
+    if ($EnclosureURL) echo "<div class=\"ep-box-line\"></div>";
+    echo "</div>"; // close tab-container
+
+    // remove podcast option (outside tab-container so it remains visible when tabs are hidden)
+    if ($EnclosureURL) { ?>
+        <div class="powerpress_remove_container">
+            <div class="powerpress_row_content">
+                <input type="checkbox" class="ep-box-checkbox"
+                    name="Powerpress[<?php echo $FeedSlug; ?>][remove_podcast]"
+                    id="powerpress_remove_<?php echo $FeedSlug; ?>"
+                    value="1"
+                    onchange="
+                        var hide = this.checked ? 'none' : 'block';
+                        document.getElementById('a-pp-selected-media-<?php echo $FeedSlug; ?>').style.display = hide;
+                        document.getElementById('tab-container-<?php echo $FeedSlug; ?>').style.display = hide;
+                    " />
+                <b><?php echo esc_html(__('Remove Episode', 'powerpress')); ?></b><?php echo esc_html(__(' - Podcast episode will be removed from this post upon save', 'powerpress')); ?>
+            </div>
+        </div>
+    <?php }
+
+    echo "</div>"; // close powerpress_podcast_box
     if ($EnclosureURL) {
         echo "<script type=\"text/javascript\">";
         echo "jQuery(document).ready(function($) {";

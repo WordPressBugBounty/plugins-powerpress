@@ -271,11 +271,6 @@ a.pp-ssb-btn.horizontal:last-child
     background-size: 100%;
     transition: background 0s;
 }
-.pp-ssb-widget-modern .pp-ssb-blubrry.pp-ssb-btn:active, .pp-ssb-widget-modern .pp-ssb-blubrry.pp-ssb-btn-sq:active {
-    background-color: #2278cf;
-    background-size: 100%;
-    transition: background 0s;
-}
 .pp-ssb-widget-modern .pp-ssb-rss.pp-ssb-btn:active, .pp-ssb-widget-modern .pp-ssb-rss.pp-ssb-btn-sq:active {
     background-color: #FF6600;
     background-size: 100%;
@@ -441,14 +436,6 @@ a.pp-ssb-btn.horizontal {
 }
 .pp-ssb-widget-modern .pp-ssb-pandora .pp-ssb-ic {
     background-position: 0 -555px;
-}
-
-.pp-ssb-widget-modern .pp-ssb-blubrry.pp-ssb-btn-sq:not(.horizontal) {
-    border-left: 3px solid #2278cf;
-    padding-right: 10px;
-}
-.pp-ssb-widget-modern .pp-ssb-blubrry .pp-ssb-ic {
-    background-position: 0 -605px;
 }
 
 .pp-ssb-widget-modern .pp-ssb-rss.pp-ssb-btn-sq:not(.horizontal) {

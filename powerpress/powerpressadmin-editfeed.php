@@ -155,9 +155,36 @@ function powerpress_admin_editfeed($type='', $type_value = '', $feed_slug = fals
 		echo '<input type="hidden" name="from_categories" value="1" />';
 	}
 
-    wp_enqueue_script('powerpress-admin', powerpress_get_root_url() . 'js/admin.js', array(), POWERPRESS_VERSION );
-    $suffix = (defined('WP_DEBUG') && WP_DEBUG) ? '' : '.min';
-    wp_enqueue_script('powerpress-podcast2.0-managers', powerpress_get_root_url() . "js/powerpressadmin-metabox{$suffix}.js", array(), POWERPRESS_VERSION);
+    powerpress_enqueue_assets([
+        // styles for welcome-tab components
+        'powerpress-program-card-css' => ['path' => 'css/components/program-card'],
+        'powerpress-stats-widget' => ['path' => 'css/components/stats-widget'],
+        'powerpress-news-widget' => ['path' => 'css/components/news-widget'],
+        'powerpress-sidenav' => ['path' => 'css/components/sidenav'],
+
+        // scripts
+        'chartjs' => [
+            'type' => 'script',
+            'path' => '3rdparty/chart.min',
+            'no_suffix' => true,
+            'version' => '4.4.1',
+        ],
+        'powerpress-admin' => [
+            'type' => 'script',
+            'path' => 'js/admin',
+        ],
+        'powerpress-program-card' => [
+            'type' => 'script',
+            'path' => 'js/program-card',
+            'deps' => ['chartjs'],
+            'module' => true,
+        ],
+        'powerpress-post' => [
+            'type' => 'script',
+            'path' => 'js/post',
+            'module' => true,
+        ],
+    ]);
 	
 ?>
     <div id="powerpress_settings_page" class="powerpress_tabbed_content">
@@ -361,10 +388,7 @@ function powerpress_admin_editfeed($type='', $type_value = '', $feed_slug = fals
                 </div>
             </div>
             <?php
-            $origin_array = explode('.', POWERPRESS_BLUBRRY_API_URL);
-            $origin_array[0] = str_replace('api', 'publish', $origin_array[0]);
-            $publisher_origin = implode('.', $origin_array);
-            $publisher_origin = rtrim($publisher_origin, '/'); ?>
+            $publisher_origin = rtrim(powerpress_get_publish_url(), '/'); ?>
             <button style="display: none;" id="make-money-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'make-money-all')"><img class="pp-nav-icon" style="width: 22px;" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/rss-symbol.svg"><?php echo htmlspecialchars(__('Hidden button', 'powerpress')); ?></button>
 
             <div id="make-money-all" class="pp-sidenav-tab active">
@@ -566,15 +590,6 @@ function powerpressadmin_edit_feed_general($FeedSettings, $General, $FeedAttribs
 </div>
 
 </div>
-
-    <div class="pp-settings-section">
-        <h2><?php echo __('Suppress Unused Item Tags', 'powerpress'); ?></h2>
-        <input class="pp-settings-checkbox" type="checkbox" name="General[suppress_unused_item_tags]" value="1" <?php if( !empty($General['suppress_unused_item_tags']) && $General['suppress_unused_item_tags'] == 1 ) echo 'checked '; ?>/>
-        <div class="pp-settings-subsection">
-            <p class="pp-main"><?php echo __('Exclude the itunes:* tags for subtitle, summary, author, and isClosedCaptioned from all items in podcast feeds.', 'powerpress'); ?>
-            <p class="pp-label-bottom"><?php echo __('These tags have all been removed from Apple\'s documentation.', 'powerpress'); ?></p></p>
-        </div>
-    </div>
 
 <div class="pp-settings-section">
     <h2><?php echo __('Feed Discovery', 'powerpress'); ?></h2>
@@ -1161,12 +1176,15 @@ if( isset($Languages[ $rss_language ]) )
         /**
          * enter key handler to trigger podcast search in PodRoll table
          */
-        document.getElementById('search-podcasts').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' || e.which === 13) {
-                e.preventDefault();
-                document.getElementById('search-for-show').click();
-            }
-        });
+        var searchPodcastsEl = document.getElementById('search-podcasts');
+        if (searchPodcastsEl) {
+            searchPodcastsEl.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' || e.which === 13) {
+                    e.preventDefault();
+                    document.getElementById('search-for-show').click();
+                }
+            });
+        }
 
         jQuery('#search-for-show').on('click', function() {
             // New search, so clean up any old results
@@ -1329,13 +1347,6 @@ function powerpressadmin_edit_itunes_feed($FeedSettings, $General, $FeedAttribs 
 	$cat_ID = $FeedAttribs['category_id'];
 	
 	$SupportUploads = powerpressadmin_support_uploads();
-// itunes:subtitle and itunes:summary deprecated
-//    if( !isset($FeedSettings['itunes_subtitle']) )
-//        $FeedSettings['itunes_subtitle'] = '';
-//    if( !isset($FeedSettings['itunes_summary']) )
-//        $FeedSettings['itunes_summary'] = '';
-//    if( !isset($FeedSettings['itunes_keywords']) )
-//        $FeedSettings['itunes_keywords'] = '';
     if( !isset($FeedSettings['itunes_cat_1']) )
 		$FeedSettings['itunes_cat_1'] = '';
 	if( !isset($FeedSettings['itunes_cat_2']) )
@@ -1360,11 +1371,6 @@ function powerpressadmin_edit_itunes_feed($FeedSettings, $General, $FeedAttribs 
 		$FeedSettings['itunes_new_feed_url'] = '';
 	if( !isset($FeedSettings['itunes_type']) )
 		$FeedSettings['itunes_type'] = '';
-
-//  itunes:subtitle deprecated by Apple
-//    $AdvancediTunesSettings = !empty($FeedSettings['itunes_summary']);
-//    if( !empty($FeedSettings['itunes_subtitle']) )
-//        $AdvancediTunesSettings = true;
 
     //Logic to convert old iTunes categories to 2019 ones.
     $CatArray = array('cat_1' => $FeedSettings['itunes_cat_1'], 'cat_2' => $FeedSettings['itunes_cat_2'], 'cat_3' => $FeedSettings['itunes_cat_3']);
@@ -1414,44 +1420,7 @@ function powerpressadmin_edit_itunes_feed($FeedSettings, $General, $FeedAttribs 
     <?php echo __('The following settings will affect the display of your podcast\'s listing on Apple Podcasts, or when/how your podcast appears in Apple Search results.','powerpress'); ?>
 </p>
 
-    <!--    itunes:subtitle and itunes:summary deprecated
-    <div class="pp-settings-section">
-        <h2><?php echo __('Program Subtitle', 'powerpress'); ?> <br /></h2>
-        <input type="text" class="pp-settings-text-input" name="Feed[itunes_subtitle]"  value="<?php echo esc_attr($FeedSettings['itunes_subtitle']); ?>" maxlength="255" />
-    </div>
-
-    <div class="pp-settings-section">
-        <h2><?php echo __('Program Summary', 'powerpress'); ?></h2>
-        <p class="pp-main"><?php echo __('Your summary cannot exceed 4,000 characters in length and should not include HTML, except for hyperlinks', 'powerpress'); ?></p>
-        <textarea name="Feed[itunes_summary]" class="pp-settings-text-input" rows="5" ><?php echo esc_textarea($FeedSettings['itunes_summary']); ?></textarea>
-        <input type="hidden" name="General[itunes_cdata]" value="0" />
-        <input type="checkbox" class="pp-settings-checkbox" name="General[itunes_cdata]" value="1" <?php echo ( !empty($General['itunes_cdata'])?'checked ':''); ?>/>
-        <div class="pp-settings-subsection" style="border: none;">
-            <p class="pp-sub"><?php echo __('Wrap summary values with &lt;![CDATA[ ... ]]&gt; tags', 'powerpress'); ?></p>
-        </div>
-    </div>
-
-    <div class="pp-settings-section">
-        <h2><?php echo __('Episode Summary', 'powerpress'); ?></h2>
-        <input type="checkbox" class="pp-settings-checkbox" name="Feed[enhance_itunes_summary]" value="1" <?php echo ( !empty($FeedSettings['enhance_itunes_summary'])?'checked ':''); ?>/>
-        <div class="pp-settings-subsection">
-            <p class="pp-main"><?php echo __('Optimize iTunes Summary from Blog Posts', 'powerpress'); ?></p>
-            <p class="pp-sub"><?php echo __('Creates a friendlier view of your post/episode content.', 'powerpress'); ?></p>
-        </div>
-    </div>
-    -->
 <?php
-    // itunes:keywords deprecated
-    // if( !empty($FeedSettings['itunes_keywords']) )
-    //{ ?>
-     <!--   <div class="pp-settings-section">
-            <h2><?php // echo __('Program Keywords', 'powerpress'); ?></h2>
-            <input type="text" class="pp-settings-text-input" name="Feed[itunes_keywords]" style="width: 60%;"  value="<?php // echo esc_attr($FeedSettings['itunes_keywords']); ?>" maxlength="255" />
-            <p><?php // echo __('Feature Deprecated by Apple. Keywords above are for your reference only.', 'powerpress'); ?></p>
-        </div> -->
-        <?php
-    // } // End iTunes keywords
-
     $MoreCategories = false;
 if( !empty($FeedSettings['itunes_cat_2']) )
 	$MoreCategories = true;

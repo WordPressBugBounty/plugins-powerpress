@@ -1,0 +1,262 @@
+/* ================================
+      PP-SIDENAV Component
+   ================================
+
+   mobile navigation sidebar for settings pages
+   includes toggle, panel, and content tab styles
+
+   requires: css/variables.css
+
+   BEM Block: .pp-sidenav, .pp-sidenav__toggle
+   Elements: __icon, __text, __menu, __feed, __actions, __hosting
+   Modifiers: --collapsed
+
+   ================================ */
+
+
+/* ==================
+    1. DESKTOP BASE
+   ================== */
+
+/* toggle hidden on desktop */
+.pp-sidenav__toggle {
+    display: none;
+}
+
+.pp-sidenav-toggle-container {
+    width: 23%;
+    flex-shrink: 0;
+}
+
+.pp-sidenav {
+    display: block;
+    overflow: hidden;
+    background-color: white;
+    float: left;
+    min-height: 70vh;
+    height: 100%;
+}
+
+.pp-sidenav-tab {
+    display: none;
+    flex: 1;
+    background-color: var(--pp-color-white);
+    border-top: none;
+    padding: 16px 24px;
+    width: 75%;
+    border-left: 1px solid var(--pp-color-gray-300);
+    min-height: 70vh;
+}
+
+.pp-sidenav-tab.active {
+    display: inline-block;
+}
+
+
+/* ==================
+    2. SIDENAV BUTTONS
+   ================== */
+
+.pp-sidenav button {
+    display: flex;
+    align-items: center;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    background-color: inherit;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 1vh 2vw 1vh 1vw;
+    transition: 0.3s;
+    width: 100%;
+    text-align: left;
+    line-height: 25px;
+}
+
+.pp-sidenav button img {
+    height: 25px;
+    width: 25px;
+    flex-shrink: 0;
+}
+
+.pp-sidenav button:hover {
+    background-color: var(--pp-color-gray-300);
+    text-decoration: underline;
+}
+
+.pp-sidenav button.active {
+    border-left: 2px solid var(--pp-color-accent);
+    color: var(--pp-color-accent);
+    background-color: var(--pp-color-blue-100);
+}
+
+
+/* ==================
+    3. MOBILE (768px)
+   ================== */
+
+@media (max-width: 768px) {
+
+    /* container resets for all settings pages */
+    .pp-sidenav-toggle-container {
+        width: 100%;
+        display: block;
+        float: none;
+    }
+
+    /* toggle row */
+    .pp-sidenav__toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 8px 16px;
+        margin: 0 0 12px 0;
+        color: var(--pp-color-accent);
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1;
+        cursor: pointer;
+        background: #fff;
+        border: none;
+        border-bottom: 1px solid var(--pp-color-gray-300);
+        transition: background 0.15s;
+    }
+
+    .pp-sidenav__toggle .dashicons {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        line-height: 18px;
+        transition: transform 0.25s ease;
+    }
+
+    .pp-sidenav__toggle:hover {
+        background: var(--pp-color-gray-50);
+    }
+
+    /* hamburger icon */
+    .pp-sidenav__toggle-icon {
+        display: inline-block;
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+    }
+
+    /* action links (rss + hosting) */
+    .pp-sidenav__toggle-actions {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .pp-sidenav__toggle-feed,
+    .pp-sidenav__toggle-hosting {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        color: var(--pp-color-primary, #0073aa);
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background 0.15s;
+    }
+
+    .pp-sidenav__toggle-feed:hover,
+    .pp-sidenav__toggle-hosting:hover {
+        background: var(--pp-color-gray-100);
+    }
+
+    .pp-sidenav__toggle-feed .dashicons {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+    }
+
+    .pp-sidenav__toggle-hosting img {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* hide text label and chevron on mobile */
+    .pp-sidenav__toggle-text,
+    .pp-sidenav__toggle .dashicons-arrow-down-alt2 {
+        display: none;
+    }
+
+    /* clickable menu area */
+    .pp-sidenav__toggle-menu {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        cursor: pointer;
+    }
+
+    /* collapsible panel */
+    .pp-sidenav {
+        display: block;
+        width: 100%;
+        min-height: auto;
+        float: none;
+        padding: var(--pp-spacing-lg);
+        background: var(--pp-color-blue-100);
+        border-bottom: 1px solid var(--pp-color-blue-300);
+        max-height: 1200px;
+        overflow: hidden;
+        transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.2s ease;
+        opacity: 1;
+    }
+
+    .pp-sidenav--collapsed {
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        border-bottom-color: transparent;
+        opacity: 0;
+    }
+
+    .pp-sidenav button {
+        width: 100%;
+        text-align: center;
+        padding: var(--pp-spacing-md) var(--pp-spacing-lg);
+        float: none;
+    }
+
+    .pp-sidenav a:hover {
+        text-decoration: underline;
+    }
+
+    /* content tab area */
+    .pp-sidenav-tab {
+        display: none;
+        border-left: none;
+        width: 100%;
+        padding: 0 16px;
+    }
+
+    .pp-sidenav-tab.active,
+    .pp-sidenav-tab.to-be-active {
+        display: block;
+    }
+
+    /* extras centered */
+    .pp-sidenav-extra {
+        text-align: center;
+        margin: var(--pp-spacing-lg) var(--pp-spacing-sm);
+    }
+
+    .pp-sidebar-notification,
+    #connect-blubrry-services {
+        margin: var(--pp-spacing-lg) auto;
+        max-width: 100%;
+        display: block;
+        text-align: center;
+    }
+
+    #connect-blubrry-services a {
+        display: inline-block;
+    }
+}

@@ -226,7 +226,6 @@ function powerpress_underscore_playlist_templates() {
 		<span class="wp-playlist-item-meta wp-playlist-item-title">{{ data.title }}</span>
 		<# } #>
 		<# if ( data.meta.date ) { #><span class="wp-playlist-item-meta wp-playlist-item-artist">{{ data.meta.date }}</span><# } #>
-		<# if ( data.meta.itunes_subtitle ) { #><span class="wp-playlist-item-meta wp-playlist-item-album">{{ data.meta.itunes_subtitle }}</span><# } #>
 	</div>
 </script>
 <script type="text/html" id="tmpl-wp-playlist-item">
@@ -306,7 +305,6 @@ function powerpress_playlist_shortcode( $attr ) {
 		'images'	=> true, // Used for PowerPress Playlist
 		'image'	=> '', // Used for PowerPress Playlist (specific image URL for default poster artwork
 		'artists'	=> true, // display the artist / author / talent name (Future use)
-		'itunes_subtitle'=>false,
 		'category'=>'', // Used for PowerPress Playlist (specify category ID, name or slug)
 		'term_id'=>'', // Used for PowerPress Playlist (specify term ID, name or slug)
 		'taxonomy'=>'', // Used for PowerPress Playlist (specify taxonomy name)
@@ -336,7 +334,6 @@ function powerpress_playlist_shortcode( $attr ) {
 	
 	$images = filter_var( $images, FILTER_VALIDATE_BOOLEAN );
 	$links = filter_var( $links, FILTER_VALIDATE_BOOLEAN );
-	$itunes_subtitle = filter_var( $itunes_subtitle, FILTER_VALIDATE_BOOLEAN );
 	$episode_title = filter_var( $title, FILTER_VALIDATE_BOOLEAN );
 	$date = filter_var( $date, FILTER_VALIDATE_BOOLEAN );
 	
@@ -400,7 +397,7 @@ function powerpress_playlist_shortcode( $attr ) {
 
 	// don't pass strings to JSON, will be truthy in JS
 	// foreach ( array( 'tracklist', 'tracknumbers', 'images', 'artists' ) as $key ) {
-	foreach ( array( 'tracklist', 'tracknumbers', 'images', 'artists', 'date', 'itunes_subtitle' ) as $key ) {
+	foreach ( array( 'tracklist', 'tracknumbers', 'images', 'artists', 'date' ) as $key ) {
 		$data[$key] = filter_var( $$key, FILTER_VALIDATE_BOOLEAN );
 	}
 	
@@ -452,8 +449,6 @@ function powerpress_playlist_shortcode( $attr ) {
 		}
 		if( !empty($episode_title) )
 			$track['meta']['title'] = $episode['post_title'];
-		if( !empty($itunes_subtitle) && !empty($episode['enclosure']['subtitle']) )
-			$track['meta']['itunes_subtitle'] = $episode['enclosure']['subtitle'];
 		$track['meta']['genre'] = 'Podcast';
 		$track['meta']['year'] = mysql2date( 'Y', $episode['post_date'] ); // Episode year
 		if( !empty($date) )

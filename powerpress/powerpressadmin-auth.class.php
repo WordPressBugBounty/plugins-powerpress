@@ -239,7 +239,11 @@ class PowerPressAuth {
         $error = curl_errno($curl);
         $error_msg = curl_error($curl);
         $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
+        if (version_compare(PHP_VERSION, '8.0', '<')) {
+            curl_close($curl);
+        } else {
+            unset($curl);
+        }
 
         if( $error ) // Curl level error, lets deal with it...
         {
@@ -262,27 +266,25 @@ class PowerPressAuth {
         }
 
         if( !empty($returnedBody) ) {
-            //mail('cio@rawvoice,com', '_makeApiCallCurl body', "$returnedBody");
-            //var_dump($returnedBody);
             if ($decode_json) {
                 $decoded = @json_decode($returnedBody, true);
-                if (!empty($decoded))
+                // json decode 
+                if ($decoded !== false && json_last_error() === JSON_ERROR_NONE)
                     return $decoded;
             } else {
                 return $returnedBody;
             }
 
-            if( $this->errorCode != 0 ) {
-                $this->error = 'Unable to decode response.';
-                $this->errorCode = -1;
-            }
+            // json decode returned empty/null, capture raw body as error context
+            $preview = substr(trim($returnedBody), 0, 200);
+            $this->error = $this->errorCode != 0
+                ? 'Unable to decode response.'
+                : "Unexpected API response: {$preview}";
+            $this->errorCode = -1;
             return false;
         }
 
-        if( !empty($returnedBody) )
-            $this->error = $returnedBody;
-        else
-            $this->error = 'Unknown error occurred.';
+        $this->error = 'Empty response from API.';
         $this->errorCode = -1;
         return false;
     }

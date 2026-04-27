@@ -20,6 +20,9 @@ var sanitizeHTML = function (str) {
     });
 };
 
+// wp.i18n wrapper w/ graceful fallback
+var __ = (typeof wp !== 'undefined' && wp.i18n && wp.i18n.__) ? wp.i18n.__ : function(s) { return s; };
+
 var interval = false;
 var verify_interval = false;
 
@@ -37,6 +40,13 @@ jQuery(window).on("load", function(){
         jQuery('#TB_window').css('margin-top', '-220px');
         jQuery('#TB_window').css('top', '50%');
     }
+
+    // collapse sidenav by default on mobile
+    if (jQuery(window).width() <= 768) {
+        jQuery('.pp-sidenav').addClass('pp-sidenav--collapsed');
+        jQuery('.pp-sidenav__toggle').addClass('pp-sidenav__toggle--collapsed');
+    }
+
     return false;
 });
 
@@ -60,10 +70,10 @@ function powerpress_openTab(evt, cityName) {
     // Declare all variables
     var tabcontent, tablinks;
 
-    let feed_slug = event.currentTarget.id.substring(1);
+    let feed_slug = evt.currentTarget.id.substring(1);
     evt.preventDefault();
 
-    let desired_tab = jQuery("#" + event.currentTarget.id);
+    let desired_tab = jQuery("#" + evt.currentTarget.id);
     let id = "#" + cityName;
     let desired_tab_contents = jQuery(id);
 
@@ -78,11 +88,27 @@ function powerpress_openTab(evt, cityName) {
     tablinks = jQuery(".tablinks");
     tablinks.each(function(index, element) {
         jQuery(this).attr("class", "tablinks");
+
+        if(cityName.includes('diagnostics')){
+            jQuery(this).attr("class", "tablinks diagnostics-tab");
+        }
     });
 
     // Show the current tab, and add an "active" class to the button that opened the tab
     desired_tab_contents.attr("class", "pp-tabcontent has-sidenav active");
     desired_tab.attr("class", "tablinks active");
+
+    // On mobile, collapse all sidenavs when switching main tabs
+    if (jQuery(window).width() <= 768) {
+        jQuery('.pp-sidenav').addClass('pp-sidenav--collapsed');
+        jQuery('.pp-sidenav__toggle').addClass('pp-sidenav__toggle--collapsed');
+        // Restore active class on any content that had to-be-active
+        jQuery('.pp-sidenav-tab.to-be-active').removeClass('to-be-active').addClass('active');
+    }
+
+    if(cityName.includes('diagnostics')){
+        desired_tab.attr("class", "tablinks diagnostics-tab active");
+    }
 
     //Set/unset the interval for updating artwork previews
     if (cityName == 'artwork-' + feed_slug) {
@@ -117,7 +143,6 @@ function powerpress_openTab(evt, cityName) {
                 document.getElementById("destinations-default-open").click();
                 break;
             case "analytics":
-
                 break;
             case "advanced":
                 document.getElementById("advanced-default-open").click();
@@ -143,59 +168,60 @@ function powerpress_openTab(evt, cityName) {
 function powerpress_displaySideNav(el) {
     let tab = el.id.replace("-toggle-sidenav", "");
     let sidenav = jQuery('#settings-' + tab + ' .pp-sidenav');
-    if (sidenav.length > 0) {
-        sidenav.each(function(index, element) {
-            jQuery(this).attr('class', 'pp-sidenav-hidden');
-            el.innerText = ">";
-        });
-        let visible_tab_contents = jQuery('.pp-sidenav-tab.to-be-active');
-        visible_tab_contents.each(function(index, element) {
-            jQuery(this).removeClass('to-be-active');
-            jQuery(this).addClass('active')
-        });
-    } else {
-        sidenav = jQuery('#settings-' + tab + ' .pp-sidenav-hidden');
-        sidenav.each(function(index, element) {
-            jQuery(this).attr('class', 'pp-sidenav');
-            el.innerText = "<";
-        });
+    let isCollapsed = sidenav.hasClass('pp-sidenav--collapsed');
+
+    if (isCollapsed) {
+        // expand
+        sidenav.removeClass('pp-sidenav--collapsed');
+        el.classList.remove('pp-sidenav__toggle--collapsed');
         let visible_tab_contents = jQuery('.pp-sidenav-tab.active');
         visible_tab_contents.each(function(index, element) {
             jQuery(this).removeClass('active');
-            jQuery(this).addClass('to-be-active')
+            jQuery(this).addClass('to-be-active');
+        });
+    } else {
+        // collapse
+        sidenav.addClass('pp-sidenav--collapsed');
+        el.classList.add('pp-sidenav__toggle--collapsed');
+        let visible_tab_contents = jQuery('.pp-sidenav-tab.to-be-active');
+        visible_tab_contents.each(function(index, element) {
+            jQuery(this).removeClass('to-be-active');
+            jQuery(this).addClass('active');
         });
     }
 }
 
 function sideNav(evt, cityName) {
-    // Declare all variables
     var i, tabcontent, tablinks, tabs;
-    let target;
     evt.preventDefault();
 
-    if (event.currentTarget.id == "pp-welcome-artwork-link") {
-        target = document.getElementById("feeds-artwork-tab");
-    } else if(event.currentTarget.id == "pp-welcome-applesubmit-link"){
-        target = document.getElementById("destinations-apple-tab");
-    } else if(event.currentTarget.id == "advanced-tab-seo-link"){
-        target = document.getElementById("feeds-seo-tab");
-    }
-    else {
-        target = event.currentTarget;
-    }
+    // map cross-tab links to their targets
+    const linkTargets = {
+        'pp-welcome-artwork-link': 'feeds-artwork-tab',
+        'pp-welcome-applesubmit-link': 'destinations-apple-tab',
+        'advanced-tab-seo-link': 'feeds-seo-tab'
+    };
+    let targetId = linkTargets[evt.currentTarget.id];
+    let target = targetId ? document.getElementById(targetId) : evt.currentTarget;
+
     let desired_tab = jQuery("#" + target.id);
     let id = "#" + cityName;
     let desired_tab_contents = jQuery(id);
 
     let icon = target.firstElementChild;
 
-    // Check if we have the sidnav open
+    // on mobile, always collapse sidenav when selecting a subtab
     let toggle_id = target.id.split("-");
-    let to_be_active = jQuery('#settings-' + toggle_id[0] + ' .pp-sidenav');
-    //Hide the sidenav if necessary
     let width = jQuery(window).width();
-    if (width < 650 && to_be_active.length > 0) {
-        jQuery('#' + toggle_id[0] + '-toggle-sidenav').click();
+    if (width <= 768) {
+        let sidenav = jQuery('#settings-' + toggle_id[0] + ' .pp-sidenav');
+        let toggle = jQuery('#' + toggle_id[0] + '-toggle-sidenav');
+        if (sidenav.length > 0) {
+            sidenav.addClass('pp-sidenav--collapsed');
+            toggle.addClass('pp-sidenav__toggle--collapsed');
+            // restore active class on content (was swapped to to-be-active)
+            jQuery('.pp-sidenav-tab.to-be-active').removeClass('to-be-active').addClass('active');
+        }
     }
 
     // Get all elements with class="pp-tabcontent" and hide them
@@ -743,182 +769,84 @@ function showHideTranscriptBox(setting_type, feed_slug){
     }
 }
 
-function unlinkAccount(idForm)
-{
-    let unlinkInput = jQuery('<input name="unlinkAccount" hidden>');
-    jQuery(function($){ $('#' + idForm).append(unlinkInput) });
-    jQuery(function($){ $('#' + idForm).attr('action', '#/') });
-}
 
-function unlinkNetwork()
-{ //Add an input of unlink to form and submit
-    jQuery(function($){ $('#linkNetwork').attr('value', 'unlink') });
-}
+// DEPRECATED FEATURE MODAL HANDLER
+(function() {
+    var currentFeature = null;
 
-function directStatus (status, idForm, changeOrCreate = false, tab = 'shows')
-{
-    if (changeOrCreate){
-        let input = jQuery('<input name="changeOrCreate" value=true hidden>');
-        jQuery(function($){ $('#' + idForm).append(input) });
-    }
-    jQuery(function($){ $('#' + idForm).attr('action', '?page=network-plugin&status='+status + '&tab=' + tab) });
-    jQuery(function($){ $('#'+idForm).unbind('submit') });
-    jQuery(function($){ $('#'+idForm).submit() });
-}
+    function initDeprecatedFeatureModal() {
+        var modal = document.getElementById('pp-deprecated-feature-modal');
+        var confirmBtn = document.getElementById('pp-deprecated-confirm-btn');
+        var checkboxes = document.querySelectorAll('.pp-deprecated-feature-checkbox');
 
-function toggle(id, subItem = '')
-{
+        if (!modal || !confirmBtn || !checkboxes.length) return;
 
-    if (document.getElementById(subItem + id).style.display === "none")
-        jQuery(function($){ $('#toggle' + subItem + id).html('more_vert') });
-    else {
-        ('#toggle' + subItem + id).html('more_horiz');
-        if (subItem === '') {
-            jQuery(function($){ $('#shortCode' + id).hide() });
-            jQuery(function($){ $('#toggle' + 'shortCode' + id).html('more_vert') });
-        }
-    }
-    jQuery(function($){ $('#'+ subItem + id).slideToggle() });
-}
-
-function showPPNTab (application)
-{
-    let x = document.getElementsByClassName("tabContent");
-    let i;
-    for (i = 0; i < x.length; i++) {
-        x[i].style.display = "none";
-    }
-    document.getElementById(application).style.display = "block";
-    jQuery(function($){ $(".tabActive").addClass("tabInactive") });
-    jQuery(function($){ $(".tabActive").removeClass("tabActive") });
-    jQuery(function($){ $("#" + application + "Tab").removeClass("tabInactive") });
-    jQuery(function($){ $("#" + application + "Tab").addClass("tabActive") });
-}
-
-function createPage(id, target, idForm, pageTitle = false)
-{
-    let content = '';
-    if (target === 'Program') {
-        if (pageTitle === false) {
-            pageTitle = 'program id = ' + id;
-        }
-        content = '[ppn-program id = ' + id + '] ';
-    } else if (target === 'List') {
-        if (pageTitle === false) {
-            pageTitle = 'list id = ' + id;
-        }
-        content = '[ppn-list id = ' + id + '] ';
-    }
-    let addElement = jQuery('<input name="target" value="' + target + '" hidden>' +
-        '<input name="targetId" value=' + id + ' hidden>' +
-        '<input name="content" value="' + content + '" hidden>'+
-        '<input name="pageTitle" value="' + pageTitle + '" hidden>');
-    jQuery(function($){ $('#' + idForm).append (addElement) });
-    directStatus('Manage ' + target, idForm);
-}
-
-function createApplicationPage(target, idForm, pageTitle = false)
-{
-    let content = '';
-    if (target === 'Application') {
-        if (pageTitle === false) {
-            pageTitle = 'Application Page';
-        }
-        content = '[ppn-application terms-url=]';
-    }
-
-    let addElement = jQuery('<input name="target" value="' + target + '" hidden>' +
-        '<input name="content" value="' + content + '" hidden>' +
-        '<input name="pageTitle" value="' + pageTitle + '" hidden>');
-    jQuery(function($) { $('#' + idForm).append (addElement) });
-    directStatus('Manage ' + target, idForm);
-}
-
-function confirmUnlink(idForm)
-{
-    let unlink = jQuery('<input name="pageAction" value="unlink" hidden>');
-    jQuery(function($){ $("#"+idForm).append(unlink) });
-}
-
-function refreshAndCallDirectAPI(currentPage, idForm, tab = 'shows', changeOrCreate = false)
-{
-    let refresh = jQuery('<input name = "pageAction" value= "clearSiteCache" hidden>') ;
-    jQuery(function($){ $("#"+idForm).append(refresh) });
-    let clear = jQuery('<input name = "clearSiteCache" value= "true" hidden>') ;
-    jQuery(function($){ $("#"+idForm).append(clear) });
-    jQuery("#"+idForm).append(refresh);
-    directStatus(currentPage, idForm, changeOrCreate, tab);
-}
-
-function manageProgram(programId, linkPage)
-{
-    jQuery(function($){ $('#programId').attr('value', programId) });
-    jQuery(function($){ $('#linkPageProgram').attr('value', linkPage) });
-}
-
-function manageList(listId, linkPage = false)
-{
-    jQuery(function($){ $('#listId').attr('value', listId) });
-    jQuery(function($){ $('#linkPageList').attr('value', linkPage) });
-}
-
-function updateListOfShows(in_list, title) {
-    if (in_list) {
-        jQuery('#shows-in-group').html(jQuery('#shows-in-group').html() + '<li><span>' + title + '</span></li>');
-    } else {
-        jQuery('#shows-in-group').html(jQuery('#shows-in-group').html().replace('<li><span>' + title + '</span></li>', ''));
-    }
-}
-
-function showSelectPage()
-{
-    jQuery(function($){ $(".selectPageBox").show() });
-    jQuery(function($){ $("#choiceBox").hide() });
-}
-function showSelectChoice()
-{
-    jQuery(function($){ $(".selectPageBox").hide() });
-    jQuery(function($){ $("#choiceBox").show() });
-}
-function showConfirmUnlink()
-{
-    jQuery(function($){ $("#choiceBox").hide() });
-    jQuery(function($){ $(".confirmUnlink").show() });
-}
-
-function approveProgram (applicantId, approve = true, undo = false, deleteApplicant = false){
-    let addInfo = null;
-    if (approve != false)
-        addInfo = jQuery ('<input name ="appAction" value="approve" hidden>');
-    else if (undo != false)
-        addInfo = jQuery ('<input name ="appAction" value="undo" hidden>');
-    else if (deleteApplicant != false)
-        addInfo = jQuery ('<input name ="appAction" value="delete" hidden>');
-    else
-        addInfo = jQuery ('<input name ="appAction" value="disapprove" hidden>');
-    let applicantInfo = jQuery ('<input name ="applicantId" value='+ applicantId+' hidden>');
-    jQuery(function($){ $('#applicationCreateForm').append(addInfo).append(applicantInfo) });
-    directStatus('Select Choice', 'applicationCreateForm', true, 'requests');
-}
-
-function editPageForProgram(programId, linkPage) {
-    jQuery('#select-page-target-id').val(programId);
-    jQuery('#page-select-ppn').val(linkPage);
-    jQuery('#ppn-program-shortcode').val('[ppn-program id="' +programId + '"');
-}
-
-function confirmRemovalOfProgram(programId)
-{
-    let url = window.location.href;
-    jQuery(function($){ $('#removeForm' + programId + ' .requestAction').attr('value', 'delete') });
-    jQuery(($) => {
-        $.ajax({
-            type: "POST",
-            url: url,
-            data: {'program_id' : programId},
-        }).done(() => {
-            refreshAndCallDirectAPI('Select Choice', 'removeForm' + programId, 'shows', true);
+        // intercept uncheck on deprecated feature checkboxes
+        checkboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function(e) {
+                if (!this.checked) {
+                    e.preventDefault();
+                    this.checked = true;
+                    currentFeature = this.dataset.feature;
+                    var keepRadio = document.querySelector('input[name="pp_deprecated_confirm"][value="keep"]');
+                    if (keepRadio) keepRadio.checked = true;
+                    modal.style.display = 'block';
+                }
+            });
         });
-    });
-}
+
+        // confirm button
+        confirmBtn.addEventListener('click', function() {
+            var checkedRadio = document.querySelector('input[name="pp_deprecated_confirm"]:checked');
+            var choice = checkedRadio ? checkedRadio.value : 'keep';
+            var featureToDisable = currentFeature; // capture before async
+            modal.style.display = 'none';
+            currentFeature = null;
+
+            if (choice === 'disable' && featureToDisable) {
+                var nonceEl = document.getElementById('pp-deprecated-nonce');
+                var nonce = nonceEl ? nonceEl.value : '';
+
+                var formData = new FormData();
+                formData.append('action', 'powerpress_disable_deprecated_feature');
+                formData.append('feature', featureToDisable);
+                formData.append('_wpnonce', nonce);
+
+                fetch(ajaxurl, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        var sectionId = 'pp-' + featureToDisable.replace(/_/g, '-') + '-section';
+                        var section = document.getElementById(sectionId);
+                        if (section) section.style.display = 'none';
+                    } else {
+                        alert('Failed to disable feature. Please refresh the page and try again.');
+                    }
+                })
+                .catch(function() {
+                    alert('Network error. Please check your connection and try again.');
+                });
+            }
+        });
+
+        // close modal on background click
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                currentFeature = null;
+            }
+        });
+    }
+
+    // init on dom ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initDeprecatedFeatureModal);
+    } else {
+        initDeprecatedFeatureModal();
+    }
+})();
+
 

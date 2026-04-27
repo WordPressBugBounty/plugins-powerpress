@@ -103,6 +103,22 @@ class PowerpressNetworkDataBus{
     }
 
     /**
+     * Clears cache using LIKE
+     */
+    static function clearCacheByLike(string $pattern): void {
+        global $wpdb;
+        $rows = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s",
+                $pattern
+            )
+        );
+        foreach ($rows as $name) {
+            delete_option($name);
+        }
+    }
+
+    /**
      * Returns networks associated to the account
      * @param $creds array of oauth credentials for blubrry api
      * @return array of networks
@@ -111,7 +127,33 @@ class PowerpressNetworkDataBus{
     {
         $cacheName = 'ppn-cache n';
         $requestUrl = '/2/powerpress/network?cache=' . md5( rand(0, 999) . time()) ;
-        return PowerpressNetworkDataBus::getCacheOrCallAPI($creds, $cacheName, $requestUrl,  true);
+        $result = PowerpressNetworkDataBus::getCacheOrCallAPI($creds, $cacheName, $requestUrl,  true);
+
+        if (!is_array($result)) {
+            return [];
+        }
+
+        if (isset($result['error'])) {
+            powerpress_page_message_add_error($result['error']);
+        }
+
+        $networks = [];
+        foreach ($result as $key => $row) {
+            if (!is_int($key) || !is_array($row) || empty($row['network_id'])) {
+                continue;
+            }
+
+            $networks[] = [
+                'network_id' => $row['network_id'],
+                'network_title' => $row['network_title'] ?? '',
+            ];
+        }
+
+        $cache = get_option($cacheName, []);
+        $cache['data'] = $networks;
+        update_option($cacheName, $cache);
+
+        return $networks;
     }
 
     /**

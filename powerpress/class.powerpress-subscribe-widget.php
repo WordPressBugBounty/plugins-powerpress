@@ -25,7 +25,7 @@ class PowerPressSubscribe_Widget extends WP_Widget {
 		if( $hook == 'widgets.php' )
 		{
 			//echo "<!-- $hook -->";
-			wp_enqueue_script( 'powerpress-subscribe-widget', plugins_url( 'js/powerpress-subscribe-widget.js' , __FILE__ ) );
+			wp_enqueue_script( 'powerpress-subscribe-widget', plugins_url( 'js/components/subscribe-widget.js' , __FILE__ ) );
 		}
 	}
 

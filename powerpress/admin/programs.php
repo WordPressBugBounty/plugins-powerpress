@@ -1,181 +1,448 @@
 <?php
+// ======
+//  INIT
+// ======
 
-$num_internal = 0;
-$num_external = 0;
+$networkID = get_option('powerpress_network_id');
+$networkObj = $GLOBALS['ppn_object'];
+
+$networkShowSearchResults = false;
+$networkShowSearchValue = false;
+$networkShowSearchCount = 0;
+if(!empty($_POST) && isset($_POST['search'])){
+    if($networkID){
+        $requestUrl = '/2/powerpress/network/' . $networkID . '/programs/search/';
+        $searchValue = htmlspecialchars($_POST['search']);
+        $result = $networkObj->requestAPI($requestUrl, true, $_POST);
+
+        // check result before access
+        if (!empty($result['error'])) {
+            powerpress_page_message_add_error(__('Error: ', 'powerpress') . $result['error']);
+        } else if ($result) {
+            $networkShowSearchResults = $result['programs'];
+            $networkShowSearchValue = $searchValue;
+            $networkShowSearchCount = $result['num_results'];
+        }
+    }
+}
+
+$accountShowsNotInNetwork = false;
+$accountShowsNotInNetworkCount = 0;
+if($networkID){
+    // find internal shows not in network
+    $requestUrl = '/2/powerpress/network/' . $networkID . '/not-in-network/';
+    $result = $networkObj->requestAPI($requestUrl, true, $_POST);
+
+    // check result before access
+    if (!empty($result['error'])) {
+        powerpress_page_message_add_error(__('Error: ', 'powerpress') . $result['error']);
+    } else if ($result){
+        $accountShowsNotInNetwork = $result['programs'];
+        $accountShowsNotInNetworkCount = $result['num_results'];
+    }
+
+    // refresh shows in network
+    $requestUrl = '/2/powerpress/network/' . $networkID . '/programs/';
+    $props = $networkObj->requestAPI($requestUrl, true, $_POST);
+
+    // check result before access
+    if (!empty($props['error']) || !is_array($props)) {
+        $props = [];
+    }
+}
+
+if (empty($props))
+    $props = [];
+
+// pre-group by internal/external
+$groups = ['internal' => [], 'external' => []];
+$inNetworkIds = [];
 foreach ($props as $program) {
-    if ($program['internal']) {
-        $num_internal++;
-    } else {
-        $num_external++;
-    }
+    if (empty($program['program_id'])) continue; // skip entries w/o valid program_id
+
+    $bucket = !empty($program['internal']) ? 'internal' : 'external';
+    $groups[$bucket][] = $program;
+
+    $inNetworkIds[$program['program_id']] = true;
 }
 
+// =================
+//  HOMEPAGE BUTTON
+// =================
 
-?>
-<h2 style="font-weight: bold; font-size: 150%; margin-bottom: 1ch;"><?php echo esc_html(get_option('powerpress_network_title') ); ?>
-    <form method="POST" action="#/" id="clearSiteCache" class="top-right-corner">
-        <a href="#TB_inline?&width=600&height=200&inlineId=unlinkNetwork" style="color: #D21919; font-size: 70%; text-decoration: none; margin-right: 1em;" class="thickbox" title="Powerpress Network plugin"><?php echo esc_html(__('UNLINK NETWORK', 'powerpress-network'));?></a>
-        <button type="button" class="cacheButton" onclick="refreshAndCallDirectAPI('Select Choice', 'clearSiteCache', 'shows')"><?php echo esc_html(__('CLEAR SITE CACHE', 'powerpress-network'));?></button>
-    </form>
-</h2>
-<h4 style="margin: 0; font-size: 120%;"><?php echo $num_internal; ?> internal | <?php echo $num_external; ?> external</h4><br>
-
-<table>
-    <thead>
-    <tr>
-        <th>Shows</th>
-        <th>Link</th>
-        <th>Show ID</th>
-        <th>Manage</th>
-    </tr>
-    </thead>
-    <tbody>
-    <?php
-    $option = get_option('powerpress_network_map');
-	$list_props = $secondary_props;
-	if( empty($props) )
-		$props = array(); // Empty array so it will not loop
-	
-    for ($i = 0; $i < count($props); ++$i){
-        $key = 'p-'.$props[$i]['program_id'];
-        if (isset($option[$key])){
-            $link = get_permalink($option[$key]);
-        } else{
-            $link = null;
-        }
-        $props[$i]['link'] = $link;
-		if( empty($props[$i]['program_title']) )
-			$props[$i]['program_title'] = 'n/a';
-		if( empty($props[$i]['program_id']) )
-			$props[$i]['program_id'] = 0;
-
-		$class = 'odd-row';
-		if ($i % 2 == 0) {
-		    $class = 'even-row';
-        }
-        ?>
-        <tr class="<?php echo $class; ?>">
-            <td class="<?php echo $class; ?>">
-                <span style="font-weight:bold;"><?php echo esc_html($props[$i]['program_title']); ?></span>
-            </td>
-            <td class="<?php echo $class; ?>">
-                <?php
-                if ($props[$i]['link'] == null){
-                    ?>
-                    <span style="font-weight:bold;">Not Linked</span>
-                    <?php
-                } else {
-                    ?>
-                <span style="font-weight:bold;"><a style="color: green;" href="<?php echo esc_url($props[$i]['link']);?>"><?php echo esc_html(__('View Page', 'powerpress-network'));?></a></span>
-                <?php
-                }
-                ?>
-            </td>
-            <td class="<?php echo $class; ?>">
-                <span style="font-weight:bold;"><?php echo esc_html($props[$i]['program_id']); ?></span>
-            </td>
-            <td class="<?php echo $class; ?>">
-                <?php if ($props[$i]['link'] != null){ ?>
-                    <a onclick="editPageForProgram(<?php echo $props[$i]['program_id']; ?>, '<?php echo $option[$key]; ?>');" href="#TB_inline?&width=500&height=300&inlineId=selectPageBox" class="thickbox" title="Powerpress Network plugin"><i class="material-icons" title="<?php echo esc_html(__('Change Page', 'powerpress-network'));?>">edit</i></a>
-                    <a href="#TB_inline?&width=600&height=200&inlineId=confirmUnlink<?php echo $props[$i]['program_id']; ?>" class="thickbox" title="Powerpress Network plugin"><i class="material-icons" title="<?php echo esc_html(__('Unlink Page', 'powerpress-network'));?>">remove_from_queue</i></a>
-                <?php } else { ?>
-                    <a onclick="editPageForProgram(<?php echo $props[$i]['program_id']; ?>, '');" href="#TB_inline?&width=500&height=300&inlineId=selectPageBox" class="thickbox" title="Powerpress Network plugin"><i class="material-icons" title="<?php echo esc_html(__('Link to Existing Page', 'powerpress-network'));?>">edit</i></a>
-                    <a href="" onclick="createPage(<?php echo esc_html($props[$i]['program_id']); ?>, 'Program','createForm', '<?php echo esc_html($props[$i]['program_title']); ?>'); return false;"><i class="material-icons" title="<?php echo esc_html(__('Create New Page', 'powerpress-network'));?>">add_to_queue</i></a>
-                <?php } ?>
-                <a onclick="jQuery('#add-program-to-group').val(<?php echo $props[$i]['program_id']; ?>);" href="#TB_inline?&width=500&height=200&inlineId=addToGroup" class="thickbox" title="Powerpress Network plugin"><i class="material-icons" title="<?php echo esc_html(__('Add to Group', 'powerpress-network'));?>">list</i></a>
-                <a href="#TB_inline?&width=500&height=200&inlineId=confirmRemoval<?php echo $props[$i]['program_id']; ?>" class="thickbox" title="Powerpress Network plugin"><i class="material-icons" title="<?php echo esc_html(__('Delete Program', 'powerpress-network'));?>">delete</i></a>
-            </td>
-        </tr>
-        <?php
+// toggle between create and edit based on page existence
+$homepageMap = get_option('powerpress_network_map', []);
+$homepageExists = false;
+$homepageId = null;
+if (!empty($homepageMap['Homepage'])) {
+    $hpId = $homepageMap['Homepage'];
+    if (get_post_status($hpId) == 'publish') {
+        $homepageExists = true;
+        $homepageId = $hpId;
     }
+}
+?>
 
-    ?>
-    </tbody>
-</table><br>
+<!-- =============
+      PAGE HEADER
+     ============= -->
 
-<div id="addToGroup" style="display: none">
-    <form method="POST" id="addForm">
-    <input id="add-program-to-group" name="program" type="hidden" />
-        <input id="group-for-program-add" name="list_id" type="hidden" />
-        <input id="requestAction" name="requestAction" value="add" hidden>
-        <table class="invisible-table">
-        <?php foreach ($list_props as $list) { ?>
-            <tr>
-                <td><a href="" class="ppn-done-link" style="float: left;" onclick="jQuery('#group-for-program-add').val(<?php echo $list['list_id']; ?>);directStatus('Select Choice', 'addForm', true, 'shows');return false;"><?php echo $list['list_title']; ?></a></td>
-            </tr>
-        <?php } ?>
-        </table>
-    </form>
+<div class="ppn-section-header">
+    <h2 class="ppn-manage__section-title">
+        <?php echo esc_html(get_option('powerpress_network_title')); ?>
+        <span id="return-to-shows-list" style="display: <?php echo ($networkShowSearchResults ? 'inline-block' : 'none'); ?>;">
+            | <a href="<?php echo esc_url(admin_url("admin.php?page=" . urlencode(powerpress_admin_get_page()))); ?>" style="color: #1976D2; font-size: 14px;"><?php esc_html_e('Return to shows list', 'powerpress'); ?></a>
+        </span>
+    </h2>
+    <div class="d-flex gap-sm">
+        <form method="POST" action="<?php echo esc_url(admin_url("admin.php?page=" . urlencode(powerpress_admin_get_page()))); ?>" onsubmit="return confirm('<?php echo esc_js(sprintf(__('Are you sure you want to unlink %s?', 'powerpress'), get_option('powerpress_network_title'))); ?>')">
+            <input type="hidden" name="ppn-action" value="unset-network-id" />
+            <?php wp_nonce_field('powerpress', '_ppn_nonce'); ?>
+            <button type="submit" class="button ppn-button-danger"><?php esc_html_e('Unlink Network', 'powerpress');?></button>
+        </form>
+
+        <!-- CREATE/EDIT HOMEPAGE BUTTON-->
+        <?php if ($homepageExists): ?>
+            <a id="ppn-homepage-btn" class="button" href="<?php echo esc_url(get_edit_post_link($homepageId)); ?>" target="_blank"
+                    style="display: <?php echo ($networkShowSearchResults ? 'none' : ''); ?>;">
+                <?php esc_html_e('Edit Home Page', 'powerpress'); ?>
+            </a>
+        <?php else: ?>
+            <button id="ppn-homepage-btn" type="button" class="button"
+                    style="display: <?php echo ($networkShowSearchResults ? 'none' : ''); ?>;"
+                    data-ppn-action="ppnPageAction" data-mode="singleton"
+                    data-target="Homepage"
+                    data-title="<?php echo esc_attr(get_option('powerpress_network_title')); ?>"
+                    data-edit-label="<?php esc_attr_e('Edit Home Page', 'powerpress'); ?>">
+                <?php esc_html_e('Add Home Page', 'powerpress'); ?>
+            </button>
+        <?php endif; ?>
+
+        <button id="display-network-search" type="button" class="button" onclick="displayNetworkSearch();"
+                style="display: <?php echo ($networkShowSearchResults ? 'none' : 'block'); ?>;" >
+            <?php esc_html_e('Add Shows to Network', 'powerpress-network');?>
+        </button>
+    </div>
 </div>
-<div class="selectPageBox" id="selectPageBox" style="display: none">
-    <h2 class="thickboxTitle"><?php echo esc_html(__('List Page Box', 'powerpress-network'));?></h2>
-    <form method="POST" id="changeForm">
-        <select class="dropdownChoice" id="page-select-ppn" name="pageID">
-            <?php
-            $availablePages = get_pages();
-            for ($j = 0; $j < count($availablePages); ++$j) {
-                ?>
-                <option name="<?php echo esc_html($availablePages[$j]->post_title); ?>" value="<?php echo esc_html($availablePages[$j]->ID); ?>"><?php echo esc_html($availablePages[$j]->post_title); ?></option>
-                <?php
-            }
+
+<!-- ============
+      SHOWS LIST
+     ============ -->
+
+<div id="network-shows-list" style="display: <?php echo ($networkShowSearchResults ? 'none' : 'block'); ?>;">
+    <?php if(!empty($groups['internal']) || !empty($groups['external'])){ ?>
+        <div class="ppn-search">
+            <input type="text" class="ppn-search__input" placeholder="<?php esc_attr_e('Filter shows...', 'powerpress'); ?>"
+                   data-ppn-action="filterList" data-ppn-target="ppn-programs-list">
+            <i class="material-icons-outlined ppn-search__icon">search</i>
+        </div>
+    <?php } ?>
+
+    <div class="ppn-list" id="ppn-programs-list">
+        <div class="ppn-list__header row">
+            <div class="col-8"><?php esc_html_e('Show', 'powerpress'); ?></div>
+            <div class="col-2"><?php esc_html_e('Show Page', 'powerpress'); ?></div>
+            <div class="col-2"><?php esc_html_e('Manage', 'powerpress'); ?></div>
+        </div>
+        <?php
+        $option = get_option('powerpress_network_map');
+        $list_props = $secondary_props;
+
+        $render_program = function($program) use ($option) {
+            $title      = $program['program_title'] ?? 'n/a';
+            $programId  = $program['program_id'] ?? 0;
+            $key        = "p-{$programId}";
+            $link       = (isset($option[$key]) && get_post_status($option[$key]) === 'publish') ? get_permalink($option[$key]) : null;
+            $pageMissing = isset($option[$key]) && !$link;
             ?>
-        </select>
-        <br>
-        <p style="color: black; font-weight: bold"><?php echo esc_html(__('Remember to put this short code on your new page', 'powerpress-network'));?></p>
-        <input readonly id="ppn-program-shortcode" value=''>
-        <input name="target" value="Program" hidden>
-        <input id="select-page-target-id" name="targetId" value="" hidden>
-        <input name="redirectUrl" value="false" hidden>
+            <div class="ppn-list__row row" data-title="<?php echo esc_attr(strtolower($title)); ?>">
+                <div class="col-8">
+                    <?php echo esc_html($title); ?>
+                </div>
+                <div class="col-2">
+                    <span class="ppn-list__label"><?php esc_html_e('Page', 'powerpress'); ?></span>
+                    <?php if ($pageMissing){ // linked page no longer published (draft/trash) ?>
+                        <span class="ppn-page-status">
+                            <button type="button"
+                                    class="ppn-page-status--action"
+                                    data-ppn-action="ppnPageAction"
+                                    data-mode="list"
+                                    data-target="Program"
+                                    data-id="<?php echo esc_attr($programId); ?>"
+                                    data-title="<?php echo esc_attr($title); ?>">
+                                        <?php esc_html_e('Create Page', 'powerpress');?>
+                            </button>
+                        </span>
+                    <?php } else if ($link === null){ // no page ever created ?>
+                        <span class="ppn-page-status">
+                            <button type="button"
+                                    class="ppn-page-status--action"
+                                    data-ppn-action="ppnPageAction"
+                                    data-mode="list"
+                                    data-target="Program"
+                                    data-id="<?php echo esc_attr($programId); ?>"
+                                    data-title="<?php echo esc_attr($title); ?>">
+                                        <?php esc_html_e('Create Page', 'powerpress');?>
+                            </button>
+                        </span>
+                    <?php } else { ?>
+                        <span class="ppn-page-status"><a class="ppn-page-status--linked" target="_blank" href="<?php echo esc_url($link);?>"><?php esc_html_e('View Page', 'powerpress');?></a></span>
+                    <?php } ?>
+                </div>
+                <div class="col-2">
+                    <?php if ($link !== null){ ?>
+                        <button type="button" class="ppn-icon-btn" title="<?php esc_html_e('Change Page', 'powerpress');?>" data-ppn-action="editPageForProgram" data-program-id="<?php echo esc_attr($programId); ?>" data-program-title="<?php echo esc_attr($title); ?>" data-link-page="<?php echo esc_attr($option[$key]); ?>" data-ppn-dialog="selectPageBox"><i class="material-icons-outlined">edit</i></button>
+                        <form method="POST" style="display:contents">
+                            <input type="hidden" name="target" value="Program" />
+                            <input type="hidden" name="targetId" value="<?php echo esc_attr($programId); ?>" />
+                            <input type="hidden" name="redirectUrl" value="false" />
+                            <input type="hidden" name="pageAction" value="unlink" />
+                            <button type="button" class="ppn-icon-btn" title="<?php esc_html_e('Unlink Page', 'powerpress');?>" data-ppn-action="ppnAction" data-tab="programs" data-confirm="<?php echo esc_attr("Are you sure you want to unlink this page from {$title}?"); ?>"><i class="material-icons-outlined">link_off</i></button>
+                        </form>
+                    <?php } else { ?>
+                        <button type="button" class="ppn-icon-btn" title="<?php esc_html_e('Link to Existing Page', 'powerpress');?>" data-ppn-action="editPageForProgram" data-program-id="<?php echo esc_attr($programId); ?>" data-program-title="<?php echo esc_attr($title); ?>" data-link-page="" data-ppn-dialog="selectPageBox"><i class="material-icons-outlined">edit</i></button>
+                    <?php } ?>
+                    <button type="button" class="ppn-icon-btn" title="<?php esc_html_e('Add to Group', 'powerpress');?>" data-ppn-action="addToGroup" data-program-id="<?php echo esc_attr($programId); ?>" data-ppn-dialog="addToGroup"><i class="material-icons-outlined">library_add</i></button>
+                    <form method="POST" style="display:contents">
+                        <input type="hidden" name="target" value="program" />
+                        <input type="hidden" name="targetId" value="<?php echo esc_attr($programId); ?>" />
+                        <input type="hidden" name="requestAction" value="delete" />
+                        <input type="hidden" name="redirectUrl" value="false" />
+                        <input type="hidden" name="changeOrCreate" value="true" />
+                        <input type="hidden" name="pageAction" value="clearSiteCache" />
+                        <input type="hidden" name="clearSiteCache" value="true" />
+                        <button type="button" class="ppn-icon-btn" title="<?php esc_html_e('Delete Program', 'powerpress');?>" data-ppn-action="ppnAction" data-tab="programs" data-confirm="<?php echo esc_attr("Are you sure you want to remove '{$title}'?"); ?>"><i class="material-icons-outlined">delete</i></button>
+                    </form>
+                </div>
+            </div>
+            <?php
+        };
+
+        if (!empty($groups['internal']) || !empty($groups['external'])) {
+            powerpress_render_list_section('internal', __('Internal Shows', 'powerpress'), $groups['internal'], $render_program);
+            powerpress_render_list_section('external', __('External Shows', 'powerpress'), $groups['external'], $render_program, false, __('No external shows yet.', 'powerpress'));
+        } else { ?>
+            <div class="row justify-content-center mt-4">
+                <h1 class="ppn-page-title"><?php esc_html_e('This Network is Empty', 'powerpress'); ?></h1>
+            </div>
+
+            <div class="row justify-content-center" style="margin-left: 20%; margin-right: 20%;">
+                <p><?php esc_html_e('A podcast network is a collection of shows managed under one umbrella, with shared branding, purpose, and often a unified strategy. While many organizations are starting to dip their toes into podcasting with a single show, networks offer flexibility, growth, and audience segmentation. With PowerPress you can host multiple shows under one account. Centralized control makes it simple to oversee multiple podcasts from one dashboard.', 'powerpress'); ?></p>
+            </div>
+
+            <div class="row justify-content-center mb-4">
+                <button id="display-network-search" type="button" class="button" onclick="displayNetworkSearch();">
+                    <?php esc_html_e('Add Shows to Network', 'powerpress');?>
+                </button>
+            </div>
+        <?php } ?>
+    </div>
+
+    <!-- form lives outside dialog so values persist -->
+    <form method="POST" id="addForm">
+        <input id="add-program-to-group" name="program" type="hidden" />
+        <input id="group-for-program-add" name="list_id" type="hidden" />
+        <input name="requestAction" value="add" type="hidden">
+    </form>
+</div>
+
+<div id="network-search-for-shows" style="display: <?php echo ($networkShowSearchResults ? 'block' : 'none'); ?>;">
+    <form id="network-show-search-form" method="POST" action="<?php echo esc_url(admin_url("admin.php?page=" . urlencode(powerpress_admin_get_page()))); ?>">
+        <?php wp_nonce_field('powerpress', '_ppn_nonce'); ?>
+
+        <input type="hidden" name="networkId" value="<?php echo esc_attr($networkID); ?>"/>
+        <div class="ppn-network-search">
+            <div class="ppn-search ppn-network-search__bar">
+                <label for="network-show-search-input"></label>
+                <input id="network-show-search-input" type="text" class="ppn-search__input" name="search" value="<?php echo esc_attr($networkShowSearchValue); ?>"
+                       placeholder="<?php esc_attr_e('Search for shows...', 'powerpress'); ?>">
+                <i id="network-show-search-submit" class="material-icons-outlined ppn-search__icon" style="cursor: pointer; pointer-events: auto;" onclick="submitNetworkShowSearch();">search</i>
+            </div>
+            <a href="<?php echo esc_url(admin_url("admin.php?page=" . urlencode(powerpress_admin_get_page()))); ?>" class="ppn-network-search__close">&times;</a>
+        </div>
     </form>
 
-    <button type="submit" class="ppn-back-button" onclick="directStatus('Select Choice', 'changeForm', true, 'shows')"><?php echo esc_html(__('Save', 'powerpress-network'));?></button>
-    <p class="ppn-back-button" onclick="tb_remove()"><?php echo esc_html(__('Cancel', 'powerpress-network'));?></p>
+    <!-- =================================
+          SEARCH RESULTS / SUGGESTED SHOWS
+         ================================= -->
+    <div class="ppn-list p-4">
+        <?php if(empty($networkShowSearchResults) && empty($accountShowsNotInNetwork)){ ?>
+            <div class="ppn-empty-state">
+                <i class="material-icons-outlined ppn-empty-state__icon">podcasts</i>
+                <p class="ppn-empty-state__text"><?php esc_html_e('Search the Blubrry directory to find and add shows to your network.', 'powerpress'); ?></p>
+            </div>
+        <?php } ?>
+
+        <?php if(!empty($networkShowSearchResults) && !empty($searchValue)){ ?>
+            <h4 class="ppn-page-subtitle mb-3">SEARCH RESULTS: <?php echo esc_html($searchValue); ?></h4>
+
+            <div class="row">
+                <?php foreach($networkShowSearchResults as $show){
+                    $title = htmlspecialchars($show['program_title']);
+                    $name = htmlspecialchars($show['talent_name']);
+                    $website = htmlspecialchars($show['program_htmlurl']);
+
+                    $artwork = 'https://assets.blubrry.com/coverart/90/' . htmlspecialchars($show['program_itunes_image']);
+                    $fallback = esc_url(powerpress_get_root_url() . 'images/pts_cover.jpg');
+                    ?>
+
+                    <div class="col-12 col-lg-6 mb-3">
+                        <div class="row align-items-center">
+                            <div class="col-1">
+                                <img data-ppn-action="addProgramToNetwork"
+                                     data-program-id="<?php echo $show['program_id']; ?>"
+                                     data-network-id="<?php echo $networkID; ?>"
+                                     data-updated-src="<?php echo powerpress_get_root_url(); ?>images/circlecheck_blue.png"
+                                     data-title="<?php echo esc_attr($show['program_title']); ?>"
+                                     id="add-program-<?php echo $show['program_id']; ?>"
+                                     class="circle-add-to-network"
+                                     alt="Add to Network" src="<?php echo powerpress_get_root_url() . (isset($inNetworkIds[$show['program_id']]) ? 'images/circlecheck_blue.png' : 'images/circleplus.png'); ?>">
+                            </div>
+
+                            <div class="col-1 pr-0 pl-0">
+                                <img class="results-coverart" src="<?php echo esc_url($artwork); ?>" onerror="this.onerror=null; this.src='<?php echo $fallback; ?>';" alt="Show Coverart">
+                            </div>
+
+                            <div class="col-10">
+                                <div class="row pl-2">
+                                    <h3 class="m-0"><?php echo $title; ?></h3>
+                                </div>
+                                <div class="row pl-2">
+                                    <?php if($name){ ?>
+                                        <h4 class="m-0"><?php echo $name; ?></h4>
+                                    <?php } ?>
+                                    <?php if($website){ ?>
+                                        <a class="website-link" href="<?php echo $website; ?>" target="_blank"><?php echo $website; ?></a>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php } ?>
+            </div>
+        <?php } ?>
+
+
+        <?php if(!empty($accountShowsNotInNetwork)){ ?>
+        <h4 class="ppn-page-subtitle mb-3 mt-3">SUGGESTED SHOWS</h4>
+
+            <div class="row">
+                <?php foreach($accountShowsNotInNetwork as $show){
+                    $title = htmlspecialchars($show['program_title']);
+                    $name = htmlspecialchars($show['talent_name']);
+                    $website = htmlspecialchars($show['program_htmlurl']);
+
+                    $artwork = 'https://assets.blubrry.com/coverart/90/' . htmlspecialchars($show['program_itunes_image']);
+                    $fallback = esc_url(powerpress_get_root_url() . 'images/pts_cover.jpg');
+                    ?>
+
+                    <div class="col-12 col-lg-6 mb-3">
+                        <div class="row align-items-center">
+                            <div class="col-1">
+                                <img data-ppn-action="addProgramToNetwork"
+                                     data-program-id="<?php echo $show['program_id']; ?>"
+                                     data-network-id="<?php echo $networkID; ?>"
+                                     data-updated-src="<?php echo powerpress_get_root_url(); ?>images/circlecheck_blue.png"
+                                     data-title="<?php echo esc_attr($show['program_title']); ?>"
+                                     id="add-program-<?php echo $show['program_id']; ?>"
+                                     class="circle-add-to-network"
+                                     alt="Add to Network" src="<?php echo powerpress_get_root_url() . (isset($inNetworkIds[$show['program_id']]) ? 'images/circlecheck_blue.png' : 'images/circleplus.png'); ?>">
+                            </div>
+
+                            <div class="col-1 pr-0 pl-0">
+                                <img class="results-coverart" src="<?php echo esc_url($artwork); ?>" onerror="this.onerror=null; this.src='<?php echo $fallback; ?>';" alt="Show Coverart">
+                            </div>
+
+                            <div class="col-10">
+                                <div class="row pl-2">
+                                    <h3 class="m-0"><?php echo $title; ?></h3>
+                                </div>
+                                <div class="row pl-2">
+                                    <?php if($name){ ?>
+                                        <h4 class="m-0"><?php echo $name; ?></h4>
+                                    <?php } ?>
+                                    <?php if($website){ ?>
+                                        <a class="website-link" href="<?php echo $website; ?>" target="_blank"><?php echo $website; ?></a>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php } ?>
+            </div>
+        <?php } ?>
+    </div>
 </div>
-<form method="POST" id="createForm" hidden></form>
+
+<!-- ====================
+      ADD TO GROUP DIALOG
+     ==================== -->
+
+<dialog id="addToGroup" class="ppn-dialog ppn-dialog--sm">
+    <button type="button" class="ppn-dialog__close" data-ppn-action="ppnDialogClose" aria-label="<?php esc_attr_e('Close', 'powerpress'); ?>"><i class="material-icons-outlined">close</i></button>
+    <h4 class="ppn-manage__field-label" style="margin-top: 0;"><?php esc_html_e('Select a Group', 'powerpress'); ?></h4>
+    <?php if (empty($list_props)) { ?>
+        <p class="description"><?php esc_html_e('No groups yet. Create a group first.', 'powerpress'); ?></p>
+    <?php } else { ?>
+        <?php foreach ($list_props as $list) { ?>
+            <div class="ppn-group-pick">
+                <a href="" data-ppn-action="ppnAction" data-form="addForm" data-tab="programs" data-set-field="group-for-program-add" data-set-value="<?php echo esc_attr($list['list_id']); ?>" data-change="true"><?php echo esc_html($list['list_title']); ?></a>
+            </div>
+        <?php } ?>
+    <?php } ?>
+    <div class="ppn-dialog__actions">
+        <button type="button" class="button" data-ppn-action="ppnDialogClose"><?php esc_html_e('Cancel', 'powerpress'); ?></button>
+    </div>
+</dialog>
+
+<script>
+    function displayNetworkSearch(){
+        let networkShowsList = document.getElementById('network-shows-list');
+        let networkSearchForShows = document.getElementById('network-search-for-shows');
+        let addShowsToNetworkBtn = document.getElementById('display-network-search');
+        let returnLink = document.getElementById('return-to-shows-list');
+        let homepageBtn = document.getElementById('ppn-homepage-btn');
+
+        if(networkShowsList.style.display !== 'none'){ // if shows list is displayed
+            // hide shows list, and display network search
+            networkShowsList.style.display = 'none';
+            networkSearchForShows.style.display = 'block';
+            addShowsToNetworkBtn.style.display = 'none';
+            if (homepageBtn) homepageBtn.style.display = 'none';
+            returnLink.style.display = 'inline-block';
+
+        } else { // if network search is displayed
+            // hide network search, and display shows list
+            networkSearchForShows.style.display = 'none';
+            networkShowsList.style.display = 'block';
+            addShowsToNetworkBtn.style.display = 'block';
+            if (homepageBtn) homepageBtn.style.display = '';
+            returnLink.style.display = 'none';
+        }
+    }
+
+    function submitNetworkShowSearch(){
+        let searchForm = document.getElementById('network-show-search-form');
+        let searchValue = document.getElementById('network-show-search-input');
+
+        if(searchValue.value !== ''){
+            searchForm.submit();
+        }
+    }
+</script>
+
+<!-- ====================
+      PAGE SELECT DIALOG
+     ==================== -->
+
 <?php
-
-
-for ($i = 0; $i < count($props); ++$i){ ?>
-
-
-
-<form method="POST" id="createForm<?php echo $props[$i]['program_id']; ?>">
-    <input name="target" value="Program" hidden>
-    <input name="targetId" value="<?php echo esc_html($props[$i]['program_id']); ?>" hidden>
-    <input name="redirectUrl" value="false" hidden>
-</form>
-
-<?php if ($props[$i]['link'] != null){ ?>
-<div class="confirmUnlink" id="confirmUnlink<?php echo $props[$i]['program_id']; ?>" style="display: none">
-    <h2 class="thickboxTitle"><?php echo esc_html(__('Confirm Unlink', 'powerpress-network'));?></h2>
-    <p style="color: black; font-weight: bold"><?php echo esc_html(__('Are you sure you want to unlink the current page off the program ' . esc_html($props[$i]['program_title']) . '?', 'powerpress-network'));?></p><br>
-    <button type="submit" class="warningButton" onclick="confirmUnlink('createForm<?php echo $props[$i]['program_id']; ?>');directStatus('Select Choice', 'createForm<?php echo $props[$i]['program_id']; ?>', false, 'shows')"><?php echo esc_html(__('Unlink page', 'powerpress-network'));?></button>
-    <p class="ppn-back-button" onclick="tb_remove();"><?php echo esc_html(__('Cancel', 'powerpress-network'));?></p>
-</div>
-<?php } ?>
-
-<form method="POST" id="removeForm<?php echo $props[$i]['program_id']; ?>" action="">
-    <input name="target" value="program" hidden>
-    <input name="requestAction" class="requestAction" value="" hidden>
-    <input name="targetId" class="removeProgram" id="removeProgram"
-        <?php
-        echo 'value = ' . esc_html($props[$i]['program_id']);
-        ?>
-           hidden>
-    <input name="redirectUrl" value="false" hidden>
-</form>
-<div class="confirmRemoval" id="confirmRemoval<?php echo $props[$i]['program_id']; ?>" style="display: none;">
-    <h2 class="thickboxTitle"><?php echo esc_html(__('Confirm removal of program from your Network', 'powerpress-network')); ?></h2>
-    <p><?php echo esc_html(__('Are you sure you want to remove this program off of your network?')); ?></p>
-    <button type="submit" class="warningButton" onclick="confirmRemovalOfProgram(<?php echo esc_html($props[$i]['program_id']); ?>);"><?php echo esc_html(__('Remove program', 'powerpress-network')); ?>
-</div>
-<?php
-}
-
+$availablePages = get_pages();
+powerpress_render_network_page_select([
+    'form_id'        => 'changeForm',
+    'select_id'      => 'page-select-ppn',
+    'shortcode_id'   => 'ppn-program-shortcode',
+    'target'         => 'Program',
+    'target_id_attr' => 'select-page-target-id',
+    'pages'          => $availablePages,
+]);
 ?>
-
-<form id="manageProgram" action="#/" method="POST" hidden> <!-- Make sure to keep back slash there for WordPress -->
-    <input id="programId" name="programId" value="">
-    <input id="linkPageProgram" name="linkPageProgram" value="">
-    <input name="previousStatus" value="List Programs">
-</form>

@@ -38,8 +38,6 @@
 	
 	if( empty($FeedSettings['itunes_url']) )
 		$FeedSettings['itunes_url'] = '';
-	if( empty($FeedSettings['blubrry_url']) )
-		$FeedSettings['blubrry_url'] = '';
 	if( empty($FeedSettings['tunein_url']) )
 		$FeedSettings['tunein_url'] = '';	
 	if( empty($FeedSettings['spotify_url']) )
@@ -76,7 +74,6 @@
     $Settings['subscribe_feature_deezer'] = (isset($General['subscribe_feature_deezer']) ? $General['subscribe_feature_deezer'] : false );
     $Settings['subscribe_feature_pandora'] = (isset($General['subscribe_feature_pandora']) ? $General['subscribe_feature_pandora'] : false );
     $Settings['subscribe_feature_android'] = (isset($General['subscribe_feature_android']) ? $General['subscribe_feature_android'] : false );
-    $Settings['subscribe_feature_blubrry'] = (isset($General['subscribe_feature_blubrry']) ? $General['subscribe_feature_blubrry'] : false );
     $Settings['subscribe_feature_amazon'] = (isset($General['subscribe_feature_amazon']) ? $General['subscribe_feature_amazon'] : false );
     $Settings['subscribe_feature_pcindex'] = (isset($General['subscribe_feature_pcindex']) ? $General['subscribe_feature_pcindex'] : false );
     $Settings['subscribe_feature_jiosaavn'] = (isset($General['subscribe_feature_jiosaavn']) ? $General['subscribe_feature_jiosaavn'] : false );
@@ -90,7 +87,6 @@
     $Settings['subscribe_feature_tunein_shortcode'] = (isset($General['subscribe_feature_tunein_shortcode']) ? $General['subscribe_feature_tunein_shortcode'] : true );
     $Settings['subscribe_feature_spotify_shortcode'] = (isset($General['subscribe_feature_spotify_shortcode']) ? $General['subscribe_feature_spotify_shortcode'] : true );
     $Settings['subscribe_feature_android_shortcode'] = (isset($General['subscribe_feature_android_shortcode']) ? $General['subscribe_feature_android_shortcode'] : true );
-    $Settings['subscribe_feature_blubrry_shortcode'] = (isset($General['subscribe_feature_blubrry_shortcode']) ? $General['subscribe_feature_blubrry_shortcode'] : true );
     $Settings['subscribe_feature_iheart_shortcode'] = (isset($General['subscribe_feature_iheart_shortcode']) ? $General['subscribe_feature_iheart_shortcode'] : true );
     $Settings['subscribe_feature_deezer_shortcode'] = (isset($General['subscribe_feature_deezer_shortcode']) ? $General['subscribe_feature_deezer_shortcode'] : true );
     $Settings['subscribe_feature_pandora_shortcode'] = (isset($General['subscribe_feature_pandora_shortcode']) ? $General['subscribe_feature_pandora_shortcode'] : true );
@@ -110,7 +106,6 @@
     $Settings['subscribe_feature_deezer_sidebar'] = (isset($General['subscribe_feature_deezer_sidebar']) ? $General['subscribe_feature_deezer_sidebar'] : false );
     $Settings['subscribe_feature_pandora_sidebar'] = (isset($General['subscribe_feature_pandora_sidebar']) ? $General['subscribe_feature_pandora_sidebar'] : false );
     $Settings['subscribe_feature_android_sidebar'] = (isset($General['subscribe_feature_android_sidebar']) ? $General['subscribe_feature_android_sidebar'] : true );
-    $Settings['subscribe_feature_blubrry_sidebar'] = (isset($General['subscribe_feature_blubrry_sidebar']) ? $General['subscribe_feature_blubrry_sidebar'] : false );
     $Settings['subscribe_feature_amazon_sidebar'] = (isset($General['subscribe_feature_amazon_sidebar']) ? $General['subscribe_feature_amazon_sidebar'] : false );
     $Settings['subscribe_feature_pcindex_sidebar'] = (isset($General['subscribe_feature_pcindex_sidebar']) ? $General['subscribe_feature_pcindex_sidebar'] : false );
     $Settings['subscribe_feature_jiosaavn_sidebar'] = (isset($General['subscribe_feature_jiosaavn_sidebar']) ? $General['subscribe_feature_jiosaavn_sidebar'] : false );
@@ -188,20 +183,6 @@ function subscribeSetting($directory, $feed_url, $listing_url, $apple_claim_toke
                     <label for="spotify_url" class="pp-settings-label-under"><?php echo sprintf(__('e.g. %s', 'powerpress'), 'https://open.spotify.com/show/abcdefghijklmnopqrstu'); ?></label>
 
 
-                <?php
-                break;
-            case 'blubrry': ?>
-
-                    <h2<?php echo $class; ?>>
-                        <img class="pp-directory-icon" <?php echo $style; ?>alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/blubrry.svg">
-                        <?php echo __('Blubrry Podcast Directory', 'powerpress'); ?>
-                        <?php powerpress_settings_save_button(); ?>
-                    </h2>
-                    <p class="pp-settings-text">
-                        <b><?php echo __('Get listed on the largest podcast directory in the world! ', 'powerpress'); ?></b><?php echo sprintf(__('Once listed, %s to expand your podcast distribution to Blubrry\'s SmartTV Apps (e.g. Roku) and apply to be on Spotify.', 'powerpress'), '<a href="https://blubrry.com/services/blubrry-podcast-directory/" target="_blank">'. __('Get Featured', 'powerpress').'</a>' ); ?>
-                    </p>
-                    <input class="pp-settings-text-input-less-wide" type="text" id="blubrry_url<?php echo $id_tail; ?>" name="Feed[blubrry_url]" placeholder="<?php echo __('Blubrry Listing URL', 'powerpress'); ?>" value="<?php echo esc_attr($listing_url); ?>" maxlength="255" />
-                    <label for="blubrry_url" class="pp-settings-label-under"><?php echo sprintf(__('e.g. %s', 'powerpress'), 'https://blubrry.com/title_of_podcast/'); ?></label>
                 <?php
                 break;
             case 'android': ?>
@@ -359,20 +340,7 @@ function subscribeSetting($directory, $feed_url, $listing_url, $apple_claim_toke
     }
 ?>
 
-<div class="pp-sidenav-toggle-container">
-    <div id="destinations-toggle-sidenav" class="toggle-sidenav" title="Destinations Settings and Blubrry Services" onclick="powerpress_displaySideNav(this);">&lt;</div>
-    <div class="pp-sidenav">
-        <?php
-        powerpressadmin_edit_blubrry_services($General);
-        ?>
-        <div class="pp-sidenav-extra"><a href="https://www.blubrry.com/support/" class="pp-sidenav-extra-text"><?php echo htmlspecialchars(__('POWERPRESS DOCUMENTATION', 'powerpress')); ?></a></div>
-        <div class="pp-sidenav-extra"><a href="https://www.blubrry.com/podcast-insider/" class="pp-sidenav-extra-text"><?php echo htmlspecialchars(__('PODCAST INSIDER BLOG', 'powerpress')); ?></a></div>
-        <div class="pp-sidenav-extra"><a href="https://blubrry.com/manual/" class="pp-sidenav-extra-text"><?php echo htmlspecialchars(__('PODCAST MANUAL', 'powerpress')); ?></a></div>
-        <div class="pp-sidenav-extra"><a href="https://blubrry.com/services/" class="pp-sidenav-extra-text"><?php echo htmlspecialchars(__('BLUBRRY RESOURCES', 'powerpress')); ?></a></div>
-        <div class="pp-sidenav-extra"><a href="https://blubrry.com/support/" class="pp-sidenav-extra-text"><?php echo htmlspecialchars(__('BLUBRRY SUPPORT', 'powerpress')); ?></a></div>
-        <div class="pp-sidenav-extra"><a href="https://wordpress.org/support/plugin/powerpress/" class="pp-sidenav-extra-text"><?php echo htmlspecialchars(__('BLUBRRY POWERPRESS FORUM', 'powerpress')); ?></a></div>
-    </div>
-</div>
+<?php powerpress_render_sidenav_container('destinations', 'Destinations Settings and Blubrry Services', $General); ?>
 <?php
 
 $atleastOneEpisode = $hasBlubrryHosting = false;
@@ -386,7 +354,7 @@ if (!empty($General['blubrry_hosting']) && $General['blubrry_hosting'] > 0) {
 }
 
 ?>
-<div style="max-width: 75%;">
+<div>
     <?php if ($atleastOneEpisode): ?>
         <div class="destinations-icon-links d-flex flex-wrap justify-content-between">
             <p class="mt-3 mb-4" style="width: 100%;">There are listeners everywhere, don’t miss out on a podcast platform. Submit and manage podcast listings here.</p>
@@ -406,10 +374,6 @@ if (!empty($General['blubrry_hosting']) && $General['blubrry_hosting'] > 0) {
             <div id="destinations-pcindex-tab" onclick="sideNav(event, 'destinations-pcindex')" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="<?php echo empty($FeedSettings['pcindex_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger pcindex"></i>
                 <small>Podcast Index</small>
-            </div>
-            <div id="destinations-blubrry-tab" onclick="sideNav(event, 'destinations-blubrry')" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="<?php echo empty($FeedSettings['blubrry_url']) ? 'grey-icon ' : ''; ?>subscribe-icons-larger blubrry"></i>
-                <small>Blubrry Podcast Directory</small>
             </div>
             <div id="destinations-android-tab" onclick="sideNav(event, 'destinations-android')" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="subscribe-icons-larger android"></i>
@@ -561,57 +525,6 @@ if (!empty($General['blubrry_hosting']) && $General['blubrry_hosting'] > 0) {
 
         </div>
 
-        <div id="destinations-blubrry" class="pp-sidenav-tab">
-            <?php if ($hasBlubrryHosting): ?>
-                <?php
-                $blubrryDirectoryListingUrl = '';
-                if (empty($FeedSettings['blubrry_url'])) {
-                    if ($hasBlubrryHosting && !empty($General['blubrry_program_keyword'])) {
-                        $blubrryDirectoryListingUrl = "https://blubrry.com/" . htmlspecialchars($General['blubrry_program_keyword']) . '/';
-                    }
-                } else {
-                    $blubrryDirectoryListingUrl = $FeedSettings['blubrry_url'];
-                }
-
-                subscribeSetting('blubrry', $feed_url, $blubrryDirectoryListingUrl);
-                ?>
-                <div class="pp-show-subscribe">
-                    <p class="pp-settings-text-smaller-margin">
-                        <input type="hidden" name="General[subscribe_feature_blubrry_sidebar]" value="0"/>
-                        <input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_blubrry_sidebar"
-                               name="General[subscribe_feature_blubrry_sidebar]"
-                               value="1" <?php if (!empty($Settings['subscribe_feature_blubrry_sidebar'])) echo 'checked '; ?>/>
-                        <label for="subscribe_feature_blubrry_sidebar"><?php echo __('Show link in subscribe sidebar', 'powerpress'); ?></label>
-                    </p>
-                    <p class="pp-settings-text-smaller-margin">
-                        <input type="hidden" name="General[subscribe_feature_blubrry_shortcode]" value="0"/>
-                        <input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_blubrry_shortcode"
-                               name="General[subscribe_feature_blubrry_shortcode]"
-                               value="1" <?php if (!empty($Settings['subscribe_feature_blubrry_shortcode'])) echo 'checked '; ?>/>
-                        <label for="subscribe_feature_blubrry_shortcode"><?php echo __('Show link on subscribe page', 'powerpress'); ?></label>
-                    </p>
-                    <?php if (!empty($General['subscribe_links'])): ?>
-                        <p class="pp-settings-text-smaller-margin">
-                            <input type="hidden" name="General[subscribe_feature_blubrry]" value="0"/>
-                            <input class="pp-settings-checkbox" type="checkbox" id="subscribe_feature_blubrry"
-                                   name="General[subscribe_feature_blubrry]"
-                                   value="1" <?php if (!empty($Settings['subscribe_feature_blubrry'])) echo 'checked '; ?>/>
-                            <label for="subscribe_feature_blubrry"><?php echo __('Show link under media player', 'powerpress'); ?></label>
-                        </p>
-                    <?php endif; ?>
-                </div>
-            <?php else: ?>
-                <div class="pp-show-subscribe" style="margin-bottom: 3rem;">
-                    <p>Directory listings are only available for hosting customers.</p>
-                    <br>
-                    <a rel="noopener noreferrer" href="https://blubrry.com/services/plans-pricing/">Learn more about
-                        Blubrry Hosting Plans</a>
-                </div>
-            <?php endif; ?>
-            <?php marketing_footer(); ?>
-
-        </div>
-
         <div id="destinations-jiosaavn" class="pp-sidenav-tab">
             <?php subscribeSetting('jiosaavn', $feed_url, $FeedSettings['jiosaavn_url']); ?>
             <div class="pp-show-subscribe">
@@ -720,36 +633,39 @@ if (!empty($General['blubrry_hosting']) && $General['blubrry_hosting'] > 0) {
 
         </div>
     <?php else: ?>
-        <div class="destinations-icon-links d-flex flex-wrap justify-content-between">
-            <div class="mb-4" style="border-bottom: 1px solid #444444; padding-bottom: 1.5rem;">
-                <h1 class="mt-3">You haven’t published your first episode yet.</h1>
-                <p class="mt-2">Before you can submit
-                    your
-                    podcast to
-                    directories (examples below), you need to have published at least one episode (this can be a
-                    trailer or pilot episode).</p>
-                <ul style="clear: unset; list-style: unset; padding-inline-start: 40px;">
-                    <li>Apple</li>
-                    <li>Spotify</li>
-                    <li>Amazon Music</li>
-                    <li>Plus others!</li>
-                </ul>
-                <div style="text-align: center;">
-                    <p><strong>All platforms require a single published episode</strong> in your RSS feed
-                        in order to submit your show to a directory.</p>
-                    <p>Your next step is to record and publish your first episode. Once it's live, you'll
-                        be ready to start submitting to your chosen directories!</p>
-                    <?php if ($hasBlubrryHosting): ?>
-                        <p>With our partner <a href="https://publish.blubrry.com/resources/adobe/" target="_blank"
-                                                        rel="noopener noreferrer">Adobe Podcasts</a> you can record your
-                            first ever episode in minutes.</p>
-                    <?php endif; ?>
-                    <div id="destinations-all" class="pp-save-button-container" style="display: block; margin-top: 15px;">
-                        <a class="powerpress_save_button mt-4 mb-4" href="/wp-admin/post-new.php" target="_blank"
-                           rel="noopener noreferrer" style="text-decoration: none;">Publish An Episode Here</a>
-                    </div>
+        <!-- NO EPISODE COPY -->
+        <div class="mb-4" style="border-bottom: 1px solid #444444; padding-bottom: 1.5rem;">
+            <h1 class="mt-3">You haven’t published your first episode yet.</h1>
+            <p class="mt-2">Before you can submit
+                your
+                podcast to
+                directories (examples below), you need to have published at least one episode (this can be a
+                trailer or pilot episode).</p>
+            <ul style="clear: unset; list-style: unset; padding-inline-start: 40px;">
+                <li>Apple</li>
+                <li>Spotify</li>
+                <li>Amazon Music</li>
+                <li>Plus others!</li>
+            </ul>
+            <div style="text-align: center;">
+                <p><strong>All platforms require a single published episode</strong> in your RSS feed
+                    in order to submit your show to a directory.</p>
+                <p>Your next step is to record and publish your first episode. Once it's live, you'll
+                    be ready to start submitting to your chosen directories!</p>
+                <?php if ($hasBlubrryHosting): ?>
+                    <p>With our partner <a href="https://publish.blubrry.com/resources/adobe/" target="_blank"
+                                                    rel="noopener noreferrer">Adobe Podcasts</a> you can record your
+                        first ever episode in minutes.</p>
+                <?php endif; ?>
+                <div id="destinations-all" class="pp-save-button-container" style="display: block; margin-top: 15px;">
+                    <a class="powerpress_save_button mt-4 mb-4" href="/wp-admin/post-new.php" target="_blank"
+                       rel="noopener noreferrer" style="text-decoration: none;">Publish An Episode Here</a>
                 </div>
             </div>
+        </div>
+        
+        <!-- DESTINATIONS ICONS -->
+        <div class="destinations-icon-links d-flex flex-wrap justify-content-between">
             <div id="destinations-default-open" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="grey-icon subscribe-icons-larger rss"></i>
                 <small>RSS</small>
@@ -765,10 +681,6 @@ if (!empty($General['blubrry_hosting']) && $General['blubrry_hosting'] > 0) {
             <div id="destinations-pcindex-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="grey-icon subscribe-icons-larger pcindex"></i>
                 <small>Podcast Index</small>
-            </div>
-            <div id="destinations-blubrry-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
-                <i class="grey-icon subscribe-icons-larger blubrry"></i>
-                <small>Blubrry Podcast Directory</small>
             </div>
             <div id="destinations-android-tab" class="pp-sidenav-tablinks destinations-link text-center align-top">
                 <i class="grey-icon subscribe-icons-larger android"></i>

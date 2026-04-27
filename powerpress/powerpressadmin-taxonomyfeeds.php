@@ -8,6 +8,7 @@ function powerpress_admin_taxonomyfeeds_columns($data=array()){
 	$data['name'] = __('Term Name', 'powerpress');
 	$data['taxonomy'] = __('Taxonomy', 'powerpress');
 	$data['feed-slug'] = __('Slug', 'powerpress');
+	$data['episode-count'] = __('Episodes', 'powerpress');
 	$data['url'] = __('Feed URL', 'powerpress');
 	return $data;
 }
@@ -148,6 +149,7 @@ function powerpress_admin_taxonomyfeeds(){
                                 continue;
                             }
 
+                            $episode_total = powerpress_admin_episodes_per_feed('', 'taxonomy', $tt_id);
                             $columns = powerpress_admin_taxonomyfeeds_columns();
                             $hidden = array();
 

@@ -404,7 +404,11 @@
 							
 							if( $redirect_url )
 							{
-								curl_close($curl);
+								if (version_compare(PHP_VERSION, '8.0', '<')) {
+									curl_close($curl);
+								} else {
+									unset($curl);
+								}
 								return $this->DownloadCurl($redirect_url, $RedirectCount +1);
 							}
 							else
@@ -420,7 +424,11 @@
 						$this->SetError( curl_error($curl) );
 					}; break;
 				}
-				curl_close($curl);
+				if (version_compare(PHP_VERSION, '8.0', '<')) {
+					curl_close($curl);
+				} else {
+					unset($curl);
+				}
 				return false;
 			}
 			
@@ -433,8 +441,12 @@
 			*/
 			
 			$FinalURL = curl_getinfo($curl, CURLINFO_EFFECTIVE_URL);
-			curl_close($curl); // Close the first CURL connection
-			
+			if (version_compare(PHP_VERSION, '8.0', '<')) {
+				curl_close($curl);
+			} else {
+				unset($curl);
+			}
+
 			if( $this->m_file_size_only )
 			{
 				if( $ContentLength )
@@ -500,7 +512,11 @@
 				
 			if( !$success && curl_getinfo($curl, CURLINFO_HTTP_CODE) == 406 )
 			{
-				curl_close($curl);
+				if (version_compare(PHP_VERSION, '8.0', '<')) {
+					curl_close($curl);
+				} else {
+					unset($curl);
+				}
 				$curl = curl_init();
 				//curl_setopt($curl, CURLOPT_URL, $url);
 				curl_setopt($curl, CURLOPT_URL, $FinalURL);
@@ -540,7 +556,11 @@
 				else if( $this->GetError() == '' )
 					$this->SetError( __('Unable to download media.', 'powerpress') );
 			}
-			curl_close($curl);
+			if (version_compare(PHP_VERSION, '8.0', '<')) {
+				curl_close($curl);
+			} else {
+				unset($curl);
+			}
 			fclose($fp);
 			
 			if( $success )

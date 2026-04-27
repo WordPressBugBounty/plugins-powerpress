@@ -62,101 +62,36 @@ function powerpress_get_news($feed_url, $limit=10)
 	
 function powerpress_dashboard_head()
 {
-	echo "<script type=\"text/javascript\" src=\"". powerpress_get_root_url() ."player.min.js\"></script>\n";
-?>
-<style type="text/css">
-#blubrry_stats_summary {
-	
-}
-#blubrry_stats_summary label {
-	width: 40%;
-	max-width: 150px;
-	float: left;
-}
-#blubrry_stats_summary h2 {
-	font-size: 14px;
-	margin: 0;
-	padding: 0;
-}
-.blubrry_stats_ul {
-	padding-left: 20px;
-	margin-top: 5px;
-	margin-bottom: 10px;
-}
-.blubrry_stats_ul li {
-	list-style-type: none;
-	margin: 0px;
-	padding: 0px;
-}
-#blubrry_stats_media {
-	display: none;
-}
-#blubrry_stats_media_show {
-	text-align: right;
-	font-size: 85%;
-}
-#blubrry_stats_media h4 {
-	margin-bottom: 10px;
-}
-.blubrry_stats_title {
-	margin-left: 10px;
-}
-.blubrry_stats_updated {
-	font-size: 80%;
-}
-.powerpress-news-dashboard {
-/*	background-image:url(http://images.blubrry.com/powerpress/blubrry_logo.png);
-	background-repeat: no-repeat;
-	background-position: top right; */
-}
-.powerpress-news-dashboard .powerpressNewsPlayer {
-	margin-top: 5px;
-}
-</style>
-<script type="text/javascript"><!--
-jQuery(document).ready(function($) {
-	jQuery('.powerpress-dashboard-notice').click( function(e) {
-		e.preventDefault();
-		var dash_id = jQuery(this).parents('.postbox').attr('id');
-		jQuery( '#' + dash_id + '-hide' ).prop('checked', false).triggerHandler('click');
-	
-		jQuery.ajax( {
-				type: 'POST',
-				url: '<?php echo admin_url(); ?>admin-ajax.php', 
-				data: { action: 'powerpress_dashboard_dismiss', dismiss_dash_id : dash_id, nonce: '<?php echo wp_create_nonce('powerpress-dashboard-dismiss'); ?>' },
-				success: function(response) {
-				}
-			});
-	});
-});
-// --></script>
-<?php
+	powerpress_enqueue_assets([
+		// styles
+		'powerpress-variables' => ['path' => 'css/variables'],
+		'powerpress-admin-css' => ['path' => 'css/admin'],
+		'powerpress-program-card-css' => ['path' => 'css/components/program-card'],
+		'powerpress-stats-widget' => ['path' => 'css/components/stats-widget'],
+		'powerpress-news-widget' => ['path' => 'css/components/news-widget'],
+		'powerpress-bootstrap-grid' => ['path' => 'css/bootstrap-grid'],
+
+		// scripts (player.min.js and chart.min.js always have .min in filename)
+		'powerpress-player' => ['type' => 'script', 'path' => 'player.min', 'no_suffix' => true, 'footer' => false],
+		'chartjs' => ['type' => 'script', 'path' => '3rdparty/chart.min', 'no_suffix' => true, 'footer' => false],
+		'powerpress-program-card' => ['type' => 'script', 'path' => 'js/program-card', 'deps' => ['chartjs'], 'module' => true],
+	]);
 }
 
 /**
- * Prints Blubrry Stats Widget to the WordPress dashboard using the stats widget class
+ * Prints Blubrry Stats Widget to the WordPress dashboard using the program card class
  */
 function powerpress_dashboard_stats_content()
 {
-    require_once('powerpressadmin-stats-widget.class.php');
-    $widget = new PowerPressStatsWidget();
-    $widget->powerpress_print_stats_widget();
+    require_once 'powerpressadmin-program-card.class.php';
+    $programCard = new PowerPressProgramCard();
+    $programCard->render_stats_widget(true);
 }
 
 function powerpress_dashboard_news_content()
 {
-	$Settings = get_option('powerpress_general');
-		
 	powerpressadmin_community_news();
 }
-
-function powerpress_dashboard_notice_message($notice_id, $message)
-{
-	echo $message;
-	// Add link to remove this notice.
-	echo '<p><a href="#" id="powerpress_dashboard_notice_'. $notice_id .'_dismiss" class="powerpress-dashboard-notice">'. __('Dismiss', 'powerpress')  .'</a></p>';
-}
-
 
 function powerpress_feed_text_limit( $text, $limit, $finish = '&hellip;') {
 	if( strlen( $text ) > $limit ) {
@@ -320,20 +255,3 @@ function powerpressadmin_add_dashboard_widgets( $check_user_id = false)
 	 
 add_action('admin_head-index.php', 'powerpress_dashboard_head');
 add_action('wp_dashboard_setup', 'powerpress_dashboard_setup');
-
-function powerpress_dashboard_dismiss()  // Called by AJAX call
-{
-	$dismiss_dash_id = $_POST['dismiss_dash_id'];
-	preg_match('/^powerpress_dashboard_notice_(.*)$/i', $dismiss_dash_id, $match );
-	if( empty($match[1]) )
-		exit;
-	$DismissedNotices = get_option('powerpress_dismissed_notices');
-	if( !is_array($DismissedNotices) )
-		$DismissedNotices = array();
-	$DismissedNotices[ $match[1] ] = 1;
-	update_option('powerpress_dismissed_notices',  $DismissedNotices);
-	echo 'ok';
-	exit;
-}
-
-?>

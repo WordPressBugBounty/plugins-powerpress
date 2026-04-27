@@ -1630,8 +1630,6 @@ jQuery(document).ready( function() {
 				$serialize['itunes_image'] = $enclosure['itunes_image'];
 			if( !empty($enclosure['block']) )
 				$serialize['block'] = $enclosure['block'];
-			if( !empty($enclosure['cc']) )
-				$serialize['cc'] = $enclosure['cc'];
 			if( !empty($enclosure['order']) )
 				$serialize['order'] = $enclosure['order'];
 			if( !empty($enclosure['explicit']) )
@@ -1687,22 +1685,6 @@ jQuery(document).ready( function() {
 				$enclosure['duration'] = $this->_sanatize_tag_value( $matches[1] );
 			}
 			
-			// keywords No longer supported by iTunes:
-			if( preg_match('|<itunes:keywords>(.*?)</itunes:keywords>|i', $post, $matches) )
-			{
-				$enclosure['keywords'] = $this->_sanatize_tag_value( $matches[1] );
-			}
-			
-			if( preg_match('|<itunes:summary>(.*?)</itunes:summary>|is', $post, $matches) )
-			{
-				$enclosure['summary'] = $this->_sanatize_tag_value( $matches[1] );
-			}
-			
-			if( preg_match('|<itunes:subtitle>(.*?)</itunes:subtitle>|i', $post, $matches) )
-			{
-				$enclosure['subtitle'] = $this->_sanatize_tag_value( $matches[1] );
-			}
-			
 			if( preg_match('|<itunes:author>(.*?)</itunes:author>|i', $post, $matches) )
 			{
 				$enclosure['author'] = $this->_sanatize_tag_value(  $matches[1] );
@@ -1718,20 +1700,6 @@ jQuery(document).ready( function() {
 			if( preg_match('/<itunes:image[^h]*href="(.*?)".*(\/>|>.*<\/itunes:image>)/i', $post, $matches) )
 			{
 				$enclosure['itunes_image'] = html_entity_decode( trim( $matches[1] ) );
-			}
-			
-			if( preg_match('|<itunes:isClosedCaptioned>(.*?)</itunes:isClosedCaptioned>|i', $post, $matches) )
-			{
-				$value = strtolower(trim( $matches[1] ));
-				if( $value == 'yes' )
-					$enclosure['cc'] = 1;
-			}
-			
-			if( preg_match('|<itunes:order>(.*?)</itunes:order>|i', $post, $matches) )
-			{
-				$value = trim( $matches[1] );
-				if( !empty($value) )
-					$enclosure['order'] = intval($value);
 			}
 			
 			if( preg_match('|<itunes:explicit>(.*?)</itunes:explicit>|i', $post, $matches) )

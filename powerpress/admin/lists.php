@@ -1,69 +1,95 @@
-<h2 style="font-weight: bold; font-size: 150%; margin-bottom: 1ch;"><?php echo esc_html(get_option('powerpress_network_title') ) . ' Groups'; ?>
-    <button onclick='manageList(-1);directStatus("Create List", "manageForm");' class="cacheButton top-right-corner"><?php echo esc_html(__('CREATE NEW GROUP', 'powerpress-network'));?></button>
+<!-- =============
+      PAGE HEADER
+     ============= -->
 
-</h2>
-<h4 style="margin: 0; font-size: 120%;"><?php echo esc_html(__('Manage the lists in your network by controlling which programs are in them.', 'powerpress-network'));?></h4><br>
-<table>
-    <thead>
-    <tr>
-        <th style="text-align: left;"><?php echo esc_html(__('Current Groups', 'powerpress-network'));?></th>
+<div class="ppn-section-header">
+    <h2 class="ppn-manage__section-title"><?php echo esc_html(get_option('powerpress_network_title')); ?></h2>
+    <button data-ppn-action="ppnAction" data-form="manageForm" data-navigate="Create List" data-tab="groups" class="button"><?php esc_html_e('Create New Group', 'powerpress');?></button>
+</div>
+<h4 class="ppn-manage__section-desc"><?php esc_html_e('Manage the groups in your network by adding/removing podcasts.', 'powerpress');?></h4>
 
-        <th style="text-align: left;"><?php echo esc_html(__('Link', 'powerpress-network'));?></th>
+<!-- =============
+      GROUPS LIST
+     ============= -->
 
-        <th style="text-align: left;"><?php echo esc_html(__('Group ID', 'powerpress-network'));?></th>
-
-        <th style="text-align: left;"><?php echo esc_html(__('Manage', 'powerpress-network'));?></th>
-    </tr>
-    </thead>
+<div class="ppn-search">
+    <input type="text" class="ppn-search__input" placeholder="<?php esc_attr_e('Filter groups...', 'powerpress'); ?>"
+           data-ppn-action="filterList" data-ppn-target="ppn-groups-list">
+    <i class="material-icons-outlined ppn-search__icon">search</i>
+</div>
+<div class="ppn-list" id="ppn-groups-list">
+    <div class="ppn-list__header row">
+        <div class="col-8"><?php esc_html_e('Group', 'powerpress');?></div>
+        <div class="col-2"><?php esc_html_e('Group Page', 'powerpress');?></div>
+        <div class="col-2"><?php esc_html_e('Manage', 'powerpress');?></div>
+    </div>
     <?php
+    $map = get_option('powerpress_network_map');
+    if (empty($props))
+        $props = [];
 
-    $map = get_option ('powerpress_network_map');
-	if( empty($props) )
-		$props = array(); // Empty array so it will not loop
-	if (!isset($props['danger'])) {
-        for ($i = 0; $i < count($props); ++$i) {
-            $key = 'l-'.$props[$i]['list_id'];
-            if (isset($map[$key])){
-                $link = get_permalink($map[$key]);
-            } else{
-                $link = null;
-            }
-            $props[$i]['link'] = $link;
+    // filter out entries w/o valid list_id (api status keys also filtered)
+    $props = array_filter($props, function($item) {
+        return is_array($item) && !empty($item['list_id']);
+    });
 
-            $class = 'odd-row';
-            if ($i % 2 == 0) {
-                $class = 'even-row';
-            }
+    $render_group = function($list) use ($map) {
+            $title       = $list['list_title'] ?? '';
+            $listId      = $list['list_id'] ?? 0;
+            $key         = "l-{$listId}";
+            $link        = (isset($map[$key]) && get_post_status($map[$key]) === 'publish') ? get_permalink($map[$key]) : null;
+            $pageMissing = isset($map[$key]) && !$link;
             ?>
-            <tr>
-                <td class="<?php echo $class; ?>">
-                    <span style="font-weight:bold;"><?php echo esc_html($props[$i]['list_title']); ?>            <br>
-                </td>
-                <td class="<?php echo $class; ?>">
-                        <?php
-                        if ($props[$i]['link'] == null){
-                            ?>
-                            <span style="font-weight:bold;">Not Linked</span>
-                            <?php
-                        } else {
-                            ?>
-                            <span style="font-weight:bold;"><a style="color: green;" target="_blank" href="<?php echo esc_url($props[$i]['link']);?>"><?php echo esc_html(__('View Page', 'powerpress-network'));?></a></span>
-                            <?php
-                        }
-                        ?>
-                </td>
-                <td class="<?php echo $class; ?>">
-                    <span style="font-weight:bold;" class="list-id"><?php echo esc_html($props[$i]['list_id']); ?></span>
-                </td>
-                <td class="<?php echo $class; ?>"><i onclick="confirmDelete(<?php echo esc_js($props[$i]['list_id']);?>)" class="material-icons" title="Delete List">delete</i></span>
-                    <span style="font-weight:bold;"><i class="material-icons" title="Edit List" onclick="manageList(<?php echo esc_js($props[$i]['list_id']);?>, '<?php echo esc_js($props[$i]['link'])?>');directStatus('Manage List', 'manageList');">edit</i></span>
-                </td>
-            </tr>
+            <div class="ppn-list__row row" data-title="<?php echo esc_attr(strtolower($title)); ?>">
+                <div class="col-8">
+                    <?php echo esc_html($title); ?>
+                </div>
+                <div class="col-2">
+                    <span class="ppn-list__label"><?php esc_html_e('Page', 'powerpress'); ?></span>
+                    <?php if ($pageMissing){ // linked page no longer published (draft/trash) ?>
+                        <span class="ppn-page-status">
+                            <button type="button"
+                                    class="ppn-page-status--action"
+                                    data-ppn-action="ppnPageAction"
+                                    data-mode="list"
+                                    data-target="List"
+                                    data-id="<?php echo esc_attr($listId); ?>"
+                                    data-title="<?php echo esc_attr($title); ?>">
+                                        <?php esc_html_e('Create Page', 'powerpress');?>
+                            </button>
+                        </span>
+                    <?php } else if ($link === null){ // no page ever created ?>
+                        <span class="ppn-page-status">
+                            <button type="button"
+                                    class="ppn-page-status--action"
+                                    data-ppn-action="ppnPageAction"
+                                    data-mode="list"
+                                    data-target="List"
+                                    data-id="<?php echo esc_attr($listId); ?>"
+                                    data-title="<?php echo esc_attr($title); ?>">
+                                        <?php esc_html_e('Create Page', 'powerpress');?>
+                            </button>
+                        </span>
+                    <?php } else { ?>
+                        <span class="ppn-page-status"><a class="ppn-page-status--linked" target="_blank" href="<?php echo esc_url($link);?>"><?php esc_html_e('View Page', 'powerpress');?></a></span>
+                    <?php } ?>
+                </div>
+                <div class="col-2">
+                    <button type="button" class="ppn-icon-btn" title="<?php esc_html_e('Edit List', 'powerpress');?>" data-ppn-action="ppnAction" data-form="manageList" data-navigate="Manage List" data-tab="groups" data-set-field="listId" data-set-value="<?php echo esc_attr($listId);?>"><i class="material-icons-outlined">edit</i></button>
+                    <button type="button" class="ppn-icon-btn" title="<?php esc_html_e('Delete List', 'powerpress');?>" data-ppn-action="ppnAction" data-form="manageList" data-tab="groups" data-change="true" data-confirm="<?php echo esc_attr(__('Are you sure you want to delete this list?', 'powerpress')); ?>" data-set-field="listId" data-set-value="<?php echo esc_attr($listId);?>" data-fields="requestAction:delete"><i class="material-icons-outlined">delete</i></button>
+                </div>
+            </div>
             <?php
-        }
-    }
+        };
+
+    powerpress_render_list_section('groups', false, $props, $render_group, false, __('No groups yet.', 'powerpress'));
     ?>
-</table><br>
+</div>
+
+<!-- ==============
+      HIDDEN FORMS
+     ============== -->
+
 <form id="manageForm" action="#/" method="POST" hidden> <!-- Make sure to keep back slash there for WordPress -->
 </form>
 
@@ -72,19 +98,3 @@
     <input id="listId" name="listId" value="">
     <input id="linkPageList" name="linkPageList" value="">
 </form>
-
-<script>
-    function manageList(listId, linkPage = false)
-    {
-        jQuery(function($){ $('#listId').attr('value', listId) });
-        jQuery(function($){ $('#linkPageList').attr('value', linkPage) });
-    }
-    function confirmDelete(listId)
-    {
-        if (confirm('<?php echo esc_js(__('Are you sure you want to delete this list?', 'powerpress-network'));?>')) { //Confirm the delete network
-            jQuery(function($){ $('#manageList .requestAction').attr('value', 'delete') });
-            jQuery(function($){ $('#listId').attr('value', listId) });
-            directStatus('Select Choice', 'manageList', true, 'groups');
-        }
-    }
-</script>

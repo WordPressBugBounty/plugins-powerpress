@@ -256,147 +256,6 @@ function episode_box_top($EnclosureURL, $FeedSlug, $ExtraData, $GeneralSettings,
             </div>
         </div>
 
-        <div id="transcript-box" style="margin-top: 25px; background-color: #f1f4f9; padding: 2ch;">
-            <?php
-            $transcript_box_style = '';
-            if ($EnclosureURL) {
-                $transcript_box_style = ' display: none;';
-            ?>
-                <p style="font-size: 14px; margin-top: 0; margin-bottom: 0;" class="pp-ep-box-text">
-                    <input id="powerpress_transcript_edit" title="<?php echo esc_attr(__("Edit transcript", "powerpress")); ?>"
-                        class="ep-box-checkbox"
-                        name="Powerpress[<?php echo $FeedSlug; ?>][transcript][edit]" value="1"
-                        type="checkbox"
-                        onclick="showHideTranscriptBox('transcript', '<?php echo $FeedSlug; ?>');" />
-                    <?php echo esc_html(__('Edit transcript', 'powerpress')); ?>
-                    <?php if (!empty($PCITranscriptURL)) { ?>
-                        - <a href="<?php echo htmlspecialchars($PCITranscriptURL); ?>" title="Transcript Link" target="_blank"><?php echo htmlspecialchars($PCITranscriptURL); ?></a>
-                    <?php } ?>
-                </p>
-            <?php } else { ?>
-                <input type="hidden" name="Powerpress[<?php echo $FeedSlug; ?>][transcript][edit]" value="1" />
-            <?php } ?>
-            <div id="transcript-box-options-<?php echo $FeedSlug; ?>" style="margin-top: 1.5em;<?php echo $transcript_box_style; ?>">
-
-                <h3 style="margin-top: 0;">Transcription (optional)</h3>
-
-                <?php
-                $GeneralSettings = get_option('powerpress_general', array());
-                if (!empty($GeneralSettings['blubrry_hosting'])) {
-                    require_once(POWERPRESS_ABSPATH . '/powerpressadmin-auth.class.php');
-                    $auth = new PowerPressAuth();
-
-                    $accessToken = powerpress_getAccessToken();
-                    $req_url = sprintf('/2/show/addons/?addon=transcript_plan&keyword=%s', urlencode($GeneralSettings['blubrry_program_keyword']));
-                    $results = $auth->api($accessToken, $req_url);
-
-                    $showAddonMessage = false;
-                    if (!empty($results) && !isset($results['error'])) {
-                        if ($results['transcript_plan'] === 'FREE') {
-                            $showAddonMessage = true;
-                        }
-                    }
-
-                    if ($showAddonMessage) { ?>
-                        <div style="font-weight: bold; background-color: #FFFEF3; border-left: 4px solid #FFCA28; display: flex;">
-                            <p style="font-size: 14px; margin: 8px;">
-                                Free transcripts until July 31, 2024! Generate yours here.
-                                <a target="_blank" href="https://blubrry.com/podcast-insider/2024/07/01/unlock-the-power-of-podcast-transcripts-with-blubrrys-one-month-free-trial/">Learn more</a>
-                            </p>
-                        </div>
-                <?php }
-                } ?>
-
-                <p style="font-size: 14px;" class="pp-ep-box-text">
-                    <input id="powerpress_transcript_none_<?php echo $FeedSlug ?>" title="<?php echo esc_attr(__("No transcript", "powerpress")); ?>"
-                        class="media-details-radio"
-                        name="Powerpress[<?php echo $FeedSlug; ?>][transcript][none]" value="1"
-                        type="radio"
-                        onclick="setTranscriptCheckboxes(this.id, '<?php echo $FeedSlug; ?>');" <?php echo empty($PCITranscriptURL) ? 'checked' : ''; ?> />
-                    <?php echo esc_html(__('No transcript', 'powerpress')); ?>
-                </p>
-
-                <hr style="margin: 1em 0 1em 0;">
-
-                <?php if (!empty($GeneralSettings['blubrry_hosting'])) { ?>
-                    <p style="font-size: 14px; display: inline;" class="pp-ep-box-text">
-                        <input id="powerpress_transcript_generate_<?php echo $FeedSlug ?>" title="<?php echo esc_attr(__("Generate transcript for me", "powerpress")); ?>"
-                            class="media-details-radio"
-                            name="Powerpress[<?php echo $FeedSlug; ?>][transcript][generate]" value="1"
-                            type="radio"
-                            onclick="setTranscriptCheckboxes(this.id, '<?php echo $FeedSlug; ?>');" />
-                        <?php echo esc_html(__('Generate transcript for me', 'powerpress')); ?>
-                    </p>
-
-                    <div style="margin-left: 30px; margin-top: 5px; display: <?php echo ($GeneralSettings['blubrry_hosting'] ? 'inline-flex' : 'none'); ?>; background-color: #FFFEF3; border-left: 4px solid #FFCA28;">
-                        <p style="font-size: 14px; margin: 8px;">Transcripts are used for displaying closed captions in the new Blubrry podcast player, as well as in podcast apps that support transcripts.</p>
-                    </div>
-                    <div class="powerpress_row" id="powerpress_generate_transcript_container_<?php echo $FeedSlug; ?>" style="display: none">
-
-                        <select id="pp-generate-language-<?php echo $FeedSlug; ?>" class="pp-ep-box-input" name="Powerpress[<?php echo $FeedSlug; ?>][pci_transcript_language]">
-                            <?php
-                            $Languages = powerpress_revai_languages();
-
-                            echo '<option value="">' . __('Select Language', 'powerpress') . '</option>';
-                            foreach ($Languages as $value => $desc)
-                                echo "\t<option value=\"$value\"" . (substr($language, 0, 2) == $value ? ' selected' : '') . ">" . esc_attr($desc) . "</option>\n";
-                            ?>
-                        </select>
-                    </div>
-
-                    <div style="margin-left: 5px; display: <?php echo (!$GeneralSettings['blubrry_hosting'] ? 'inline-flex' : 'none'); ?>; background-color: #FFFEF3; border-left: 4px solid #FFCA28;">
-                        <p style="font-size: 14px; margin: 8px;">
-                            Generated transcripts are only available for Blubrry Hosting customers.
-                            Learn more about hosting with Blubrry <a href="">here</a>.
-                        </p>
-                    </div>
-
-                    <hr style="margin: 1em 0 1em 0;">
-                <?php } ?>
-
-                <p style="font-size: 14px; display: inline-block;" class="pp-ep-box-text">
-                    <input id="powerpress_pci_transcript_<?php echo $FeedSlug; ?>" title="<?php echo esc_attr(__("Add a transcript", "powerpress")); ?>"
-                        class="media-details-radio" onclick="setTranscriptCheckboxes(this.id, '<?php echo $FeedSlug; ?>');"
-                        name="Powerpress[<?php echo $FeedSlug; ?>][transcript][upload]" value="1"
-                        type="radio" <?php echo !empty($PCITranscriptURL) ? 'checked' : ''; ?> />
-                    <?php echo esc_html(__('Add a transcript', 'powerpress')); ?>
-                </p>
-                <div class="pp-tooltip-right" style="margin: 1ch 0 0 1ch;">i
-                    <span class="text-pp-tooltip" style="top: -50%; min-width: 200px;"><?php echo esc_html(__('Supported transcript types include .srt, .vtt, .json, and .html. An SRT or VTT transcript is required for generating closed captions in apps that support it.', 'powerpress')); ?></span>
-                </div>
-
-                <div class="powerpress_row" id="powerpress_pci_transcript_container_<?php echo $FeedSlug; ?>"
-                    <?php if (empty($PCITranscriptURL)) {
-                        echo "style=\"display: none;\"";
-                    } ?>>
-
-                    <input type="text" id="powerpress_transcript_url_<?php echo $FeedSlug; ?>" title="<?php echo esc_attr(__("URL to transcript file", "powerpress")); ?>"
-                        class="pp-ep-box-input"
-                        name="Powerpress[<?php echo $FeedSlug; ?>][pci_transcript_url]"
-                        value="<?php echo esc_attr($PCITranscriptURL); ?>"
-                        placeholder="<?php echo 'https://' . $_SERVER['SERVER_NAME'] . '/wp-content/uploads/' . date('Y') . '/' . date('m') . '/' . 'transcript.vtt'; ?>"
-                        <?php echo !empty($PCITranscriptURL) ? 'checked' : ''; ?> />
-                    <!--                    <label class="pp-ep-box-label-under">-->
-                    <?php
-                    //echo esc_html(__("Can be added later by editing this post", 'powerpress')); 
-                    ?>
-                    <!--</label>-->
-
-
-                    <select id="pp-upload-language-<?php echo $FeedSlug; ?>" class="pp-ep-box-input" name="Powerpress[<?php echo $FeedSlug; ?>][pci_transcript_language]">
-                        <?php
-                        $Languages = powerpress_languages();
-
-                        echo '<option value="">' . __('Select Language', 'powerpress') . '</option>';
-                        foreach ($Languages as $value => $desc)
-                            echo "\t<option value=\"$value\"" . ($language == $value ? ' selected' : '') . ">" . esc_attr($desc) . "</option>\n";
-                        ?>
-                    </select>
-                </div>
-            </div>
-
-        </div>
-
         <?php
         if (!empty($GeneralSettings['cat_casting_strict']) && !empty($GeneralSettings['custom_cat_feeds'])) {
             // Get Podcast Categories...
@@ -442,14 +301,7 @@ function episode_box_top($EnclosureURL, $FeedSlug, $ExtraData, $GeneralSettings,
             <div class="ep-box-line"></div>
         <?php } ?>
     </div>
-    <?php if ($EnclosureURL) { ?>
-        <div class="powerpress_remove_container">
-            <div class="powerpress_row_content">
-                <input type="checkbox" class='ep-box-checkbox' name="Powerpress[<?php echo $FeedSlug; ?>][remove_podcast]" id="powerpress_remove_<?php echo $FeedSlug; ?>" value="1" onchange="javascript:document.getElementById('a-pp-selected-media-<?php echo $FeedSlug; ?>').style.display=(this.checked?'none':'block');javascript:document.getElementById('tab-container-<?php echo $FeedSlug; ?>').style.display=(this.checked?'none':'block');" />
-                <b><?php echo esc_html(__('Remove Episode', 'powerpress')); ?></b><?php echo esc_html(__(' - Podcast episode will be removed from this post upon save', 'powerpress')); ?>
-            </div>
-        </div>
-    <?php }
+<?php
 }
 
 function seo_tab($FeedSlug, $ExtraData, $iTunesExplicit, $seo_feed_title, $GeneralSettings, $iTunesAuthor, $iTunesBlock, $object)
@@ -476,6 +328,9 @@ function seo_tab($FeedSlug, $ExtraData, $iTunesExplicit, $seo_feed_title, $Gener
         }
         if (empty($ExtraData['feed_title'])) {
             $ExtraData['feed_title'] = '';
+        }
+        if (empty($ExtraData['show_notes'])) {
+            $ExtraData['show_notes'] = '';
         }
         if (empty($ExtraData['episode_no_display'])) {
             $ExtraData['episode_no_display'] = '';
@@ -524,13 +379,27 @@ function seo_tab($FeedSlug, $ExtraData, $iTunesExplicit, $seo_feed_title, $Gener
                 </div> <!-- Close Title -->
 
                 <div class="pp-section-container">
-                    <!-- Open Description-->
-                    <h4 class="pp-section-title"><?php echo esc_html(__("Episode Description", 'powerpress')); ?></h4>
+                    <!-- Show Notes -->
+                    <h4 class="pp-section-title"><?php esc_html_e("Show Notes", 'powerpress'); ?></h4>
                     <div class="pp-tooltip-right" style="margin: 1ch 0 0 1ch;">i
-                        <span class="text-pp-tooltip"><?php echo esc_html(__('Please enter your description in the space above the episode box, underneath the post title.', 'powerpress')); ?></span>
+                        <span class="text-pp-tooltip"><?php esc_html_e('A short summary for podcast apps. 150-250 characters works best.', 'powerpress'); ?></span>
                     </div>
-                    <p class="pp-ep-box-text"><?php echo esc_html(__("The episode description is pulled from your WordPress post content, which can be edited above.", 'powerpress')); ?></p>
-                </div> <!-- Close Description -->
+                    <p class="pp-ep-box-text mb-2"><?php esc_html_e("Write a short summary for listeners — this will be used in directories as opposed to the entire blog post content.", 'powerpress'); ?></p>
+                    <div class="powerpress_row_content">
+                        <textarea id="powerpress_shownotes_<?php echo $FeedSlug; ?>"
+                            name="Powerpress[<?php echo $FeedSlug; ?>][show_notes]"
+                            class="pp-ep-box-input pp-width"
+                            style="min-height: 10vh;"
+                            data-char-counter="powerpress_shownotes_count_<?php echo $FeedSlug; ?>"
+                            placeholder="<?php esc_attr_e('Write a short summary for listeners...', 'powerpress'); ?>"><?php echo esc_textarea($ExtraData['show_notes'] ?? ''); ?></textarea>
+                        <div class="d-flex justify-content-between align-items-center" style="margin-top: var(--pp-spacing-xs);">
+                            <label class="pp-ep-box-label-under" style="margin: 0;"><?php esc_html_e('Leave empty to use your main post content.', 'powerpress'); ?></label>
+                            <span class="pp-text-muted" style="font-size: var(--pp-font-size-sm);">
+                                <span id="powerpress_shownotes_count_<?php echo $FeedSlug; ?>">0</span> <?php esc_html_e('characters', 'powerpress'); ?>
+                            </span>
+                        </div>
+                    </div>
+                </div> <!-- Close Show Notes -->
 
                 <div class="pp-section-container">
                     <!-- Open Episode number Display-->
@@ -550,7 +419,46 @@ function seo_tab($FeedSlug, $ExtraData, $iTunesExplicit, $seo_feed_title, $Gener
                             maxlength="32" />
                     </div>
                 </div> <!-- Close Episode number Display -->
-            </div>
+
+                <!-- CATEGORY SECTION -->
+                <?php 
+                if (!empty($GeneralSettings['cat_casting_strict']) && !empty($GeneralSettings['custom_cat_feeds'])) {
+                    // get podcast categories
+                    $cur_cat_id = intval(!empty($ExtraData['category']) ? $ExtraData['category'] : 0);
+                    // default to first category if none selected (new posts or single category)
+                    if ($cur_cat_id == 0 || count($GeneralSettings['custom_cat_feeds']) == 1) {
+                        foreach ($GeneralSettings['custom_cat_feeds'] as $null => $cur_cat_id) {
+                            break;
+                        }
+                        reset($GeneralSettings['custom_cat_feeds']);
+                    }
+                ?>
+                <div class="pp-section-container">
+                    <h4 class="pp-section-title"><?php echo esc_html(__('Category', 'powerpress')); ?></h4>
+                    <div class="pp-tooltip-right" style="margin: 1ch 0 0 1ch;">i
+                        <span class="text-pp-tooltip"><?php echo esc_html(__('Pick a category to organize this episode. If Category Podcasting is enabled, PowerPress will generate a podcast for the selected category.', 'powerpress')); ?></span>
+                    </div>
+                    <p class="pp-ep-box-text" style="margin-bottom: 1em;"><?php echo esc_html(__('Choose a category for this episode. If Category Podcasting is enabled, this will power category-specific podcast feeds.', 'powerpress')); ?></p>
+                    <div class="row" style="margin: auto">
+                        <?php
+                        echo '<select id="powerpress_category_' . $FeedSlug . '" name="Powerpress[' . $FeedSlug . '][category]" class="pp-ep-box-input col-4" title="Category">';
+                        foreach ($GeneralSettings['custom_cat_feeds'] as $null => $cat_id) {
+                            $catObj = get_category($cat_id);
+                            if (empty($catObj->name))
+                                continue; // do not allow empty categories forward
+
+                            $label = $catObj->name;
+                            echo '<option value="' . esc_attr($cat_id) . '"';
+                            if ($cat_id == $cur_cat_id)
+                                echo ' selected="selected"';
+                            echo '>' . esc_html($label) . '</option>' . "\n";
+                        }
+                        echo '</select>';
+                        ?>
+                    </div>
+                </div>
+                <?php } ?>
+            </div> <!-- END CATEGORY SECTION -->
 
 
         </div> <!-- Section Container-->
@@ -1123,6 +1031,151 @@ function chapters_tab($EnclosureURL, $FeedSlug, $object, $GeneralSettings, $PCIT
                         </div>
                     </div>
                 <?php } ?>
+            </div>
+
+            <hr style="margin: 2em 0 2em 0;">
+
+            <!-- TRANSCRIPTION SECTION -->
+            <div class="pp-section-container">
+                <h4 class="pp-section-title-block"> <?php echo esc_html(__('Transcription', 'powerpress')); ?> </h4>
+                <?php
+                // get language setting for transcript
+                $FeedSettings = get_option('powerpress_feed_' . $FeedSlug);
+                $language = $ExtraData['pci_transcript_language'] ?? '';
+                if (empty($language) && !empty($FeedSettings['rss_language'])) {
+                    $language = $FeedSettings['rss_language'];
+                }
+                if (empty($language)) {
+                    $language = get_bloginfo("language");
+                }
+
+                $transcript_box_style = '';
+                if ($EnclosureURL) {
+                    $transcript_box_style = ' display: none;';
+                ?>
+                    <p style="font-size: 14px; margin-top: 0; margin-bottom: 0;" class="pp-ep-box-text">
+                        <input id="powerpress_transcript_edit" title="<?php echo esc_attr(__("Edit transcript", "powerpress")); ?>"
+                            class="ep-box-checkbox"
+                            name="Powerpress[<?php echo $FeedSlug; ?>][transcript][edit]" value="1"
+                            type="checkbox"
+                            onclick="showHideTranscriptBox('transcript', '<?php echo $FeedSlug; ?>');" />
+                        <?php echo esc_html(__('Edit transcript', 'powerpress')); ?>
+                        <?php if (!empty($PCITranscriptURL)) { ?>
+                            - <a href="<?php echo htmlspecialchars($PCITranscriptURL); ?>" title="Transcript Link" target="_blank"><?php echo htmlspecialchars($PCITranscriptURL); ?></a>
+                        <?php } ?>
+                    </p>
+                <?php } else { ?>
+                    <input type="hidden" name="Powerpress[<?php echo $FeedSlug; ?>][transcript][edit]" value="1" />
+                <?php } ?>
+                <div id="transcript-box-options-<?php echo $FeedSlug; ?>" style="margin-top: 1.5em;<?php echo $transcript_box_style; ?>">
+
+                    <?php
+                    if (!empty($GeneralSettings['blubrry_hosting'])) {
+                        require_once(POWERPRESS_ABSPATH . '/powerpressadmin-auth.class.php');
+                        $auth = new PowerPressAuth();
+
+                        $accessToken = powerpress_getAccessToken();
+                        $req_url = sprintf('/2/show/addons/?addon=transcript_plan&keyword=%s', urlencode($GeneralSettings['blubrry_program_keyword']));
+                        $results = $auth->api($accessToken, $req_url);
+
+                        $showAddonMessage = false;
+                        if (!empty($results) && !isset($results['error'])) {
+                            if ($results['transcript_plan'] === 'FREE') {
+                                $showAddonMessage = true;
+                            }
+                        }
+
+                        if ($showAddonMessage) { ?>
+                            <div style="font-weight: bold; background-color: #FFFEF3; border-left: 4px solid #FFCA28; display: flex;">
+                                <p style="font-size: 14px; margin: 8px;">
+                                    Free transcripts until July 31, 2024! Generate yours here.
+                                    <a target="_blank" href="https://blubrry.com/podcast-insider/2024/07/01/unlock-the-power-of-podcast-transcripts-with-blubrrys-one-month-free-trial/">Learn more</a>
+                                </p>
+                            </div>
+                    <?php }
+                    } ?>
+
+                    <p style="font-size: 14px;" class="pp-ep-box-text">
+                        <input id="powerpress_transcript_none_<?php echo $FeedSlug ?>" title="<?php echo esc_attr(__("No transcript", "powerpress")); ?>"
+                            class="media-details-radio"
+                            name="Powerpress[<?php echo $FeedSlug; ?>][transcript][none]" value="1"
+                            type="radio"
+                            onclick="setTranscriptCheckboxes(this.id, '<?php echo $FeedSlug; ?>');" <?php echo empty($PCITranscriptURL) ? 'checked' : ''; ?> />
+                        <?php echo esc_html(__('No transcript', 'powerpress')); ?>
+                    </p>
+
+                    <hr style="margin: 1em 0 1em 0;">
+
+                    <p style="font-size: 14px; display: inline-block;" class="pp-ep-box-text">
+                        <input id="powerpress_pci_transcript_<?php echo $FeedSlug; ?>" title="<?php echo esc_attr(__("Add a transcript", "powerpress")); ?>"
+                            class="media-details-radio" onclick="setTranscriptCheckboxes(this.id, '<?php echo $FeedSlug; ?>');"
+                            name="Powerpress[<?php echo $FeedSlug; ?>][transcript][upload]" value="1"
+                            type="radio" <?php echo !empty($PCITranscriptURL) ? 'checked' : ''; ?> />
+                        <?php echo esc_html(__('Add a transcript', 'powerpress')); ?>
+                    </p>
+                    <div class="pp-tooltip-right" style="margin: 1ch 0 0 1ch;">i
+                        <span class="text-pp-tooltip" style="top: -50%; min-width: 200px;"><?php echo esc_html(__('Supported transcript types include .srt, .vtt, .json, and .html. An SRT or VTT transcript is required for generating closed captions in apps that support it.', 'powerpress')); ?></span>
+                    </div>
+
+                    <div class="powerpress_row" id="powerpress_pci_transcript_container_<?php echo $FeedSlug; ?>" <?php if (empty($PCITranscriptURL)) {
+                                                                                                                    echo "style=\"display: none;\"";
+                                                                                                                } ?>>
+                        <div class="powerpress_row_content" style="display: flex; gap: 2%;">
+                            <input type="text" id="powerpress_transcript_url_<?php echo $FeedSlug; ?>" title="<?php echo esc_attr(__("URL to transcript file", "powerpress")); ?>"
+                                class="pp-ep-box-input"
+                                name="Powerpress[<?php echo $FeedSlug; ?>][pci_transcript_url]"
+                                value="<?php echo esc_attr($PCITranscriptURL); ?>"
+                                placeholder="<?php echo 'https://' . $_SERVER['SERVER_NAME'] . '/wp-content/uploads/' . date('Y') . '/' . date('m') . '/' . 'transcript.vtt'; ?>"
+                                style="width: 70%; margin: 1em 0 0 0;" />
+                            <select id="pp-upload-language-<?php echo $FeedSlug; ?>" class="pp-ep-box-input" name="Powerpress[<?php echo $FeedSlug; ?>][pci_transcript_language]" style="width: 24%; margin: 1em 0 0 0;">
+                                <?php
+                                $Languages = powerpress_languages();
+
+                                echo '<option value="">' . esc_html(__('Select Language', 'powerpress')) . '</option>';
+                                foreach ($Languages as $value => $desc)
+                                    echo "\t<option value=\"" . esc_attr($value) . "\"" . ($language == $value ? ' selected' : '') . ">" . esc_html($desc) . "</option>\n";
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <?php if (!empty($GeneralSettings['blubrry_hosting'])) { ?>
+                        <hr style="margin: 1em 0 1em 0;">
+
+                        <p style="font-size: 14px; display: inline;" class="pp-ep-box-text">
+                            <input id="powerpress_transcript_generate_<?php echo $FeedSlug ?>" title="<?php echo esc_attr(__("Generate transcript for me", "powerpress")); ?>"
+                                class="media-details-radio"
+                                name="Powerpress[<?php echo $FeedSlug; ?>][transcript][generate]" value="1"
+                                type="radio"
+                                onclick="setTranscriptCheckboxes(this.id, '<?php echo $FeedSlug; ?>');" />
+                            <?php echo esc_html(__('Generate transcript for me', 'powerpress')); ?>
+                        </p>
+
+                        <div style="margin-left: 30px; margin-top: 5px; display: <?php echo ($GeneralSettings['blubrry_hosting'] ? 'inline-flex' : 'none'); ?>; background-color: #FFFEF3; border-left: 4px solid #FFCA28;">
+                            <p style="font-size: 14px; margin: 8px;">Transcripts are used for displaying closed captions in the new Blubrry podcast player, as well as in podcast apps that support transcripts.</p>
+                        </div>
+                        <div class="powerpress_row" id="powerpress_generate_transcript_container_<?php echo $FeedSlug; ?>" style="display: none">
+                            <div class="powerpress_row_content">
+                                <select id="pp-generate-language-<?php echo $FeedSlug; ?>" class="pp-ep-box-input" name="Powerpress[<?php echo $FeedSlug; ?>][pci_transcript_language]" style="width: 24%; margin: 1em 0 0 0;">
+                                    <?php
+                                    $Languages = powerpress_revai_languages();
+
+                                    echo '<option value="">' . esc_html(__('Select Language', 'powerpress')) . '</option>';
+                                    foreach ($Languages as $value => $desc)
+                                        echo "\t<option value=\"" . esc_attr($value) . "\"" . (substr($language, 0, 2) == $value ? ' selected' : '') . ">" . esc_html($desc) . "</option>\n";
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="margin-left: 5px; display: <?php echo (!$GeneralSettings['blubrry_hosting'] ? 'inline-flex' : 'none'); ?>; background-color: #FFFEF3; border-left: 4px solid #FFCA28;">
+                            <p style="font-size: 14px; margin: 8px;">
+                                Generated transcripts are only available for Blubrry Hosting customers.
+                                Learn more about hosting with Blubrry <a href="">here</a>.
+                            </p>
+                        </div>
+                    <?php } ?>
+                </div>
             </div>
         </div>
         <script>

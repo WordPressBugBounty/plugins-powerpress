@@ -8,6 +8,7 @@ function powerpress_admin_posttypefeeds_columns($data=array()){
 	$data['name'] = __('Feed Title', 'powerpress');
 	$data['post-type'] = __('Post Type', 'powerpress');
 	$data['feed-slug'] = __('Slug', 'powerpress');
+	$data['episode-count'] = __('Episodes', 'powerpress');
 	$data['url'] = __('Feed URL', 'powerpress');
 	return $data;
 }
@@ -114,6 +115,7 @@ function powerpress_admin_posttypefeeds(){
 
                             foreach($PostTypeSettingsArray as $feed_slug => $PostTypeSettings){
                                 $feed_title = ( !empty($PostTypeSettings['title']) ? $PostTypeSettings['title'] : '(blank)');
+                                $episode_total = powerpress_admin_episodes_per_feed($feed_slug, 'posttype', $post_type);
                                 $columns = powerpress_admin_posttypefeeds_columns();
                                 $hidden = array();
 

@@ -39,9 +39,8 @@ if (isset($_FILES['itunes_image_file'])) {
                 break;
             case 'DESCRIPTION:':
                 if(strlen($feed_info[$i + 1]) > 3){
-                    $FeedSettings['itunes_summary'] = str_replace('_', ' ', $feed_info[$i + 1]);
-                    $FeedSettings['itunes_summary'] = str_replace('{underscore.pp}', '_', $FeedSettings['itunes_summary']);
-                    $FeedSettings['description'] = $FeedSettings['itunes_summary'];
+                    $description = str_replace('_', ' ', $feed_info[$i + 1]);
+                    $FeedSettings['description'] = str_replace('{underscore.pp}', '_', $description);
                 }
                 break;
             default:

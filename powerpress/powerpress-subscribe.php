@@ -138,7 +138,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
             $Settings['subscribe_feature_deezer'] = (isset($GeneralSettings['subscribe_feature_deezer']) ? $GeneralSettings['subscribe_feature_deezer'] : false );
             $Settings['subscribe_feature_pandora'] = (isset($GeneralSettings['subscribe_feature_pandora']) ? $GeneralSettings['subscribe_feature_pandora'] : false );
             $Settings['subscribe_feature_android'] = (isset($GeneralSettings['subscribe_feature_android']) ? $GeneralSettings['subscribe_feature_android'] : false );
-            $Settings['subscribe_feature_blubrry'] = (isset($GeneralSettings['subscribe_feature_blubrry']) && !empty($GeneralSettings['blubrry_hosting']) ? $GeneralSettings['subscribe_feature_blubrry'] : false );
             $Settings['subscribe_feature_amazon'] = (isset($GeneralSettings['subscribe_feature_amazon']) ? $GeneralSettings['subscribe_feature_amazon'] : false );
             $Settings['subscribe_feature_pcindex'] = (isset($GeneralSettings['subscribe_feature_pcindex']) ? $GeneralSettings['subscribe_feature_pcindex'] : false );
             $Settings['subscribe_feature_jiosaavn'] = (isset($GeneralSettings['subscribe_feature_jiosaavn']) ? $GeneralSettings['subscribe_feature_jiosaavn'] : false );
@@ -152,7 +151,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
             $Settings['subscribe_feature_tunein_shortcode'] = (isset($GeneralSettings['subscribe_feature_tunein_shortcode']) ? $GeneralSettings['subscribe_feature_tunein_shortcode'] : true );
             $Settings['subscribe_feature_spotify_shortcode'] = (isset($GeneralSettings['subscribe_feature_spotify_shortcode']) ? $GeneralSettings['subscribe_feature_spotify_shortcode'] : true );
             $Settings['subscribe_feature_android_shortcode'] = (isset($GeneralSettings['subscribe_feature_android_shortcode']) ? $GeneralSettings['subscribe_feature_android_shortcode'] : true );
-            $Settings['subscribe_feature_blubrry_shortcode'] = (isset($GeneralSettings['subscribe_feature_blubrry_shortcode']) && !empty($GeneralSettings['blubrry_hosting']) ? $GeneralSettings['subscribe_feature_blubrry_shortcode'] : false );
             $Settings['subscribe_feature_iheart_shortcode'] = (isset($GeneralSettings['subscribe_feature_iheart_shortcode']) ? $GeneralSettings['subscribe_feature_iheart_shortcode'] : true );
             $Settings['subscribe_feature_deezer_shortcode'] = (isset($GeneralSettings['subscribe_feature_deezer_shortcode']) ? $GeneralSettings['subscribe_feature_deezer_shortcode'] : true );
             $Settings['subscribe_feature_pandora_shortcode'] = (isset($GeneralSettings['subscribe_feature_pandora_shortcode']) ? $GeneralSettings['subscribe_feature_pandora_shortcode'] : true );
@@ -172,7 +170,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
             $Settings['subscribe_feature_deezer_sidebar'] = (isset($GeneralSettings['subscribe_feature_deezer_sidebar']) ? $GeneralSettings['subscribe_feature_deezer_sidebar'] : false );
             $Settings['subscribe_feature_pandora_sidebar'] = (isset($GeneralSettings['subscribe_feature_pandora_sidebar']) ? $GeneralSettings['subscribe_feature_pandora_sidebar'] : false );
             $Settings['subscribe_feature_android_sidebar'] = (isset($GeneralSettings['subscribe_feature_android_sidebar']) ? $GeneralSettings['subscribe_feature_android_sidebar'] : true );
-            $Settings['subscribe_feature_blubrry_sidebar'] = (isset($GeneralSettings['subscribe_feature_blubrry_sidebar']) && !empty($GeneralSettings['blubrry_hosting']) ? $GeneralSettings['subscribe_feature_blubrry_sidebar'] : false );
             $Settings['subscribe_feature_amazon_sidebar'] = (isset($GeneralSettings['subscribe_feature_amazon_sidebar']) ? $GeneralSettings['subscribe_feature_amazon_sidebar'] : false );
             $Settings['subscribe_feature_pcindex_sidebar'] = (isset($GeneralSettings['subscribe_feature_pcindex_sidebar']) ? $GeneralSettings['subscribe_feature_pcindex_sidebar'] : false );
             $Settings['subscribe_feature_jiosaavn_sidebar'] = (isset($GeneralSettings['subscribe_feature_jiosaavn_sidebar']) ? $GeneralSettings['subscribe_feature_jiosaavn_sidebar'] : false );
@@ -229,7 +226,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
             $Settings['subscribe_feature_deezer'] = (isset($GeneralSettings['subscribe_feature_deezer']) ? $GeneralSettings['subscribe_feature_deezer'] : false );
             $Settings['subscribe_feature_pandora'] = (isset($GeneralSettings['subscribe_feature_pandora']) ? $GeneralSettings['subscribe_feature_pandora'] : false );
             $Settings['subscribe_feature_android'] = (isset($GeneralSettings['subscribe_feature_android']) ? $GeneralSettings['subscribe_feature_android'] : false );
-            $Settings['subscribe_feature_blubrry'] = (isset($GeneralSettings['subscribe_feature_blubrry']) && !empty($GeneralSettings['blubrry_hosting']) ? $GeneralSettings['subscribe_feature_blubrry'] : false );
             $Settings['subscribe_feature_amazon'] = (isset($GeneralSettings['subscribe_feature_amazon']) ? $GeneralSettings['subscribe_feature_amazon'] : false );
             $Settings['subscribe_feature_pcindex'] = (isset($GeneralSettings['subscribe_feature_pcindex']) ? $GeneralSettings['subscribe_feature_pcindex'] : false );
             $Settings['subscribe_feature_jiosaavn'] = (isset($GeneralSettings['subscribe_feature_jiosaavn']) ? $GeneralSettings['subscribe_feature_jiosaavn'] : false );
@@ -243,7 +239,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
             $Settings['subscribe_feature_tunein_shortcode'] = (isset($GeneralSettings['subscribe_feature_tunein_shortcode']) ? $GeneralSettings['subscribe_feature_tunein_shortcode'] : true );
             $Settings['subscribe_feature_spotify_shortcode'] = (isset($GeneralSettings['subscribe_feature_spotify_shortcode']) ? $GeneralSettings['subscribe_feature_spotify_shortcode'] : true );
             $Settings['subscribe_feature_android_shortcode'] = (isset($GeneralSettings['subscribe_feature_android_shortcode']) ? $GeneralSettings['subscribe_feature_android_shortcode'] : true );
-            $Settings['subscribe_feature_blubrry_shortcode'] = (isset($GeneralSettings['subscribe_feature_blubrry_shortcode']) && !empty($GeneralSettings['blubrry_hosting']) ? $GeneralSettings['subscribe_feature_blubrry_shortcode'] : false );
             $Settings['subscribe_feature_iheart_shortcode'] = (isset($GeneralSettings['subscribe_feature_iheart_shortcode']) ? $GeneralSettings['subscribe_feature_iheart_shortcode'] : true );
             $Settings['subscribe_feature_deezer_shortcode'] = (isset($GeneralSettings['subscribe_feature_deezer_shortcode']) ? $GeneralSettings['subscribe_feature_deezer_shortcode'] : true );
             $Settings['subscribe_feature_pandora_shortcode'] = (isset($GeneralSettings['subscribe_feature_pandora_shortcode']) ? $GeneralSettings['subscribe_feature_pandora_shortcode'] : true );
@@ -263,7 +258,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
             $Settings['subscribe_feature_deezer_sidebar'] = (isset($GeneralSettings['subscribe_feature_deezer_sidebar']) ? $GeneralSettings['subscribe_feature_deezer_sidebar'] : false );
             $Settings['subscribe_feature_pandora_sidebar'] = (isset($GeneralSettings['subscribe_feature_pandora_sidebar']) ? $GeneralSettings['subscribe_feature_pandora_sidebar'] : false );
             $Settings['subscribe_feature_android_sidebar'] = (isset($GeneralSettings['subscribe_feature_android_sidebar']) ? $GeneralSettings['subscribe_feature_android_sidebar'] : true );
-            $Settings['subscribe_feature_blubrry_sidebar'] = (isset($GeneralSettings['subscribe_feature_blubrry_sidebar']) && !empty($GeneralSettings['blubrry_hosting']) ? $GeneralSettings['subscribe_feature_blubrry_sidebar'] : false );
             $Settings['subscribe_feature_amazon_sidebar'] = (isset($GeneralSettings['subscribe_feature_amazon_sidebar']) ? $GeneralSettings['subscribe_feature_amazon_sidebar'] : false );
             $Settings['subscribe_feature_pcindex_sidebar'] = (isset($GeneralSettings['subscribe_feature_pcindex_sidebar']) ? $GeneralSettings['subscribe_feature_pcindex_sidebar'] : false );
             $Settings['subscribe_feature_jiosaavn_sidebar'] = (isset($GeneralSettings['subscribe_feature_jiosaavn_sidebar']) ? $GeneralSettings['subscribe_feature_jiosaavn_sidebar'] : false );
@@ -329,7 +323,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
                         $Settings['subscribe_feature_deezer'] = (isset($GeneralSettings['subscribe_feature_deezer']) ? $GeneralSettings['subscribe_feature_deezer'] : false );
                         $Settings['subscribe_feature_pandora'] = (isset($GeneralSettings['subscribe_feature_pandora']) ? $GeneralSettings['subscribe_feature_pandora'] : false );
                         $Settings['subscribe_feature_android'] = (isset($GeneralSettings['subscribe_feature_android']) ? $GeneralSettings['subscribe_feature_android'] : false );
-                        $Settings['subscribe_feature_blubrry'] = (isset($GeneralSettings['subscribe_feature_blubrry']) && !empty($GeneralSettings['blubrry_hosting']) ? $GeneralSettings['subscribe_feature_blubrry'] : false );
                         $Settings['subscribe_feature_amazon'] = (isset($GeneralSettings['subscribe_feature_amazon']) ? $GeneralSettings['subscribe_feature_amazon'] : false );
                         $Settings['subscribe_feature_pcindex'] = (isset($GeneralSettings['subscribe_feature_pcindex']) ? $GeneralSettings['subscribe_feature_pcindex'] : false );
                         $Settings['subscribe_feature_jiosaavn'] = (isset($GeneralSettings['subscribe_feature_jiosaavn']) ? $GeneralSettings['subscribe_feature_jiosaavn'] : false );
@@ -343,7 +336,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
                         $Settings['subscribe_feature_tunein_shortcode'] = (isset($GeneralSettings['subscribe_feature_tunein_shortcode']) ? $GeneralSettings['subscribe_feature_tunein_shortcode'] : true );
                         $Settings['subscribe_feature_spotify_shortcode'] = (isset($GeneralSettings['subscribe_feature_spotify_shortcode']) ? $GeneralSettings['subscribe_feature_spotify_shortcode'] : true );
                         $Settings['subscribe_feature_android_shortcode'] = (isset($GeneralSettings['subscribe_feature_android_shortcode']) ? $GeneralSettings['subscribe_feature_android_shortcode'] : true );
-                        $Settings['subscribe_feature_blubrry_shortcode'] = (isset($GeneralSettings['subscribe_feature_blubrry_shortcode']) && !empty($GeneralSettings['blubrry_hosting']) ? $GeneralSettings['subscribe_feature_blubrry_shortcode'] : false );
                         $Settings['subscribe_feature_iheart_shortcode'] = (isset($GeneralSettings['subscribe_feature_iheart_shortcode']) ? $GeneralSettings['subscribe_feature_iheart_shortcode'] : true );
                         $Settings['subscribe_feature_deezer_shortcode'] = (isset($GeneralSettings['subscribe_feature_deezer_shortcode']) ? $GeneralSettings['subscribe_feature_deezer_shortcode'] : true );
                         $Settings['subscribe_feature_pandora_shortcode'] = (isset($GeneralSettings['subscribe_feature_pandora_shortcode']) ? $GeneralSettings['subscribe_feature_pandora_shortcode'] : true );
@@ -363,7 +355,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
                         $Settings['subscribe_feature_deezer_sidebar'] = (isset($GeneralSettings['subscribe_feature_deezer_sidebar']) ? $GeneralSettings['subscribe_feature_deezer_sidebar'] : false );
                         $Settings['subscribe_feature_pandora_sidebar'] = (isset($GeneralSettings['subscribe_feature_pandora_sidebar']) ? $GeneralSettings['subscribe_feature_pandora_sidebar'] : false );
                         $Settings['subscribe_feature_android_sidebar'] = (isset($GeneralSettings['subscribe_feature_android_sidebar']) ? $GeneralSettings['subscribe_feature_android_sidebar'] : true );
-                        $Settings['subscribe_feature_blubrry_sidebar'] = (isset($GeneralSettings['subscribe_feature_blubrry_sidebar']) && !empty($GeneralSettings['blubrry_hosting']) ? $GeneralSettings['subscribe_feature_blubrry_sidebar'] : false );
                         $Settings['subscribe_feature_amazon_sidebar'] = (isset($GeneralSettings['subscribe_feature_amazon_sidebar']) ? $GeneralSettings['subscribe_feature_amazon_sidebar'] : false );
                         $Settings['subscribe_feature_pcindex_sidebar'] = (isset($GeneralSettings['subscribe_feature_pcindex_sidebar']) ? $GeneralSettings['subscribe_feature_pcindex_sidebar'] : false );
                         $Settings['subscribe_feature_jiosaavn_sidebar'] = (isset($GeneralSettings['subscribe_feature_jiosaavn_sidebar']) ? $GeneralSettings['subscribe_feature_jiosaavn_sidebar'] : false );
@@ -413,7 +404,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
         $Settings['subscribe_feature_deezer'] = (isset($GeneralSettings['subscribe_feature_deezer']) ? $GeneralSettings['subscribe_feature_deezer'] : false );
         $Settings['subscribe_feature_pandora'] = (isset($GeneralSettings['subscribe_feature_pandora']) ? $GeneralSettings['subscribe_feature_pandora'] : false );
         $Settings['subscribe_feature_android'] = (isset($GeneralSettings['subscribe_feature_android']) ? $GeneralSettings['subscribe_feature_android'] : false );
-        $Settings['subscribe_feature_blubrry'] = (isset($GeneralSettings['subscribe_feature_blubrry']) && !empty($GeneralSettings['blubrry_hosting']) ? $GeneralSettings['subscribe_feature_blubrry'] : false );
         $Settings['subscribe_feature_amazon'] = (isset($GeneralSettings['subscribe_feature_amazon']) ? $GeneralSettings['subscribe_feature_amazon'] : false );
         $Settings['subscribe_feature_pcindex'] = (isset($GeneralSettings['subscribe_feature_pcindex']) ? $GeneralSettings['subscribe_feature_pcindex'] : false );
         $Settings['subscribe_feature_jiosaavn'] = (isset($GeneralSettings['subscribe_feature_jiosaavn']) ? $GeneralSettings['subscribe_feature_jiosaavn'] : false );
@@ -427,7 +417,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
         $Settings['subscribe_feature_tunein_shortcode'] = (isset($GeneralSettings['subscribe_feature_tunein_shortcode']) ? $GeneralSettings['subscribe_feature_tunein_shortcode'] : true );
         $Settings['subscribe_feature_spotify_shortcode'] = (isset($GeneralSettings['subscribe_feature_spotify_shortcode']) ? $GeneralSettings['subscribe_feature_spotify_shortcode'] : true );
         $Settings['subscribe_feature_android_shortcode'] = (isset($GeneralSettings['subscribe_feature_android_shortcode']) ? $GeneralSettings['subscribe_feature_android_shortcode'] : true );
-        $Settings['subscribe_feature_blubrry_shortcode'] = (isset($GeneralSettings['subscribe_feature_blubrry_shortcode']) && !empty($GeneralSettings['blubrry_hosting']) ? $GeneralSettings['subscribe_feature_blubrry_shortcode'] : false );
         $Settings['subscribe_feature_iheart_shortcode'] = (isset($GeneralSettings['subscribe_feature_iheart_shortcode']) ? $GeneralSettings['subscribe_feature_iheart_shortcode'] : true );
         $Settings['subscribe_feature_deezer_shortcode'] = (isset($GeneralSettings['subscribe_feature_deezer_shortcode']) ? $GeneralSettings['subscribe_feature_deezer_shortcode'] : true );
         $Settings['subscribe_feature_pandora_shortcode'] = (isset($GeneralSettings['subscribe_feature_pandora_shortcode']) ? $GeneralSettings['subscribe_feature_pandora_shortcode'] : true );
@@ -447,7 +436,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
         $Settings['subscribe_feature_deezer_sidebar'] = (isset($GeneralSettings['subscribe_feature_deezer_sidebar']) ? $GeneralSettings['subscribe_feature_deezer_sidebar'] : false );
         $Settings['subscribe_feature_pandora_sidebar'] = (isset($GeneralSettings['subscribe_feature_pandora_sidebar']) ? $GeneralSettings['subscribe_feature_pandora_sidebar'] : false );
         $Settings['subscribe_feature_android_sidebar'] = (isset($GeneralSettings['subscribe_feature_android_sidebar']) ? $GeneralSettings['subscribe_feature_android_sidebar'] : true );
-        $Settings['subscribe_feature_blubrry_sidebar'] = (isset($GeneralSettings['subscribe_feature_blubrry_sidebar']) && !empty($GeneralSettings['blubrry_hosting']) ? $GeneralSettings['subscribe_feature_blubrry_sidebar'] : false );
         $Settings['subscribe_feature_amazon_sidebar'] = (isset($GeneralSettings['subscribe_feature_amazon_sidebar']) ? $GeneralSettings['subscribe_feature_amazon_sidebar'] : false );
         $Settings['subscribe_feature_pcindex_sidebar'] = (isset($GeneralSettings['subscribe_feature_pcindex_sidebar']) ? $GeneralSettings['subscribe_feature_pcindex_sidebar'] : false );
         $Settings['subscribe_feature_jiosaavn_sidebar'] = (isset($GeneralSettings['subscribe_feature_jiosaavn_sidebar']) ? $GeneralSettings['subscribe_feature_jiosaavn_sidebar'] : false );
@@ -471,7 +459,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
             $Settings['subscribe_feature_deezer'] = false;
             $Settings['subscribe_feature_pandora'] = false;
             $Settings['subscribe_feature_android'] = false;
-            $Settings['subscribe_feature_blubrry'] = false;
             $Settings['subscribe_feature_amazon'] = false;
             $Settings['subscribe_feature_pcindex'] = false;
             $Settings['subscribe_feature_jiosaavn'] = false;
@@ -485,7 +472,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
             $Settings['subscribe_feature_tunein_shortcode'] = false;
             $Settings['subscribe_feature_spotify_shortcode'] = false;
             $Settings['subscribe_feature_android_shortcode'] = false;
-            $Settings['subscribe_feature_blubrry_shortcode'] = false;
             $Settings['subscribe_feature_iheart_shortcode'] = false;
             $Settings['subscribe_feature_deezer_shortcode'] = false;
             $Settings['subscribe_feature_pandora_shortcode'] = false;
@@ -505,7 +491,6 @@ function powerpresssubscribe_get_settings($ExtraData, $detect_category=true)
             $Settings['subscribe_feature_deezer_sidebar'] = false;
             $Settings['subscribe_feature_pandora_sidebar'] = false;
             $Settings['subscribe_feature_android_sidebar'] = false;
-            $Settings['subscribe_feature_blubrry_sidebar'] = false;
             $Settings['subscribe_feature_amazon_sidebar'] = false;
             $Settings['subscribe_feature_pcindex_sidebar'] = false;
             $Settings['subscribe_feature_jiosaavn_sidebar'] = false;
@@ -581,12 +566,6 @@ function powerpressplayer_link_subscribe_pre($content, $media_url, $ExtraData = 
     {
         $SubscribeSettings['iheart_url'] = trim($SubscribeSettings['iheart_url']);
         $links_array[] = "<a href=\"".  esc_attr($SubscribeSettings['iheart_url'] ) ."\" class=\"powerpress_link_subscribe powerpress_link_subscribe_iheart\" target=\"_blank\" title=\"". __('Subscribe on iHeartRadio', 'powerpress') ."\" rel=\"nofollow\">". __('iHeartRadio','powerpress') ."</a>".PHP_EOL_WEB;
-    }
-
-    if( !empty($SubscribeSettings['subscribe_feature_blubrry']) && !empty($SubscribeSettings['blubrry_url']) )
-    {
-        $SubscribeSettings['blubrry_url'] = trim($SubscribeSettings['blubrry_url']);
-        $links_array[] = "<a href=\"".  esc_attr($SubscribeSettings['blubrry_url'] ) ."\" class=\"powerpress_link_subscribe powerpress_link_subscribe_blubrry\" target=\"_blank\" title=\"". __('Subscribe on Blubrry', 'powerpress') ."\" rel=\"nofollow\">". __('Blubrry','powerpress') ."</a>".PHP_EOL_WEB;
     }
 
     if( !empty($SubscribeSettings['subscribe_feature_jiosaavn']) && !empty($SubscribeSettings['jiosaavn_url']) )
@@ -705,8 +684,6 @@ function powerpress_subscribe_shortcode( $attr ) {
 		'image_url'=>'', // provide subscribe widget for specific iTunes subscribe URL
 		'heading'=>'', // heading label for podcast
 		
-		'itunes_subtitle'=>'', // Set to 'true' to include the iTunes subtitle in subscribe widget
-		
 		// Appearance attributes
 		'itunes_button'=>'', // Set to 'true' to use only the iTunes button
 		'itunes_banner'=>'', // Set to 'true' to use only the iTunes banner
@@ -784,10 +761,6 @@ function powerpress_subscribe_shortcode( $attr ) {
 		$Settings['title'] = ''; // This way the title can be detected
 		
 	unset($Settings['subtitle']); // Make sure no subtitle passes this point
-	if( !empty($Settings['itunes_subtitle']) ) {
-		$Settings['subtitle'] = $Settings['itunes_subtitle'];
-	}
-
 	if (!empty($Settings['description'])) {
         $Settings['subtitle'] = $Settings['description'];
     }
@@ -953,11 +926,6 @@ function powerpress_do_subscribe_widget($settings, $PowerPressSettings)
                 $html .= '<a href="'.  esc_url( $settings['iheart_url'] ) .'" class="pp-sub-btn'. htmlspecialchars($settings['subscribe_widget_shape']) .' pp-sub-iheartradio" target="_blank" title="'.  esc_attr( __('Subscribe on iHeartRadio', 'powerpress') ) .'"><span class="pp-sub-ic"></span>'.  esc_html( __('iHeartRadio', 'powerpress') ) .'</a>';
             }
 
-            if( !empty($settings['subscribe_feature_blubrry_shortcode']) &&  !empty($settings['blubrry_url']) ) {
-                $link_counter++;
-                $html .= '<a href="'.  esc_url( $settings['blubrry_url'] ) .'" class="pp-sub-btn'. htmlspecialchars($settings['subscribe_widget_shape']) .' pp-sub-blubrry" target="_blank" title="'.  esc_attr( __('Subscribe on Blubrry', 'powerpress') ) .'"><span class="pp-sub-ic"></span>'.  esc_html( __('Blubrry', 'powerpress') ) .'</a>';
-            }
-
             if( !empty($settings['subscribe_feature_jiosaavn_shortcode']) &&  !empty($settings['jiosaavn_url']) ) {
                 $link_counter++;
                 $html .= '<a href="'.  esc_url( $settings['jiosaavn_url'] ) .'" class="pp-sub-btn'. htmlspecialchars($settings['subscribe_widget_shape']) .' pp-sub-jiosaavn" target="_blank" title="'.  esc_attr( __('Subscribe on JioSaavn', 'powerpress') ) .'"><span class="pp-sub-ic"></span>'.  esc_html( __('JioSaavn', 'powerpress') ) .'</a>';
@@ -1085,11 +1053,6 @@ function powerpress_do_subscribe_sidebar_widget($settings)
         if(  !empty($settings['subscribe_feature_iheart_sidebar']) && !empty($settings['iheart_url']) ) {
             $settings['iheart_url'] = trim($settings['iheart_url']);
             $html .= '<a href="'.  esc_url( $settings['iheart_url'] ) .'" class="pp-ssb-btn'.$settings['modern_style'].' '.$settings['modern_direction'].' pp-ssb-iheartradio" target="_blank" title="'.  esc_attr( __('Subscribe on iHeartRadio', 'powerpress') ) .'"><span class="pp-ssb-ic"></span><span class="pp-ssb-text">'.  esc_html( __('iHeartRadio', 'powerpress') ) .'</span></a>';
-        }
-
-        if( !empty($settings['subscribe_feature_blubrry_sidebar']) && !empty($settings['blubrry_url']) ) {
-            $settings['blubrry_url'] = trim($settings['blubrry_url']);
-            $html .= '<a href="'.  esc_url( $settings['blubrry_url'] ) .'" class="pp-ssb-btn'.$settings['modern_style'].' '.$settings['modern_direction'].' pp-ssb-blubrry" target="_blank" title="'.  esc_attr( __('Subscribe on Blubrry', 'powerpress') ) .'"><span class="pp-ssb-ic"></span><span class="pp-ssb-text">'.  esc_html( __('Blubrry', 'powerpress') ) .'</span></a>';
         }
 
         if(  !empty($settings['subscribe_feature_jiosaavn_sidebar']) && !empty($settings['jiosaavn_url']) ) {

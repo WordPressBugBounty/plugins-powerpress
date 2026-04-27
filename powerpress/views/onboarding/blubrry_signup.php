@@ -73,12 +73,9 @@ if (wp_verify_nonce($_REQUEST['_wpnonce'], 'powerpress-link-blubrry')) {
         $props['add_show_token'] = $result['add_show_token'];
         powerpress_save_settings($props, 'powerpress_onboarding');
         $publisher_origin = '';
-        if (strpos($result['session_url'], 'publish.blubrry') === false ) {
+        if (strpos($result['session_url'], 'publish.blubrry') === false) {
             if (defined('POWERPRESS_BLUBRRY_API_URL')) {
-                $origin_array = explode('.', POWERPRESS_BLUBRRY_API_URL);
-                $origin_array[0] = str_replace('api', 'publish', $origin_array[0]);
-                $publisher_origin = implode('.', $origin_array);
-                $publisher_origin = rtrim($publisher_origin, '/');
+                $publisher_origin = rtrim(powerpress_get_publish_url(), '/');
             } else {
                 $publisher_origin = 'https://publish.blubrry.com';
             }

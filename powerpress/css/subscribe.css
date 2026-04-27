@@ -220,11 +220,6 @@ body .pp-sub-widget-include a:hover {
 	background-size: 100%;
 	transition: background 0s;
 }
-.pp-sub-widget-modern .pp-sub-blubrry.pp-sub-btn:active, .pp-sub-widget-modern .pp-sub-blubrry.pp-sub-btn-sq:active {
-	background-color: #2278cf;
-	background-size: 100%;
-	transition: background 0s;
-}
 .pp-sub-widget-modern .pp-sub-rss.pp-sub-btn:active, .pp-sub-widget-modern .pp-sub-rss.pp-sub-btn-sq:active {
 	background-color: #FF6600;
 	background-size: 100%;
@@ -386,9 +381,6 @@ body .pp-sub-widget-include a:hover {
 }
 .pp-sub-widget-modern .pp-sub-pandora .pp-sub-ic {
 	background-position: 0 -555px;
-}
-.pp-sub-widget-modern .pp-sub-blubrry .pp-sub-ic {
-	background-position: 0 -605px;
 }
 .pp-sub-widget-modern .pp-sub-rss .pp-sub-ic {
 	background-position: 0 -355px;

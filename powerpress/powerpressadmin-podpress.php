@@ -195,12 +195,6 @@ if( !function_exists('add_action') )
 							$return[ $row['ID'] ]['itunes'] = array();
 							
 							// Add iTunes stuff...
-							if( $itunes_data['itunes:subtitle'] != '##PostExcerpt##' && $itunes_data['itunes:subtitle'] != '' )
-								$return[ $row['ID'] ]['itunes']['subtitle'] = $itunes_data['itunes:subtitle'];
-							
-							if( $itunes_data['itunes:summary'] != '##PostExcerpt##' && $itunes_data['itunes:summary'] != '##Global##' && $itunes_data['itunes:summary'] != '' )
-								$return[ $row['ID'] ]['itunes']['summary'] = $itunes_data['itunes:summary'];
-								
 							if( $itunes_data['itunes:author'] != '##Global##' && $itunes_data['itunes:author'] != '' )
 								$return[ $row['ID'] ]['itunes']['author'] = $itunes_data['itunes:author'];
 								

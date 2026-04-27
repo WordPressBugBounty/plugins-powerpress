@@ -194,6 +194,9 @@ function powerpress_admin_customfeeds(){
                 }
             ?>
             </tbody>
+            <tfoot>
+                <tr><?php print_column_headers('powerpressadmin_customfeeds'); ?></tr>
+            </tfoot>
     </table>
 
         <?php if(!isset($General['custom_feeds'][ $feed_slug ])) { ?>

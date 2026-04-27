@@ -91,6 +91,29 @@ div[class^="pp-tooltip"] .text-pp-tooltip::after {
     width: 10%;
 }
 
+/* mobile horizontal scrolling tabs */
+@media (max-width: 782px) {
+    .pp-tab {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .pp-tab::-webkit-scrollbar {
+        display: none;
+    }
+    .pp-tab button {
+        float: none;
+        flex: 0 0 auto;
+        width: auto;
+        padding: 2vh 3%;
+        white-space: nowrap;
+    }
+}
+
 /* Change background color of buttons on hover */
 .pp-tab button:hover {
     background-color: #ddd;
@@ -331,7 +354,7 @@ h4[class^="pp-section-title"] {
 .pp-tabcontent {
     display: none;
     border-top: none;
-    padding: 40px;
+    padding: 40px 40px 14px 40px;
 }
 
 .pp-tabcontent.active {
@@ -841,6 +864,10 @@ input.ep-box-checkbox:checked + label.pp-checkbox-label {
     margin-bottom: 4ch;
     width: 100%;
     justify-content: space-between;
+}
+
+.pp-tabcontent > .pp-section-container:last-child {
+    margin-bottom: 0;
 }
 
 .apple-opt-section-container {

@@ -78,33 +78,7 @@ function powerpress_get_the_excerpt_rss($no_filters = true)
 	return convert_chars( ent2ncr( $output ) );
 }
 
-function powerpress_the_generator() {
-	echo '<generator>https://wordpress.org/?v=' . get_bloginfo_rss( 'version' ) . '</generator>';
-}
-
-
 $GeneralSettings = get_option('powerpress_general');
-//    For Deprecated Apple Order Tag / Featured episode
-//    $iTunesOrderNumber = 0;
-//    $FeaturedPodcastID = 0;
-//
-//
-//
-//    if( !empty($GeneralSettings['new_episode_box_feature_in_itunes']) ) {
-//        $iTunesFeatured = get_option('powerpress_itunes_featured');
-//        $feed_slug = get_query_var('feed');
-//        if( !empty($iTunesFeatured[ $feed_slug ]) )
-//        {
-//            if( get_post_type() == 'post' )
-//            {
-//                $FeaturedPodcastID = $iTunesFeatured[ $feed_slug ];
-//                $GLOBALS['powerpress_feed']['itunes_feature'] = true; // So any custom order value is not used when looping through the feeds.
-//                $iTunesOrderNumber = 2; // One reserved for featured episode
-//            }
-//        }
-//    }
-
-
 
 if (is_feed() && !headers_sent()) {
     // Add the Access-Control-Allow-Origin header to allow all origins.
@@ -151,21 +125,23 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'."\n"; 
         $trailerAttrs = false;
         if( !empty($EpisodeData['episode_type']) && $EpisodeData['episode_type']=='trailer') {
             $trailerAttrs = array(
-                'url' => trim(htmlspecialchars($EpisodeData['url'])),
-                'length' => trim(!empty($EpisodeData['size']) ? $EpisodeData['size'] : '5242880'),
-                'type' => trim($EpisodeData['type'])
+                'url' => trim(esc_url($EpisodeData['url'])),
+                'length' => ((int) ($EpisodeData['size'] ?? 0)) ?: 5242880, // take 5242880 if invalid
+                'type' => esc_attr(trim($EpisodeData['type'])),
+                'title' => esc_html(powerpress_trim_value($EpisodeData['episode_title'] ?? get_the_title(), 'trailer')),
+                'pubdate' => mysql2date('D, d M Y H:i:s +0000', get_post_time('Y-m-d H:i:s', true), false),
             );
 
             if ( !empty($EpisodeData['season']) )
-                $trailerAttrs['season'] = $EpisodeData['season'];
-
-            $trailerAttrs['title'] = $EpisodeData['episode_title'] ?? get_the_title();
+                $trailerAttrs['season'] = esc_attr($EpisodeData['season']);
         }
 
         if ($trailerAttrs) {
             $trailerCount += 1;
+            
+            $season_attr = isset($trailerAttrs['season']) ? " season=\"{$trailerAttrs['season']}\"" : '';
             ?>
-        <podcast:trailer url="<?php echo $trailerAttrs['url']; ?>" pubdate="<?php echo mysql2date('D, d M Y H:i:s +0000', get_post_time('Y-m-d H:i:s', true), false); ?>" length="<?php echo $trailerAttrs['length']; ?>" type="<?php echo $trailerAttrs['type']; ?>" <?php echo isset($trailerAttrs['season']) ? 'season="' . $trailerAttrs['season'] . '"'  : '' ?>><?php echo esc_html($trailerAttrs['title']); ?></podcast:trailer>
+        <podcast:trailer url="<?php echo $trailerAttrs['url']; ?>" pubdate="<?php echo $trailerAttrs['pubdate']; ?>" length="<?php echo $trailerAttrs['length']; ?>" type="<?php echo $trailerAttrs['type']; ?>"<?php echo $season_attr; ?>><?php echo $trailerAttrs['title']; ?></podcast:trailer>
             <?php
         }
 
@@ -181,6 +157,7 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'."\n"; 
 		//else
 		//	$GLOBALS['post'] = $GLOBALS['wp_query']->next_post(); // Use this rather than the_post() that way we do not add additional queries to the database
 
+		$EpisodeData = powerpress_get_enclosure_data(get_the_ID());
 ?>
 	<item>
 		<title><?php the_title_rss(); ?></title>
@@ -199,83 +176,41 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'."\n"; 
 				the_category_rss('rss2');
 			}
 
-			if (get_option('rss_use_excerpt')) {
+			// show_notes override: use if available, fall back to legacy summary, then excerpt/content
+			if ( !empty($EpisodeData['show_notes']) ) {
+				echo "\t\t<description>" . powerpress_format_itunes_value($EpisodeData['show_notes'], 'description') . "</description>\n";
+			} else if ( !empty($EpisodeData['summary']) ) {
+				// legacy itunes:summary data - preserve for existing episodes
+				echo "\t\t<description>" . powerpress_format_itunes_value($EpisodeData['summary'], 'description') . "</description>\n";
+			} else if (get_option('rss_use_excerpt')) {
 				echo "\t\t<description>" . powerpress_format_itunes_value(powerpress_get_the_excerpt_rss(!empty($GeneralSettings['feed_action_hook'])), 'description') . "</description>\n";
-			} else { // else no rss_use_excerpt
+			} else {
 				$content = powerpress_get_the_content_feed('rss2', !empty($GeneralSettings['feed_action_hook']));
 				if (strlen($content) > 0) {
 					echo "\t\t<description><![CDATA[" . rtrim($content) . "]]></description>\n";
 				} else {
 					echo "\t\t<description><![CDATA[" . rtrim(powerpress_get_the_excerpt_rss(!empty($GeneralSettings['feed_action_hook']))) . "]]></description>\n";
 				}
-			} // end else no rss_use_excerpt
+			}
 		}
 		// If feed maximizer on
 		else {
-			echo "\t\t<description>" . powerpress_format_itunes_value(powerpress_get_the_excerpt_rss(!empty($GeneralSettings['feed_action_hook'])), 'description') . "</description>\n";
+			// show_notes override: use if available, fall back to legacy summary, then excerpt
+			if ( !empty($EpisodeData['show_notes']) ) {
+				echo "\t\t<description>" . powerpress_format_itunes_value($EpisodeData['show_notes'], 'description') . "</description>\n";
+			} else if ( !empty($EpisodeData['summary']) ) {
+				// legacy itunes:summary data - preserve for existing episodes
+				echo "\t\t<description>" . powerpress_format_itunes_value($EpisodeData['summary'], 'description') . "</description>\n";
+			} else {
+				echo "\t\t<description>" . powerpress_format_itunes_value(powerpress_get_the_excerpt_rss(!empty($GeneralSettings['feed_action_hook'])), 'description') . "</description>\n";
+			}
 		}
 		rss_enclosure();
 		apply_filters('rss2_item'.$FeedActionHook, '');
-//  itunes:order deprecated by Apple
-//
-//
-//        if( $iTunesOrderNumber > 0 )
-//        {
-//            echo "\t<itunes:order>";
-//            if( $FeaturedPodcastID == get_the_ID() )
-//            {
-//                echo '1';
-//                $FeaturedPodcastID = 0;
-//            }
-//            else // Print of 2, 3, ...
-//            {
-//                echo $iTunesOrderNumber;
-//                $iTunesOrderNumber++;
-//            }
-//            echo "</itunes:order>\n";
-//        }
-//
-//        // Decide based on count if we want to flip on the feed maximizer...
-//        $ItemCount++;
-//
-//        if( empty($GLOBALS['powerpress_feed']['feed_maximizer_on']) && $ItemCount >= 10 && !empty($GLOBALS['powerpress_feed']['maximize_feed']) )
-//        {
-//            $GLOBALS['powerpress_feed']['feed_maximizer_on'] = true; // All future items will be minimized in order to maximize episode count
-//        }
 ?>
 	</item>
 <?php
-    endwhile; 
-	if( !empty($FeaturedPodcastID) )
-	{
-		query_posts( array('p'=>$FeaturedPodcastID) );
-		if( have_posts())
-		{
-			if( empty($GeneralSettings['feed_accel']) )
-				the_post();
-			else
-				$GLOBALS['post'] = $GLOBALS['wp_query']->next_post(); // Use this rather than the_post() that way we do not add additional queries to the database
-	// Featured podcast epiosde, give it the highest itunes:order value...
-?>
-	<item>
-		<title><?php the_title_rss() ?></title>
-		<link><?php the_permalink_rss() ?></link>
-		<pubDate><?php echo mysql2date('D, d M Y H:i:s +0000', get_post_time('Y-m-d H:i:s', true), false); ?></pubDate>
-		<guid isPermaLink="false"><?php the_guid(); ?></guid>
-		<description><?php echo powerpress_format_itunes_value( powerpress_get_the_excerpt_rss( !empty($GeneralSettings['feed_accel']) ), 'description' ); ?></description>
-<?php rss_enclosure(); ?>
-	<?php do_action('rss2_item'.$FeedActionHook); ?>
-	<?php
-    // Order Deprecated - https://github.com/Podcast-Standards-Project/PSP-1-Podcast-RSS-Specification/issues/13
-	//echo "\t<itunes:order>";
-	//echo 1;
-	//echo "</itunes:order>\n";
-	?>
-	</item>
-<?php 
-		}
-		wp_reset_query();
-	}
+    endwhile;
 ?>
 </channel>
 </rss>

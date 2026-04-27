@@ -1,0 +1,965 @@
+/* ================================
+      PP-STATS-WIDGET Component
+   ================================
+
+   stats display widget for settings welcome and dashboard
+
+   requires: css/variables.css
+
+   TABLE OF CONTENTS
+   -----------------
+   0.  ACCESSIBILITY
+   1.  CONTAINER
+   2.  ERROR STATE
+   3.  HEADER
+   4.  CHART
+   5.  SUMMARY
+   6.  FOOTER ACTIONS
+   7.  EMPTY STATE
+   8.  LOADING STATES
+   9.  INLINE SELECTOR
+   10. STACKED LAYOUT
+   11. DASHBOARD OVERRIDES
+
+   BEM Block: .pp-stats-widget
+   Elements: __canvas, __header, __chart, __summary, __error
+   Modifiers: --loading, --skeleton
+
+   ================================ */
+
+
+/* ===================
+    0. ACCESSIBILITY
+   =================== */
+
+.pp-screen-reader-text {
+    border: 0;
+    clip: rect(1px, 1px, 1px, 1px);
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+    word-wrap: normal !important;
+}
+
+
+/* ===============
+    1. CONTAINER
+   =============== */
+
+#pp-stats-widget {
+    position: relative;
+}
+
+#pp-stats-widget .spinner {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    float: none;
+    margin: 0;
+}
+
+.pp-stats-row {
+    align-items: center;
+}
+
+
+/* ================
+    2. ERROR STATE
+   ================ */
+
+.pp-stats-error-selector {
+    max-width: 300px;
+    margin-bottom: 15px;
+}
+
+.pp-stats-error-selector select {
+    width: 100%;
+    padding: 8px;
+    color: var(--pp-color-primary);
+    font-weight: 600;
+}
+
+.pp-stats-error-selector option:disabled {
+    color: var(--pp-color-gray-500);
+    font-style: italic;
+}
+
+.pp-stats-error-message {
+    padding: 20px 0;
+}
+
+
+/* =============
+     3. HEADER
+   ============= */
+
+.pp-stats-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    padding: 12px 0;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--pp-color-gray-200);
+}
+
+.pp-stats-header-left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    position: relative;
+    min-width: 0;
+}
+
+.pp-stats-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pp-color-gray-900);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    min-width: 0;
+}
+
+.pp-stats-title-text {
+    flex-shrink: 0;
+}
+
+/* inline program selector trigger */
+.pp-program-selector-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: 6px;
+    padding: 2px 4px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid var(--pp-color-primary);
+    border-radius: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pp-color-primary);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.pp-program-selector-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pp-program-selector-trigger:hover {
+    color: var(--pp-color-primary-dark, #5b21b6);
+    border-bottom-color: var(--pp-color-primary-dark, #5b21b6);
+}
+
+.pp-program-selector-trigger .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    transition: transform 0.2s;
+}
+
+.pp-program-selector-trigger.pp-open .dashicons {
+    transform: rotate(180deg);
+}
+
+/* program selector dropdown */
+.pp-program-selector-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    min-width: 200px;
+    max-width: 300px;
+    max-height: 0;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0);
+    z-index: 100;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: max-height 0.25s ease, opacity 0.2s ease, transform 0.2s ease,
+                box-shadow 0.2s ease, border-color 0.2s ease;
+    pointer-events: none;
+}
+
+.pp-program-selector-dropdown.pp-open {
+    max-height: 300px;
+    overflow-y: auto;
+    opacity: 1;
+    transform: translateY(0);
+    border-color: var(--pp-color-gray-200);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: auto;
+}
+
+.pp-program-selector-list {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+}
+
+.pp-program-selector-item {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 14px;
+    color: var(--pp-color-gray-800);
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.pp-program-selector-item:hover {
+    background: var(--pp-color-gray-100);
+}
+
+.pp-program-selector-item--active {
+    color: var(--pp-color-primary);
+    font-weight: 600;
+    background: var(--pp-color-primary-light, #f3e8ff);
+}
+
+.pp-program-selector-item--disabled {
+    color: var(--pp-color-gray-400);
+    cursor: not-allowed;
+}
+
+.pp-program-selector-item-note {
+    display: block;
+    font-size: 11px;
+    color: var(--pp-color-gray-400);
+    font-style: italic;
+}
+
+.pp-program-selector-divider {
+    height: 1px;
+    margin: 4px 0;
+    background: var(--pp-color-gray-200);
+}
+
+.pp-stats-header-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+/* legacy selector (kept for fallback) */
+.pp-stats-program-selector {
+    min-width: 140px;
+    max-width: 200px;
+}
+
+.pp-stats-program-selector select {
+    width: 100%;
+    padding: 4px 24px 4px 8px;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    border: 1px solid var(--pp-color-gray-300);
+    border-radius: 4px;
+    color: var(--pp-color-gray-800);
+}
+
+/* Blubrry button base */
+.pp-stats-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 14px;
+    height: 34px;
+    min-height: 34px;
+    background: #fff;
+    color: var(--pp-color-gray-700);
+    border: 1px solid var(--pp-color-gray-300);
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+}
+
+.pp-stats-btn:hover {
+    background: var(--pp-color-gray-50);
+    border-color: var(--pp-color-gray-400);
+    color: var(--pp-color-gray-900);
+}
+
+.pp-stats-btn .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+}
+
+/* Primary button (New Episode) */
+.pp-stats-btn--primary {
+    background: linear-gradient(135deg, #0073aa 0%, #005a87 100%);
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 90, 135, 0.3);
+}
+
+.pp-stats-btn--primary:hover {
+    background: linear-gradient(135deg, #005a87 0%, #004466 100%);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 90, 135, 0.4);
+}
+
+.pp-stats-btn--primary .dashicons {
+    color: #fff;
+}
+
+
+/* Cog button */
+.pp-stats-cog-btn {
+    padding: 0;
+    width: 34px;
+}
+
+.pp-stats-cog-btn:hover {
+    background: var(--pp-color-gray-100);
+    border-color: var(--pp-color-primary);
+    color: var(--pp-color-primary);
+}
+
+.pp-stats-cog-btn:hover .dashicons {
+    transform: rotate(45deg);
+}
+
+.pp-stats-cog-btn .dashicons {
+    transition: transform 0.2s ease;
+}
+
+.pp-stats-cog-btn.pp-open {
+    background: linear-gradient(135deg, #0073aa 0%, #005a87 100%);
+    border-color: transparent;
+    color: #fff;
+}
+
+.pp-stats-cog-btn.pp-open:hover {
+    background: linear-gradient(135deg, #005a87 0%, #004466 100%);
+    color: #fff;
+}
+
+.pp-stats-cog-btn.pp-open .dashicons {
+    color: #fff;
+}
+
+/* Legacy header button (kept for compatibility) */
+.pp-stats-header-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 10px;
+    height: 32px;
+    min-height: 32px;
+    background: var(--pp-color-gray-100);
+    color: var(--pp-color-gray-900);
+    border: 1px solid var(--pp-wp-border);
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    box-sizing: border-box;
+}
+
+.pp-stats-header-btn:hover {
+    background: var(--pp-wp-bg-hover);
+    border-color: var(--pp-wp-border-hover);
+    color: var(--pp-color-gray-900);
+}
+
+.pp-stats-header-btn .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+}
+
+@media (max-width: 600px) {
+    .pp-stats-header {
+        gap: 6px 10px;
+    }
+    .pp-stats-header-left {
+        flex: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .pp-stats-header {
+        padding-top: 0;
+        margin-bottom: 4px;
+    }
+}
+
+
+/* ============
+     4. CHART
+   ============ */
+
+.pp-stats-chart {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 220px;
+    padding: 12px;
+    background: linear-gradient(135deg, #e8daff 0%, #d9ebff 100%);
+    border-radius: 8px;
+}
+
+/* let Chart.js handle canvas sizing for proper HiDPI rendering */
+#pp-stats-widget__canvas {
+    display: block;
+}
+
+/* inline settings row (expandable) */
+.pp-stats-settings-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    border-bottom: 1px solid var(--pp-color-gray-200);
+    animation: pp-slideDown 0.2s ease;
+}
+
+@keyframes pp-slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.pp-stats-settings-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--pp-color-gray-100);
+}
+
+.pp-stats-settings-line:last-child {
+    border-bottom: none;
+}
+
+/* TOGGLE GROUP */
+
+.pp-stats-toggle-group {
+    display: inline-flex;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--pp-color-gray-100, #f3f4f6);
+}
+
+.pp-stats-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    padding: 5px 12px;
+    min-height: 28px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--pp-color-gray-600);
+    cursor: pointer;
+    background: transparent;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+}
+
+.pp-stats-toggle input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* active state for radios */
+.pp-stats-toggle:has(input[type="radio"]:checked) {
+    background: var(--pp-color-primary-soft, #6B9AE8);
+    color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+/* active state for checkboxes */
+.pp-stats-toggle:has(input[type="checkbox"]:checked) {
+    background: var(--pp-color-primary-soft, #6B9AE8);
+    color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+/* hover states */
+.pp-stats-toggle:hover:not(:has(input:checked)) {
+    background: var(--pp-color-gray-200, #e5e7eb);
+}
+
+/* checkbox group: same style but with gaps */
+.pp-stats-toggle-group--checkboxes {
+    gap: 6px;
+    background: transparent;
+}
+
+.pp-stats-toggle-group--checkboxes .pp-stats-toggle {
+    background: var(--pp-color-gray-100, #f3f4f6);
+    border-radius: 5px;
+    min-width: 52px;
+}
+
+/* MOBILE: larger touch targets */
+@media (max-width: 782px) {
+    .pp-stats-toggle {
+        min-height: 44px;
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+    .pp-stats-settings-line {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+}
+
+.pp-stats-setting-divider {
+    width: 1px;
+    height: 16px;
+    background: var(--pp-color-gray-300);
+    margin: 0 4px;
+}
+
+.pp-stats-setting-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pp-stats-setting-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--pp-color-gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 45px;
+}
+
+.pp-stats-refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: none;
+    border: 1px solid var(--pp-color-gray-300);
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--pp-color-gray-600);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.pp-stats-refresh-btn:hover {
+    background: var(--pp-color-gray-100);
+    border-color: var(--pp-color-gray-400);
+    color: var(--pp-color-gray-800);
+}
+
+.pp-stats-refresh-btn .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+}
+
+.pp-stats-refresh-btn.pp-refreshing .dashicons {
+    animation: pp-spin 1s linear infinite;
+}
+
+.pp-stats-refresh-btn:disabled {
+    color: var(--pp-color-gray-400);
+    border-color: var(--pp-color-gray-300);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* refresh button (legacy, kept for compatibility) */
+.pp-stats-refresh-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    color: var(--pp-color-gray-500);
+    transition: color 0.2s, background 0.2s;
+}
+
+.pp-stats-refresh-circle:hover {
+    background: var(--pp-color-gray-100);
+    color: var(--pp-color-primary);
+}
+
+.pp-stats-refresh-circle:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pp-stats-refresh-circle .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+}
+
+.pp-stats-refresh-circle.pp-refreshing .dashicons {
+    animation: pp-spin 1s linear infinite;
+}
+
+@keyframes pp-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+
+/* ==============
+     5. SUMMARY
+   ============== */
+
+.pp-stats-summary {
+    display: block;
+    width: 100%;
+}
+
+.pp-stats-summary__table {
+    width: 100%;
+    background-color: white;
+    border: none;
+    border-radius: 0;
+    margin-bottom: 10px;
+}
+
+.pp-stats-summary__item {
+    border-top: 1px solid var(--pp-border-light);
+    line-height: 1.4;
+}
+
+.pp-stats-summary__item--first .pp-stats-summary__data {
+    color: var(--pp-stats-today, #AB47BC);
+}
+
+.pp-stats-summary__item:nth-child(2) .pp-stats-summary__data {
+    color: var(--pp-stats-average, #42A5F5);
+}
+
+.pp-stats-summary__item:nth-child(3) .pp-stats-summary__data {
+    color: var(--pp-stats-total, #66BB6A);
+}
+
+.pp-stats-summary__label {
+    color: var(--pp-color-gray-900);
+    font-weight: bold;
+    text-align: left;
+    border: none;
+    font-size: 14px;
+    white-space: nowrap;
+    padding: 8px 12px 8px 0;
+}
+
+.pp-stats-summary__data {
+    color: var(--pp-color-navy);
+    text-align: right;
+    font-weight: bold;
+    border: none;
+    font-size: 14px;
+    white-space: nowrap;
+    padding: 8px 0 8px 12px;
+}
+
+.pp-stats-summary__icon {
+    display: inline-block;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+.pp-stats-summary__icon img {
+    width: 14px;
+    height: 14px;
+}
+
+@media (max-width: 1200px) {
+    .pp-stats-summary__label,
+    .pp-stats-summary__data {
+        font-size: 13px;
+    }
+    .pp-stats-summary__icon img {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+@media (max-width: 960px) {
+    .pp-stats-summary__label,
+    .pp-stats-summary__data {
+        font-size: 12px;
+    }
+    .pp-stats-summary__icon img {
+        width: 11px;
+        height: 11px;
+    }
+}
+
+@media (max-width: 782px) {
+    .pp-stats-summary__label,
+    .pp-stats-summary__data {
+        font-size: 11px;
+    }
+    .pp-stats-summary__icon img {
+        width: 10px;
+        height: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pp-stats-summary__label,
+    .pp-stats-summary__data {
+        font-size: 14px;
+    }
+    .pp-stats-summary__icon img {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+
+/* ==================
+    6. FOOTER ACTIONS
+   ================== */
+
+/* container for side-by-side buttons */
+.pp-stats-footer-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.pp-stats-footer-actions .pp-stats-btn {
+    flex: 1;
+    text-align: center;
+    height: auto;
+    min-height: 34px;
+    padding: 5px 12px;
+}
+
+/* secondary button (outline style matching primary colors) */
+.pp-stats-btn--secondary {
+    background: var(--pp-color-primary-light, #e8f4fc);
+    border: 1px solid var(--pp-color-primary, #0073aa);
+    color: var(--pp-color-primary, #0073aa);
+    font-weight: 600;
+}
+
+.pp-stats-btn--secondary:hover {
+    background: var(--pp-color-primary, #0073aa);
+    color: #fff;
+    border-color: var(--pp-color-primary, #0073aa);
+}
+
+/* stack on mobile */
+@media (max-width: 480px) {
+    .pp-stats-footer-actions {
+        flex-direction: column;
+    }
+
+    /* tap feedback for touch devices */
+    .pp-stats-footer-actions .pp-stats-btn--primary:active {
+        background: linear-gradient(135deg, #005a87 0%, #004466 100%);
+        transform: scale(0.98);
+    }
+
+    .pp-stats-footer-actions .pp-stats-btn--secondary:active {
+        background: var(--pp-color-primary, #0073aa);
+        color: #fff;
+        transform: scale(0.98);
+    }
+}
+
+
+/* ================
+    7. EMPTY STATE
+   ================ */
+
+.pp-stats-empty-message {
+    color: var(--pp-color-gray-600);
+    font-size: 12px;
+    font-style: italic;
+    text-align: center;
+    margin: 8px 0;
+    padding: 0;
+}
+
+
+/* ===================
+    8. LOADING STATES
+   =================== */
+
+.pp-stats-loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.pp-stats-skeleton {
+    opacity: 0.7;
+}
+
+.pp-skeleton-chart {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(90deg, var(--pp-skeleton-light) 25%, var(--pp-skeleton-mid) 50%, var(--pp-skeleton-light) 75%);
+    background-size: 200% 100%;
+    animation: pp-skeleton-shimmer 3.0s infinite;
+    border-radius: 4px;
+}
+
+.pp-skeleton-line {
+    height: 20px;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, var(--pp-skeleton-light) 25%, var(--pp-skeleton-mid) 50%, var(--pp-skeleton-light) 75%);
+    background-size: 200% 100%;
+    animation: pp-skeleton-shimmer 3.0s infinite;
+    border-radius: 4px;
+}
+
+.pp-skeleton-line-short {
+    width: 60%;
+}
+
+@keyframes pp-skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+
+/* ====================
+    9. INLINE SELECTOR
+   ==================== */
+
+.pp-stats-program-selector-inline {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.pp-stats-program-selector-inline select {
+    width: 100%;
+    padding: 8px;
+    color: var(--pp-color-primary);
+    font-weight: 600;
+}
+
+.pp-stats-program-selector-inline option:disabled {
+    color: var(--pp-color-gray-500);
+    font-style: italic;
+}
+
+
+/* ====================
+    10. STACKED LAYOUT
+   ====================
+
+   single-column stacked layout for dashboard widget */
+
+.pp-stats-stacked {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pp-stats-stacked .pp-stats-chart {
+    height: 200px;
+    padding: 10px;
+}
+
+.pp-stats-stacked .pp-stats-summary {
+    padding: 0;
+}
+
+
+/* ===========================
+    11. DASHBOARD OVERRIDES
+   ===========================
+
+   additional dashboard-specific tweaks */
+
+#powerpress_dashboard_stats .pp-stats-header {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+#powerpress_dashboard_stats .pp-stats-header-left {
+    flex: 1;
+}
+
+#powerpress_dashboard_stats .pp-stats-header-controls {
+    flex-shrink: 0;
+    gap: 6px;
+}
+
+/* Compact buttons for dashboard */
+#powerpress_dashboard_stats .pp-stats-btn {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+}
+
+#powerpress_dashboard_stats .pp-stats-cog-btn {
+    width: 28px;
+}
+
+#powerpress_dashboard_stats .pp-stats-program-selector {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+}
+
+#powerpress_dashboard_stats .pp-stats-footer-actions {
+    gap: 6px;
+    margin-top: 10px;
+}

@@ -1,15 +1,9 @@
-<link rel="stylesheet" href="<?php echo PowerPressNetwork::powerpress_network_plugin_url(); ?>css/style.css" type="text/css"/>
-<link href="<?php echo PowerPressNetwork::powerpress_network_plugin_url(). "css/blueprint.css";?>" rel="stylesheet">
-<link href="<?php echo powerpress_get_root_url(). "css/subscribe-widget.css";?>" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
-<meta http-equiv="Content-Type" content="text/html" charset="UTF-8"/>
 <?php
-$allowed_desc_tags = "<p><a><h1><h2><h3><h4><h5><h6>";
 if($props['style'] == 'older-full') {?>
     <div class="ppn-container" id="ppn-program">
         <div class="ppn-header" id="ppn-header">
-            <img alt="<?php echo esc_html(($props['program_title'])) ?>" src="<?php echo esc_url(($props['artwork_url']['300'])) ?>">
-            <p><?php echo @strip_tags(($props['program_desc']), $allowed_desc_tags) ?></p>
+            <img alt="<?php echo esc_html(($props['program_title'])) ?>" src="<?php echo esc_url(($props['artwork_url']['300'])) ?>" onerror="this.onerror=null; this.src='<?php echo esc_url(powerpress_get_root_url() . 'images/pts_cover.jpg'); ?>';">
+            <p><?php echo wp_kses_post($props['program_desc']) ?></p>
         </div>
         <br>
         <?php for ($i = 0; ($i < $props['limit'] && $i < count($props['episodes'])); $i++) {
@@ -23,7 +17,7 @@ if($props['style'] == 'older-full') {?>
                         <h3><?php echo esc_html(($props['episodes'][$i]['podcast_title'])); ?></h3>
                     </div>
                     <div>
-                        <p><?php echo @strip_tags(($props['episodes'][$i]['podcast_desc']), $allowed_desc_tags); ?></p>
+                        <p><?php echo wp_kses_post($props['episodes'][$i]['podcast_desc']); ?></p>
                     </div>
                     <div>
                         <i><?php echo date('F d, Y', $props['episodes'][$i]['podcast_post_date']); ?></i>
@@ -35,7 +29,7 @@ if($props['style'] == 'older-full') {?>
 <?php }elseif($props['style'] == 'artwork') { ?>
     <div class="ppn-container" id="ppn-program">
         <div class="ppn-header" id="ppn-header">
-            <img alt="<?php echo esc_html((is_array($props['program_title']))) ?>" src="<?php echo esc_url(($props['artwork_url']['300'])); ?>">
+            <img alt="<?php echo esc_html($props['program_title']) ?>" src="<?php echo esc_url(($props['artwork_url']['300'])); ?>" onerror="this.onerror=null; this.src='<?php echo esc_url(powerpress_get_root_url() . 'images/pts_cover.jpg'); ?>';">
         </div>
     </div>
 <?php }elseif($props['style'] == 'playlist') {?>
@@ -51,7 +45,7 @@ if($props['style'] == 'older-full') {?>
                     <p class="ppn-episode-date"><?php echo date('F d, Y', $episode['podcast_post_date']);?></p>
                 </div>
                 <?php echo $player;?>
-                <p class="ppn-episode-description"><?php echo @strip_tags(($episode['podcast_desc']), $allowed_desc_tags)?></p>
+                <p class="ppn-episode-description"><?php echo wp_kses_post($episode['podcast_desc'])?></p>
                 <a class="ppn-download-link" href="<?php echo esc_url(($episode['media_url'])); ?>">
                     <div>
                         <div class="ppn-download-arrow"></div>Download
@@ -66,17 +60,17 @@ if($props['style'] == 'older-full') {?>
 <?php }elseif($props['style'] == 'description') { ?>
     <div class="ppn-container" id="ppn-program">
         <div class="ppn-header" id="ppn-header">
-            <p><?php echo @strip_tags(($props['program_desc']), $allowed_desc_tags) ?></p>
+            <p><?php echo wp_kses_post($props['program_desc']) ?></p>
         </div>
     </div>
 <?php } elseif($props['style'] == 'full') {
     ?>
     <div class="ppn-grid-header" bp="grid">
         <div bp="4@lg 4@md 12@sm">
-            <span class="ppn-program-artwork-cell"><img class="ppn-program-artwork" src="<?php echo esc_url(($props['artwork_url']['300']));?>"></span>
+            <span class="ppn-program-artwork-cell"><img class="ppn-program-artwork" src="<?php echo esc_url(($props['artwork_url']['300']));?>" onerror="this.onerror=null; this.src='<?php echo esc_url(powerpress_get_root_url() . 'images/pts_cover.jpg'); ?>';"></span>
         </div>
         <div class="ppn-program-info-cell" bp="8@lg 8@md 12@sm">
-            <p class="ppn-program-description"><?php echo @strip_tags(($props['program_desc']), $allowed_desc_tags);?></p>
+            <p class="ppn-program-description"><?php echo wp_kses_post($props['program_desc']);?></p>
             <br />
             <b class="ppn-program-talent-name">By <?php echo esc_html(($props['talent_name'])); ?></b>
             <p class="ppn-program-url word-break"><a href="<?php echo esc_url(($props['program_url']));?>"><?php echo esc_url(($props['program_url']));?></a></p>
@@ -103,8 +97,6 @@ if($props['style'] == 'older-full') {?>
                         'iheart_url'=>esc_url($props['subscribe_iheart']), //For future use
                         'subscribe_feature_deezer_sidebar'=>false,
                         'deezer_url'=>esc_url($props['subscribe_deezer']), //For future use
-                        'subscribe_feature_blubrry_sidebar'=>false,
-                        'blubrry_url'=>esc_url($props['subscribe_blubrry']), //For future use
                         'subscribe_feature_podchaser_sidebar'=>false,
                         'podchaser_url'=>esc_url($props['subscribe_podchaser']), //For future use
                         'subscribe_feature_jiosaavn_sidebar'=>false,
@@ -134,7 +126,7 @@ if($props['style'] == 'older-full') {?>
                     <p class="ppn-episode-date"><?php echo date('F d, Y', $episode['podcast_post_date']);?></p>
                 </div>
                 <?php echo $player;?>
-                <p class="ppn-episode-description word-break"><?php echo @strip_tags(($episode['podcast_desc']), $allowed_desc_tags)?></p>
+                <p class="ppn-episode-description word-break"><?php echo wp_kses_post($episode['podcast_desc'])?></p>
                 <a class="ppn-download-link word-break" href="<?php echo esc_url(($episode['media_url'])); ?>">
                     <div>
                         <div class="ppn-download-arrow"></div>Download

@@ -7,6 +7,7 @@ if(!function_exists('add_action')){
 function powerpress_admin_customfeeds_columns($data=array()){
 	$data['name'] = __('Category Name', 'powerpress');
 	$data['feed-slug'] = __('Slug', 'powerpress');
+	$data['episode-count'] = __('Episodes', 'powerpress');
 	$data['url'] = __('Feed URL', 'powerpress');
 	return $data;
 }
@@ -88,6 +89,8 @@ function powerpress_admin_categoryfeeds(){
                                 continue;
                             }
 
+                            $term_taxonomy_id = $category->term_taxonomy_id ?? $category->term_id;
+                            $episode_total = powerpress_admin_episodes_per_feed('', 'category', $term_taxonomy_id);
                             $columns = powerpress_admin_customfeeds_columns();
                             $hidden = array();
 

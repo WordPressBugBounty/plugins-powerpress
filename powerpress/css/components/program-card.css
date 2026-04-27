@@ -1,0 +1,441 @@
+/* ================================
+      PP-PROGRAM-CARD Component
+   ================================
+
+   program/show info card for program summary metabox
+
+   requires: css/variables.css
+
+   TABLE OF CONTENTS
+   -----------------
+   1. CONTAINER
+   2. HEADER
+   3. BODY
+   4. CONTENT
+   5. FOOTER
+   6. EPISODE COUNT
+   7. ACTIONS
+   8. NEW EPISODE BUTTON
+
+   BEM Block: .pp-program-card
+   Elements: __header, __body, __content, __footer, __actions, __episode-count
+
+   ================================ */
+
+
+/* =================
+     1. CONTAINER
+   ================= */
+
+.pp-settings-program-summary {
+    margin-bottom: 2em;
+    font-size: 15px;
+}
+
+.pp-program-row {
+    margin-top: 1em;
+}
+
+.pp-program-card__actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* wrapper container */
+.pp-program-summary {
+    font-size: 15px;
+}
+
+/* show info card */
+.pp-program-card {
+    background: var(--pp-color-white);
+    border: 1px solid var(--pp-color-gray-300);
+    border-radius: 12px;
+    padding: 1em;
+    height: 100%;
+    font-size: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* ==============
+     2. HEADER
+   ============== */
+
+.pp-program-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1em;
+    margin-bottom: 0.5em;
+    padding-bottom: 0.5em;
+    border-bottom: 1px solid var(--pp-color-gray-200);
+}
+
+.pp-program-card__header .pp-heading {
+    margin: 0;
+    font-size: 1.1em;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pp-episode-count {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: var(--pp-color-primary);
+}
+
+@media (max-width: 1200px) {
+    .pp-program-card__header .pp-heading {
+        font-size: 1.05em;
+    }
+}
+
+@media (max-width: 960px) {
+    .pp-program-card__header .pp-heading {
+        font-size: 1em;
+    }
+}
+
+@media (max-width: 768px) {
+    .pp-program-card__header .pp-heading {
+        font-size: 1em;
+    }
+}
+
+@media (max-width: 480px) {
+    .pp-program-card {
+        padding: 0.75em;
+    }
+    .pp-program-card__header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.5em;
+    }
+    .pp-program-card__header .pp-heading {
+        font-size: 1.1em;
+        white-space: normal;
+        text-overflow: clip;
+        overflow: visible;
+    }
+}
+
+
+/* ============
+     3. BODY
+   ============ */
+
+.pp-program-card__body {
+    display: flex;
+    gap: 1em;
+    align-items: stretch;
+    flex: 1;
+}
+
+.pp-program-card__body #welcome-preview-image {
+    width: 150px;
+    height: 150px;
+    max-width: 360px;
+    max-height: 360px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+    align-self: flex-start;
+}
+
+@media (max-width: 480px) {
+    .pp-program-card__body {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .pp-program-card__body #welcome-preview-image {
+        margin: 0 auto 1em auto;
+    }
+}
+
+
+/* ===============
+     4. CONTENT
+   =============== */
+
+.pp-program-card__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    text-align: left;
+}
+
+.pp-program-card__label {
+    font-weight: 600;
+    color: var(--pp-color-gray-800);
+}
+
+.pp-program-card__author {
+    margin: 0 0 0.75em 0;
+    color: var(--pp-color-gray-700);
+    font-size: 0.9em;
+}
+
+.pp-program-card__main {
+    flex: 1;
+    overflow: hidden;
+    margin-bottom: 0.75em;
+}
+
+.pp-program-card__description {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.4;
+    margin: 0;
+    color: var(--pp-color-gray-700);
+    font-size: 0.9em;
+}
+
+@media (max-width: 1200px) {
+    .pp-program-card__author,
+    .pp-program-card__description,
+    .pp-program-card__category {
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 960px) {
+    .pp-program-card__author,
+    .pp-program-card__description,
+    .pp-program-card__category {
+        font-size: 0.88em;
+    }
+}
+
+@media (max-width: 768px) {
+    .pp-program-card__author,
+    .pp-program-card__description,
+    .pp-program-card__category,
+    .pp-program-card__dates {
+        font-size: 0.88em;
+    }
+}
+
+@media (max-width: 480px) {
+    .pp-program-card__content {
+        text-align: center;
+    }
+}
+
+
+/* ==============
+     5. FOOTER
+   ============== */
+
+.pp-program-card__footer {
+    margin-top: auto;
+    padding-top: 0.5em;
+    border-top: 1px solid var(--pp-color-gray-200);
+}
+
+.pp-program-card__footer p {
+    margin-top: 0.25ch;
+}
+
+.pp-program-card__category {
+    margin: 0 0 0.5em 0;
+    font-size: 0.9em;
+    color: var(--pp-color-gray-700);
+}
+
+.pp-program-card__dates {
+    font-size: 0.85em;
+    color: var(--pp-color-gray-700);
+}
+
+.pp-program-card__dates span {
+    display: inline;
+}
+
+.pp-program-card__date-separator {
+    margin: 0 0.75em;
+    color: var(--pp-color-gray-400);
+}
+
+.pp-program-card__last-update,
+.pp-program-card__created-date {
+    white-space: nowrap;
+}
+
+@media (max-width: 1200px) {
+    .pp-program-card__dates {
+        font-size: 0.85em;
+    }
+}
+
+@media (max-width: 960px) {
+    .pp-program-card__dates {
+        font-size: 0.82em;
+    }
+    .pp-program-card__date-separator {
+        display: none;
+    }
+    .pp-program-card__dates span {
+        display: block;
+    }
+}
+
+@media (max-width: 480px) {
+    .pp-program-card__footer {
+        padding-top: 0.5em;
+    }
+    .pp-program-card__dates {
+        display: block;
+        font-size: 0.8em;
+    }
+    .pp-program-card__dates span {
+        display: block;
+        margin: 0.25em 0;
+    }
+    .pp-program-card__date-separator {
+        display: none;
+    }
+}
+
+
+/* ====================
+     6. EPISODE COUNT
+   ==================== */
+
+.pp-program-card__episode-count {
+    flex-shrink: 0;
+    text-align: center;
+    padding: 0.75em 1em;
+    background: var(--pp-color-primary-light);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25em;
+}
+
+.pp-program-card__episode-count .pp-program-card__label {
+    font-size: 0.8em;
+    color: var(--pp-color-gray-600);
+}
+
+.pp-program-card__episode-count .pp-episode-count {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--pp-color-primary);
+}
+
+.pp-settings-podcast-status {
+    margin-top: 2ch;
+}
+
+@media (max-width: 480px) {
+    .pp-program-card__episode-count {
+        display: inline-flex;
+        flex-direction: row;
+        padding: 0.25em 0.75em;
+        background: var(--pp-color-primary-light);
+        border-radius: 20px;
+        gap: 0.3em;
+    }
+    .pp-program-card__episode-count .pp-program-card__label {
+        font-size: 0.85em;
+        color: var(--pp-color-gray-600);
+    }
+    .pp-program-card__episode-count .pp-episode-count {
+        font-size: 0.85em;
+        font-weight: bold;
+        color: var(--pp-color-primary);
+    }
+}
+
+/* settings page override */
+#powerpress_settings .pp-program-card__episode-count {
+    width: 16%;
+    margin-left: 3em;
+}
+
+@media (max-width: 480px) {
+    #powerpress_settings .pp-program-card__episode-count {
+        width: auto;
+        margin-left: 0;
+    }
+}
+
+
+/* ===============
+     7. ACTIONS
+   =============== */
+
+.pp-program-card__actions .pp_button-container {
+    background-color: var(--pp-color-primary);
+    color: var(--pp-color-white);
+    padding: 1em 2em;
+    border-radius: 4px;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.pp-program-card__actions a {
+    text-decoration: none;
+}
+
+
+/* =========================
+     8. NEW EPISODE BUTTON
+   ========================= */
+
+.pp-program-card__new-post-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 12px;
+    height: 32px;
+    min-height: 32px;
+    background: var(--pp-color-primary);
+    color: var(--pp-color-white);
+    border: 1px solid var(--pp-color-primary);
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s;
+    box-sizing: border-box;
+}
+
+.pp-program-card__new-post-btn:hover {
+    background: var(--pp-color-primary-hover);
+    border-color: var(--pp-color-primary-hover);
+    color: var(--pp-color-white);
+}
+
+.pp-program-card__new-post-btn .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+}
+
+@media (max-width: 600px) {
+    .pp-program-card__new-post-btn .pp-program-card__new-post-text {
+        display: none;
+    }
+    .pp-program-card__new-post-btn {
+        padding: 6px 8px;
+    }
+}
+

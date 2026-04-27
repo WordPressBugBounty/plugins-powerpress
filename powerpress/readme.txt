@@ -4,7 +4,7 @@ Tags: podcast, apple podcasts, podcast rss feed, spotify, podcast publishing
 Requires at least: 3.6
 Requires PHP: 5.2
 Tested up to: 6.9
-Stable tag: 11.15.17
+Stable tag: 11.16.0
 Donate link: https://blubrry.com/services/podcast-hosting/
 License: GPLv2 or later
 
@@ -110,7 +110,7 @@ If you are having a problem specifically with the player and links, try the "Hav
 
 = Premium podcasting themes compatible with PowerPress =
 Second Line Themes are designed specifically to take advantage of built-in features, settings, and podcast episode metadata  in PowerPress. The Blubrry team works with the Appendipity team during beta testing and major WordPress releases to make sure the Podcast Pro theme and PowerPress work together seamlessly.
- 
+
 = Why doesn't Blubrry PowerPress support multiple enclosures in one feed item/post? =
 PowerPress does not allow you to include multiple media files for one feed item (blog post). This is because each podcatcher handles multiple enclosures in feeds differently. Apple Podcasts will download the first enclosure that it sees in the feed ignoring the rest. Other podcatchers and podcasting directories either pick up the first enclosure or the last in each post item. This inconsistency, combined with the fact that [Dave Winer does not recommend multiple enclosures](http://www.reallysimplesyndication.com/2004/12/21), is why the Blubrry PowerPress does not support them.
 
@@ -123,11 +123,11 @@ Blubrry's PowerPress does not include media statistics built-in. This is not bec
 You can insert the media player within your blog posts by using the WordPress shortcode feature. The shortcode for PowerPress is `[powerpress]` (all lowercase).
 
 You may use the shortcode to add a player to other media files (non episode files) by specifying the media url in the shortcode: [powerpress url="http://example.com/path/to/media.mp3"]
-	
+
 For advanced users with multiple podcast feeds, you may insert the player for a specific feed by specifying the feed slug in the shortcode: [powerpress feed="podcast"]
- 
+
 If you want to specify a cover image, add an image attribute which points to the specific image url: [powerpress image="http://example.com/path/to/cover_image.jpg"] *This is an experimental feature.*
-	
+
 = Why can't you upload large media files? =
 File uploads are tricky to handle because there are so many web hosting variations with different upload size limits. We recommend using an FTP application to upload large media files. FTP is much more efficient than web based uploads and is typically provided by nearly all web hosting providers.
 
@@ -142,12 +142,12 @@ Please report security bugs found in the source code of the PowerPress Podcastin
 == Installation ==
  = Point and Click Installation =
 1. Sign into your blog, go to the plugins section and click 'Add New'.
-2. In the search box enter "PowerPress", then click 'Search'. 
+2. In the search box enter "PowerPress", then click 'Search'.
 3. Click the 'Install Now' link and proceed to install the plugin.
 4. Once installed, click 'Activate'.
 5. Configure your Blubrry PowerPress by going to the **Settings** > **Blubrry PowerPress** page.
 
- = Manual Installation = 
+ = Manual Installation =
 To install Blubrry PowerPress manually, follow these steps:
 
 1. Download [PowerPress from WordPress.org](http://wordpress.org/plugins/powerpress/).
@@ -164,6 +164,14 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 
 
 == Changelog ==
+
+= 11.16.0 =
+* Released on 04/27/26
+* Refined network capabilities, giving users a cleaner interface and allowing them to create a network from inside their site
+* Removed deprecated itunes tags
+* New podcast description field in metabox
+* Added stats widget in multi program mode
+* Deprecated post type and taxonomy podcasting
 
 = 11.15.17 =
 * Released on 3/02/26
@@ -230,7 +238,7 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 
 = 11.15.5 =
 * Released on 12/2/25
-* Bugfix: Chapters pipeline fix 
+* Bugfix: Chapters pipeline fix
 * Bugfix: powerpress_subscribe shortcode feed url output variable typo
 * Bugfix: Alternate Enclosure template producing `blubrry_hosting does not exist` warning
 
@@ -1387,7 +1395,7 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 
 = 8.0 =
 * Released on 10/7/2019
-* New Subscribe Destinations added: 
+* New Subscribe Destinations added:
 ** Deezer - Anyone can now submit their podcast to Deezer with just a blubrry.com account. [Learn more](https://powerpresspodcast.com/2019/08/07/blubrry-podcasts-coming-deezer/)
 ** Pandora - [Submit your podcast to Pandora](https://blubrry.com/manual/podcast-promotion/submit-podcast-to-pandora/)
 ** iHeart - [Submit your podcast to iHeart radio](https://blubrry.com/manual/podcast-promotion/submit-podcast-to-iheartradio/).
@@ -1421,7 +1429,7 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 
 = 7.5.1 =
 * Released on 7/23/2019
-* Added library for PubSubHubbub. Missed it when merging latest git release into wordpress.org svn. Sorry about that! 
+* Added library for PubSubHubbub. Missed it when merging latest git release into wordpress.org svn. Sorry about that!
 
 
 = 7.5 =
@@ -1459,7 +1467,7 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 = 7.4.1 =
 * Released on 4/10/2019
 * Added logic to authentication email addresses differently for premium password protected podcasts.
-* Added support for YoastSEO and Google Podcasts (Thanks @sunkast for bringing to our attention!) 
+* Added support for YoastSEO and Google Podcasts (Thanks @sunkast for bringing to our attention!)
 * Removed use of `create_function` to fix damaged serialized data created by the old PodPress plugin. (Thanks @oilmanmag and Dimitris for bringing to our attention!)
 * Fixed `esc_attr()`bug with podpress import.
 * Added Tamil (ta) as a podcast feed language option. Thanks KT for requesting! If you do not see your language pelase contact us we will add it!
@@ -1581,7 +1589,7 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 	* `define('POWERPRESS_FEEDS_FORCE_HTTP', true);` when added to wp-config.php forces all media links and iTunes images to use HTTP.
 
 
-= 7.0.2 = 
+= 7.0.2 =
 * Released on 7/22/2016
 * Fixed bug with new Blubrry Player not displaying show notes button.
 * Added TuneIn subscribe URL option. (Thanks @kgagne for bringing to our attention!)
@@ -1608,7 +1616,7 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 * Added Stitcher to subscribe page shortcode embed and sidebar widget.
 * New: Strict Category Podcasting. Select a specific category to each episode for statistics tracking and subscription links.
 * New: Podcast only category feeds. You can now mix blog posts with podcast episodes in your podast categories.
-* New: Blubrry Audio Player. Modern podcast audio player complete with subscribe and share tools. For Blubrry Hosting customers only. 
+* New: Blubrry Audio Player. Modern podcast audio player complete with subscribe and share tools. For Blubrry Hosting customers only.
 * Updated the getid3 library to latest version.
 * Embed link enhanced to use provided embed. If an embed is placed into an episode, the embed link below the player will use that embed as well.
 * Fixed bug where post type podcast feed with slug 'podcast' will also get the default podcast feed settings (Thanks steveportigal for bringing to our attention).

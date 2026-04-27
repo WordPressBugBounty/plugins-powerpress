@@ -17,8 +17,6 @@ function powerpressadmin_edit_entry_options($General)
         $General['auto_enclose'] = 0;
     if( !isset($General['episode_box_player_size']) )
         $General['episode_box_player_size'] = 0;
-    if( !isset($General['episode_box_closed_captioned']) )
-        $General['episode_box_closed_captioned'] = 0;
     if( !isset($General['episode_box_order']) )
         $General['episode_box_order'] = 0;
     if( !isset($General['episode_box_feature_in_itunes']) )

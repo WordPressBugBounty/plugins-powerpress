@@ -79,7 +79,7 @@
                     else if (!empty($resultClient['error']))
                         powerpress_page_message_add_error($resultClient['error']);
                     else
-                        powerpress_page_message_add_error(__('Error issuing client:', 'powerpress-network') . ' ' . $auth->GetLastError() . $auth->getDebugInfo() . print_r($resultClient, true));
+                        powerpress_page_message_add_error(__('Error issuing client:', 'powerpress') . ' ' . $auth->GetLastError() . $auth->getDebugInfo() . print_r($resultClient, true));
                     powerpress_page_message_print();
                     exit;
                 }
@@ -92,7 +92,7 @@
                     else if (!empty($resultTokens['error']))
                         powerpress_page_message_add_error($resultTokens['error']);
                     else
-                        powerpress_page_message_add_error(__('Error retrieving access token:', 'powerpress-network') . ' ' . $auth->GetLastError());
+                        powerpress_page_message_add_error(__('Error retrieving access token:', 'powerpress') . ' ' . $auth->GetLastError());
                     powerpress_page_message_print();
                     exit;
                 }
