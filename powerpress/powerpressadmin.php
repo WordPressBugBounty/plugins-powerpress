@@ -5405,14 +5405,14 @@ function powerpress_remote_fopen($url, $basic_auth = false, $post_args = array()
 /**
  * Fetch from API with automatic curl retry on failure
  *
- * @param string $url      Full URL to fetch
- * @param string $auth     Basic auth string
- * @param array  $post     POST data (optional)
- * @param int    $timeout  Timeout in seconds
+ * @param string      $url      Full URL to fetch
+ * @param string|null $auth     Basic auth string; null skips auth header
+ * @param array       $post     POST data (optional)
+ * @param int         $timeout  Timeout in seconds
  *
  * @return string|false Response body or false on failure
  */
-function powerpress_fetch_with_retry(string $url, string $auth, array $post = [], int $timeout = 30) {
+function powerpress_fetch_with_retry(string $url, ?string $auth, array $post = [], int $timeout = 30) {
 	$data = powerpress_remote_fopen($url, $auth, $post, $timeout);
 
 	// retry with curl if primary api failed

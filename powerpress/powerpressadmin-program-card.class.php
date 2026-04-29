@@ -175,7 +175,7 @@ class PowerPressProgramCard
     private function build_program_info(): array {
         // 1. FETCH API DATA (skip when deferred - will load via AJAX later)
         $api = [];
-        if (!$this->deferred && !empty($this->program_keyword)) {
+        if (!$this->deferred && !empty($this->program_keyword) && $this->has_blubrry_auth) {
             $program = $this->fetch_program_info($this->program_keyword);
             if ($program) {
                 $api = $program;

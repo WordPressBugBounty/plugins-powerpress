@@ -1014,21 +1014,6 @@ function powerpress_admin_migrate()
     <?php }
     if(  !empty($BlubrryQueuedCount) && empty($CompletedCount)  ) { ?>
 
-    <div id="pp-migration-marketing" class="pp-migrate-container">
-        <div class="pp-migrate-content">
-            <h4><b><?php echo __('Looking for private or premium hosting?', 'powerpress'); ?></b></h4>
-            <div style="margin-top: 1em;">
-                <img src="<?php echo powerpress_get_root_url(); ?>images/onboarding/pip_logo_rbg.png" alt="" class="pp-migration-image" />
-                <h4 class="pp-migrate-subtitle"><?php echo __('Our private internal podcasting option makes it simple to offer secure and restricted content. Available for desktop and app streaming only.', 'powerpress'); ?>
-                        <br />
-                        <a href="https://blubrry.com/services/private-internal-podcasting/">
-                            <?php echo __('Learn more here', 'powerpress'); ?>
-                        </a>
-                </h4>
-            </div>
-        </div>
-    </div>
-
     <div id="powerpress_steps" class="pp-migrate-container">
         <div class="pp-migrate-container-heading">
             <h1><div class="powerpress-step-blue">2</div><?php echo __('Migration Status', 'powerpress'); ?></h1>
