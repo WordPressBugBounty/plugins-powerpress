@@ -2495,7 +2495,7 @@ function powerpress_edit_post($post_ID, $post)
                         if (esc_url_raw(sanitize_text_field($MediaURL))) {
                             $contentLink = ['url' => $MediaURL, 'label' => ''];
 							if (!empty($content_link_data['label'])) {
-                                $contentLink['label'] = sanitize_text_field($content_link_data['label']);
+                                $contentLink['label'] = sanitize_text_field(stripslashes($content_link_data['label']));
                             }
 
                             $ContentLinkData[] = $contentLink;
@@ -2592,7 +2592,7 @@ function powerpress_edit_post($post_ID, $post)
                                                 'type' => $ContentType,
                                                 'hosting' => $alt_enclosure_data['hosting'],
 
-                                                'title' => sanitize_text_field($alt_enclosure_data['title']),
+                                                'title' => sanitize_text_field(stripslashes($alt_enclosure_data['title'])),
                                                 'bitrate' => absint($alt_enclosure_data['bitrate']),
                                                 'height' => absint($alt_enclosure_data['height'] ?? ''),
                                                 'rel' => sanitize_text_field($alt_enclosure_data['rel']),
@@ -2675,7 +2675,7 @@ function powerpress_edit_post($post_ID, $post)
                         }
                         // requires address
                         if (empty($address)) continue;
-						$address = powerpress_trim_value($address, 'address');
+						$address = powerpress_trim_value(stripslashes($address), 'address');
                         
                         $location_data[] = [
                             'address' => sanitize_text_field($address),
@@ -2701,7 +2701,7 @@ function powerpress_edit_post($post_ID, $post)
                 if (!empty($Powerpress['credits'])) {
 					foreach ($Powerpress['credits'] as $credit) {
 						if (empty($credit['name'])) continue;
-						$credit_name = powerpress_trim_value($credit['name'], 'credit_name');
+						$credit_name = powerpress_trim_value(stripslashes($credit['name']), 'credit_name');
 
 					    $credit_data[] = [
 					    	'name' => sanitize_text_field($credit_name),
@@ -2727,7 +2727,7 @@ function powerpress_edit_post($post_ID, $post)
        
 						if ($startSecs === 0 || $durSecs === 0) continue;
 
-						$soundbite_title = powerpress_trim_value($soundbite['title'], 'soundbite_title');
+						$soundbite_title = powerpress_trim_value(stripslashes($soundbite['title']), 'soundbite_title');
 
 						$soundbites_data[] = [
 							'start' => $startSecs,
@@ -2834,7 +2834,7 @@ function powerpress_edit_post($post_ID, $post)
                     $donate_url = esc_url_raw(sanitize_text_field($Powerpress['donate_url']));
 				}
 				if (!empty($Powerpress['donate_label'])) {
-					$donate_label = powerpress_trim_value($Powerpress['donate_label'], 'donate_label');
+					$donate_label = powerpress_trim_value(stripslashes($Powerpress['donate_label']), 'donate_label');
 					$donate_label = sanitize_text_field($donate_label);
 				}
 
@@ -2845,7 +2845,7 @@ function powerpress_edit_post($post_ID, $post)
 
 				// podcast:license
                 if (!empty($Powerpress['copyright'])) {
-					$copyright = powerpress_trim_value($Powerpress['copyright'], 'copyright');
+					$copyright = powerpress_trim_value(stripslashes($Powerpress['copyright']), 'copyright');
 					$copyright = sanitize_text_field($copyright);
 
 					$copyright_url = '';
@@ -2897,13 +2897,13 @@ function powerpress_edit_post($post_ID, $post)
                     $ToSerialize['episode_no'] = (int)floor($Powerpress['episode_no']);
                 }
                 if ( isset($Powerpress['episode_no_display']) && $Powerpress['episode_no_display'] != '' ) {
-                    $ep_no_display = powerpress_trim_value($Powerpress['episode_no_display'], 'episode_no_display');
+                    $ep_no_display = powerpress_trim_value(stripslashes($Powerpress['episode_no_display']), 'episode_no_display');
                     $ToSerialize['episode_no_display'] = sanitize_text_field($ep_no_display);
                 }
-                
+
                 // Show Notes
                 if ( isset($Powerpress['show_notes']) && trim($Powerpress['show_notes']) != '' ) {
-                    $show_notes = powerpress_trim_value($Powerpress['show_notes'], 'description');
+                    $show_notes = powerpress_trim_value(stripslashes($Powerpress['show_notes']), 'description');
                     $ToSerialize['show_notes'] = sanitize_textarea_field($show_notes);
                 }
 
@@ -2913,8 +2913,8 @@ function powerpress_edit_post($post_ID, $post)
 
                     foreach($Powerpress['txt_tag'] as $tag) {
                         // Sanitize
-                        $tag_content = isset($tag['tag']) ? sanitize_textarea_field($tag['tag']) : '';
-                        $tag_purpose = isset($tag['purpose']) ? sanitize_text_field($tag['purpose']) : '';
+                        $tag_content = isset($tag['tag']) ? sanitize_textarea_field(stripslashes($tag['tag'])) : '';
+                        $tag_purpose = isset($tag['purpose']) ? sanitize_text_field(stripslashes($tag['purpose'])) : '';
 
 						$tag_content = powerpress_trim_value($tag_content, 'tag_content');
 						$tag_purpose = powerpress_trim_value($tag_purpose, 'tag_purpose');
