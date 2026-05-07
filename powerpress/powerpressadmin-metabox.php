@@ -256,47 +256,6 @@ function episode_box_top($EnclosureURL, $FeedSlug, $ExtraData, $GeneralSettings,
             </div>
         </div>
 
-        <?php
-        if (!empty($GeneralSettings['cat_casting_strict']) && !empty($GeneralSettings['custom_cat_feeds'])) {
-            // Get Podcast Categories...
-            $cur_cat_id = intval(!empty($ExtraData['category']) ? $ExtraData['category'] : 0);
-            if (count($GeneralSettings['custom_cat_feeds']) == 1) // Lets auto select the category
-            {
-                foreach ($GeneralSettings['custom_cat_feeds'] as $null => $cur_cat_id) {
-                    break;
-                }
-                reset($GeneralSettings['custom_cat_feeds']);
-            }
-
-        ?>
-            <div id="pp-category-dropdown-<?php echo $FeedSlug; ?>">
-                <label for="Powerpress[<?php echo $FeedSlug; ?>][category]"><?php echo esc_html(__('Category', 'powerpress')); ?></label>
-                <div class="powerpress_row_content"><?php
-                                                    echo '<select id="powerpress_category_' . $FeedSlug . '" name="Powerpress[' . $FeedSlug . '][category]" class="pp-ep-box-input" title="Category">';
-                                                    echo '<option value="0"';
-                                                    echo '>' . esc_html(__('Select category', 'powerpress')) . '</option>' . "\n";
-
-                                                    foreach ($GeneralSettings['custom_cat_feeds'] as $null => $cat_id) {
-                                                        $catObj = get_category($cat_id);
-                                                        if (empty($catObj->name))
-                                                            continue; // Do not allow empty categories forward
-
-                                                        $label = $catObj->name;
-                                                        echo '<option value="' . esc_attr($cat_id) . '"';
-
-                                                        // never pre-select a category for a new post
-                                                        global $pagenow;
-                                                        if ($cat_id == $cur_cat_id && strpos($pagenow, 'post-new.php') === false)
-                                                            echo ' selected="selected"';
-                                                        echo '>' . esc_html($label) . '</option>' . "\n";
-                                                    }
-                                                    echo '</select>';
-                                                    ?>
-                </div>
-            </div>
-        <?php
-        }
-        ?>
         <?php if ($EnclosureURL) { ?>
             <div class="ep-box-line"></div>
         <?php } ?>
@@ -425,13 +384,16 @@ function seo_tab($FeedSlug, $ExtraData, $iTunesExplicit, $seo_feed_title, $Gener
                 if (!empty($GeneralSettings['cat_casting_strict']) && !empty($GeneralSettings['custom_cat_feeds'])) {
                     // get podcast categories
                     $cur_cat_id = intval(!empty($ExtraData['category']) ? $ExtraData['category'] : 0);
-                    // default to first category if none selected (new posts or single category)
-                    if ($cur_cat_id == 0 || count($GeneralSettings['custom_cat_feeds']) == 1) {
-                        foreach ($GeneralSettings['custom_cat_feeds'] as $null => $cur_cat_id) {
-                            break;
-                        }
-                        reset($GeneralSettings['custom_cat_feeds']);
+
+                    // SORT CATEGORY SELECTOR
+                    $cat_options = [];
+                    foreach ($GeneralSettings['custom_cat_feeds'] as $null => $cat_id) {
+                        $catObj = get_category($cat_id);
+                        if (empty($catObj->name))
+                            continue;
+                        $cat_options[$cat_id] = $catObj->name;
                     }
+                    asort($cat_options);
                 ?>
                 <div class="pp-section-container">
                     <h4 class="pp-section-title"><?php echo esc_html(__('Category', 'powerpress')); ?></h4>
@@ -442,12 +404,8 @@ function seo_tab($FeedSlug, $ExtraData, $iTunesExplicit, $seo_feed_title, $Gener
                     <div class="row" style="margin: auto">
                         <?php
                         echo '<select id="powerpress_category_' . $FeedSlug . '" name="Powerpress[' . $FeedSlug . '][category]" class="pp-ep-box-input col-4" title="Category">';
-                        foreach ($GeneralSettings['custom_cat_feeds'] as $null => $cat_id) {
-                            $catObj = get_category($cat_id);
-                            if (empty($catObj->name))
-                                continue; // do not allow empty categories forward
-
-                            $label = $catObj->name;
+                        echo '<option value="0">' . esc_html(__('Select category', 'powerpress')) . '</option>' . "\n";
+                        foreach ($cat_options as $cat_id => $label) {
                             echo '<option value="' . esc_attr($cat_id) . '"';
                             if ($cat_id == $cur_cat_id)
                                 echo ' selected="selected"';

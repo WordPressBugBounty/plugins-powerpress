@@ -1139,6 +1139,8 @@ function powerpress_admin_init()
                     }
 
                     $field = 'powerpress_feed'.($FeedSlug?'_'.$FeedSlug:'');
+                    $prev_feed_settings = get_option($field);
+                    $prev_itunes_image = isset($prev_feed_settings['itunes_image']) ? $prev_feed_settings['itunes_image'] : '';
                     powerpress_save_settings($Feed,  $field);
 				}
 
@@ -1189,6 +1191,30 @@ function powerpress_admin_init()
                             }
                         }
                         $results = powerpress_json_decode($response_data);
+                    }
+
+                    // SYNC FEED ARTWORK URL TO BLUBRRY DB
+                    if (isset($field, $prev_itunes_image) && !empty($Feed['itunes_image']) && $Feed['itunes_image'] !== $prev_itunes_image) {
+                        $artwork_results = powerpress_api_request(
+                            '/2/media/%s/coverart.json',
+                            [urlencode($GeneralSettingsTemp['blubrry_program_keyword'])],
+                            ['url' => $Feed['itunes_image']],
+                            $GeneralSettingsTemp,
+                            $creds,
+                            $auth,
+                            $api_url_array,
+                            30
+                        );
+                        if (is_array($artwork_results) && isset($artwork_results['error'])) {
+                            powerpress_page_message_add_error(__('Blubrry Hosting Error (updating Podcast Artwork)', 'powerpress') . ': ' . $artwork_results['error']);
+                        } else if (is_array($artwork_results) && isset($artwork_results['success'])) {
+                            powerpress_page_message_add_notice(__('Podcast Artwork synced to Blubrry.', 'powerpress'));
+                            // save Blubrry program image URL into Feed[itunes_image]
+                            if (!empty($artwork_results['image_url']) && $artwork_results['image_url'] !== $Feed['itunes_image']) {
+                                $Feed['itunes_image'] = $artwork_results['image_url'];
+                                powerpress_save_settings($Feed, $field);
+                            }
+                        }
                     }
                 }
 
@@ -3201,8 +3227,12 @@ function powerpress_edit_post($post_ID, $post)
 				if( !empty($ToSerialize['category']) )
 				{
 					$Categories = wp_get_post_categories($post_ID);
-					if( !in_array($ToSerialize['category'], $Categories) )
-					{
+                    $default_cat = (int) get_option('default_category');
+
+					// REPLACE W/ SELECTED CAT IF ONLY THE DEFAULT CAT IS SET
+					if(count($Categories) === 1 && in_array($default_cat, $Categories)) {
+						wp_set_post_categories($post_ID, array($ToSerialize['category']), false);
+					} else if(!in_array($ToSerialize['category'], $Categories)) {
 						$AddCategories = array($ToSerialize['category']);
 						wp_set_post_categories($post_ID, $AddCategories, true);
 					}
