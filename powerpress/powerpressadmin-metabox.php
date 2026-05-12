@@ -883,6 +883,30 @@ function chapters_tab($EnclosureURL, $FeedSlug, $object, $GeneralSettings, $PCIT
                 <?php } ?>
                 <div id="chapters-box-options-<?php echo $FeedSlug; ?>" style="margin-top: 1.5em;<?php echo $chapters_box_style; ?>">
 
+                    <?php if (!empty($GeneralSettings['blubrry_hosting'])) {
+                        if (empty($GeneralSettings['write_tags'])) {
+                            $writeChaptersToId3 = false;
+                        } else {
+                            $programDefaultId3  = !empty($GeneralSettings['tag_chapters']);
+                            $episodeOverrideId3 = $ExtraData['write_chapters_to_id3'] ?? null;
+                            $writeChaptersToId3 = ($episodeOverrideId3 !== null) ? !empty($episodeOverrideId3) : $programDefaultId3;
+                        }
+                    ?>
+                        <div style="border-left: 3px solid #d0d0d0; padding-left: 1em; margin: 0 0 1.5em 1.25em;">
+                            <p style="font-size: 14px; margin: 0;" class="pp-ep-box-text">
+                                <input type="hidden" name="Powerpress[<?= $FeedSlug; ?>][write_chapters_to_id3]" value="0">
+                                <input id="powerpress_write_chapters_id3_<?= $FeedSlug; ?>"
+                                       type="checkbox"
+                                       name="Powerpress[<?= $FeedSlug; ?>][write_chapters_to_id3]" value="1"
+                                       class="ep-box-checkbox"
+                                       <?= $writeChaptersToId3 ? 'checked' : ''; ?> />
+                                <label for="powerpress_write_chapters_id3_<?= $FeedSlug; ?>">
+                                    <?= esc_html(__('Embed chapter tags into media file (CHAP/CTOC)', 'powerpress')); ?>
+                                </label>
+                            </p>
+                        </div>
+                    <?php } ?>
+
                     <p style="font-size: 14px;" class="pp-ep-box-text">
                         <input id="powerpress_chapters_none_<?php echo $FeedSlug ?>" title="<?php echo esc_attr(__("No chapters", "powerpress")); ?>"
                             class="media-details-radio"

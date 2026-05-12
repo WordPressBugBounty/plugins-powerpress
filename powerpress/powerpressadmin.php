@@ -729,10 +729,14 @@ function powerpress_admin_init()
 							if( !empty($_POST['coverart_image_checkbox']) && $key == 'tag_coverart' )
 								continue;
 								
-							// Specail case, the track is saved in a separate column in the database.
+							// Special case, the track is saved in a separate column in the database.
 							if( $key == 'tag_track' )
-								continue; 
-							
+								continue;
+
+							// Special case, tag_chapters is a boolean radio, no TagValues[]
+							if( $key == 'tag_chapters' )
+								continue;
+
 							if( !empty($value) )
 								$General[$key] = $TagValues[$key];
 							else
@@ -3166,6 +3170,7 @@ function powerpress_edit_post($post_ID, $post)
                     $ToSerialize['pci_chapters'] = 1;
                     $ToSerialize['pci_chapters_manual'] = !empty($Powerpress['chapters']['manual']) ? 1 : 0;
                     $ToSerialize['pci_chapters_url'] = stripslashes($Powerpress['pci_chapters_url']);
+                    $ToSerialize['write_chapters_to_id3'] = !empty($Powerpress['write_chapters_to_id3']) ? 1 : 0;
                     $chapterURL = $ToSerialize['pci_chapters_url'];
                 } else {
                     $chapterURL = '';
@@ -6244,13 +6249,28 @@ function powerpress_process_hosting($post_id, $post_title)
 				$enc_chapters_url = urlencode($episode_data['pci_chapters_url']);
 				$chapters_query = "{$podcast_search_and}&chapters_url={$enc_chapters_url}";
 
+                // ID3 CHAP/CTOC embed params
+                $chapters_body = [];
+                if (!empty($episode_data['write_chapters_to_id3'])) {
+                    $response = wp_remote_get($episode_data['pci_chapters_url'], ['timeout' => 5]);
+                    if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+                        $chapters_json = wp_remote_retrieve_body($response);
+                        if ($chapters_json !== '') {
+                            $chapters_body = [
+                                'chapters_id3' => 1,
+                                'chapters_json' => $chapters_json,
+                            ];
+                        }
+                    }
+                }
+
 				// api request
 				$enc_keyword = urlencode($program_keyword);
 				$enc_filename = urlencode($enclosure_filename);
 				$chapters_results = powerpress_api_request(
 					"/2/media/{$enc_keyword}/{$enc_filename}?chapters=true{$chapters_query}&purge_chapters=1",
 					[],
-					[],
+					$chapters_body,
 					$settings,
 					$creds,
 					$auth,
@@ -6267,6 +6287,15 @@ function powerpress_process_hosting($post_id, $post_title)
 					}
 
 					$episode_data_modified = true;
+				}
+
+				// check id3 result + error
+				if (isset($chapters_results['id3']) && empty($chapters_results['id3']['success'])) {
+					$id3_error = $chapters_results['id3']['error'] ?? __('unknown error', 'powerpress');
+					powerpress_add_error(sprintf(
+						__('Chapter embed into media file failed: %s', 'powerpress'),
+						esc_html($id3_error)
+					));
 				}
 
 				// display api messages/errors

@@ -87,7 +87,21 @@ function ToggleID3Tags(Obj)
 	powerpressadmin_tag_option('tag_copyright', $General['tag_copyright'], __('Copyright Tag', 'powerpress'), __('Use &copy; Talent Name', 'powerpress') );
 	powerpressadmin_tag_option('tag_url', $General['tag_url'], __('URL Tag', 'powerpress'), __('Use main blog URL', 'powerpress') .': '.  get_bloginfo('url') .'' );
 	powerpressadmin_tag_option('tag_coverart', $General['tag_coverart'], __('Coverart Tag', 'powerpress'), '' );
-	
+?>
+
+    <div class="pp-settings-subsection" style="margin-left: 3em;">
+        <p class="pp-main"><?php _e('Auto-Embed Chapter Tags', 'powerpress'); ?></p>
+        <p class="pp-sub">
+            <input type="radio" name="General[tag_chapters]" value="0" <?php if( empty($General['tag_chapters']) ) echo 'checked'; ?> />
+            <?php _e('Do not embed chapter tags', 'powerpress'); ?>
+            <br />
+            <input type="radio" name="General[tag_chapters]" value="1" <?php if( !empty($General['tag_chapters']) ) echo 'checked'; ?> />
+            <?php _e('Embed chapter tags into media file (CHAP/CTOC)', 'powerpress'); ?>
+        </p>
+        <p class="pp-label-bottom" style="margin-bottom: 0;"><?php echo __('When enabled, chapters saved on episodes will be embedded as ID3 (CHAP/CTOC) tags directly into the media file. Sets the per-episode default. This can be overriden on individual episodes.', 'powerpress'); ?></p>
+    </div>
+
+<?php
 ?>
 
 </div>
