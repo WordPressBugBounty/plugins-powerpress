@@ -66,18 +66,6 @@ function powerpress_admin_jquery_init()
 	$DeleteFile = false;
 	switch($action)
 	{
-
-        case 'powerpress-jquery-add-show-to-network':{
-            mail('grant.galinger@rawvoice.com', 'ajax action', $action);
-
-			check_admin_referer('powerpress-jquery-add-show-to-network');
-
-            ?>
-
-
-            <?php
-        }
-
 	    case 'powerpress-jquery-migrate-queue': {
 			check_admin_referer('powerpress-jquery-migrate-queue');
             powerpress_admin_jquery_header('powerpress/powerpressadmin_migrate.php');
@@ -837,6 +825,7 @@ window.onload = function() {
 				    $accessToken = powerpress_getAccessToken();
                     $auth->revokeClient($accessToken, $creds['client_id'], $creds['client_secret']);
                     delete_option('powerpress_creds');
+                    powerpress_clear_blubrry_caches();
                 }
 				?>
                 <script>
@@ -977,6 +966,7 @@ window.onload = function() {
 				    $accessToken = powerpress_getAccessToken();
                     $auth->revokeClient($accessToken, $creds['client_id'], $creds['client_secret']);
                     delete_option('powerpress_creds');
+                    powerpress_clear_blubrry_caches();
                 }
 				$Close = true;
 				$Save = true;

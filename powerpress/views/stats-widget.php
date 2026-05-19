@@ -66,7 +66,7 @@ $program_keyword = $program_card->get_program_keyword();
 
     <?php elseif (isset($stats_content['error'])) : ?>
         <!-- ERROR STATE -->
-        <div class="pp-stats-error-message"><?php echo $stats_content['error']; ?></div>
+        <div class="pp-stats-error-message"><?php echo wp_kses_post($stats_content['error']); ?></div>
 
     <?php elseif (empty($stats_content)) : ?>
         <!-- EMPTY STATE -->

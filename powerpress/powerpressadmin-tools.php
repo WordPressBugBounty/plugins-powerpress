@@ -69,5 +69,18 @@ function powerpress_admin_tools(){
         <div class="pp-row pp-tools-row">
             <p class="pp-tools-text">The Diagnostics page checks to see if your server is configured to support all the available features in Blubrry PowerPress.</p>
         </div>
+
+        <hr>
+
+        <!-- RESET BLUBRRY CONNECTION -->
+        <div class="pp-row pp-tools-row">
+            <h3 class="pp-page-h3-bold pp-tools-item">Reset Blubrry Connection</h3>
+            <a href="<?php echo admin_url() . wp_nonce_url("admin.php?page=powerpress/powerpressadmin_tools.php&amp;action=powerpress-reset-blubrry-connection", 'powerpress-reset-blubrry-connection'); ?>" title="Disconnect and re-link Blubrry"
+               class="powerpress_save_button_other pp-tools-button"
+               onclick="return confirm('<?php echo esc_js(__('This will disconnect your Blubrry account and start a fresh re-link. Continue?', 'powerpress')); ?>');">RESET &amp; RECONNECT</a>
+        </div>
+        <div class="pp-row pp-tools-row">
+            <p class="pp-tools-text">Use this if you cannot unlink through the normal Hosting Settings popup. Clears your local Blubrry connection state and redirects to a fresh OAuth re-link.</p>
+        </div>
     </div>
 <?php } ?>

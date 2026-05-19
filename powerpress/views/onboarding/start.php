@@ -13,7 +13,7 @@ $pp_nonce = powerpress_login_create_nonce();
             </div>
             <div style="display: inline-block;">
                 <h4 style="margin: 0;"><?php echo __('Welcome to PowerPress','powerpress'); ?></h4>
-                <h5 style="margin: 0;"><?php echo __('Let\'s get started by connecting your podcast. ','powerpress'); ?> <a href="<?php echo esc_attr(add_query_arg( '_wpnonce', $pp_nonce, admin_url("admin.php?page=powerpressadmin_onboarding.php&step=blubrrySignin&from=new_post")));?>">Connect Blubrry Account</a></h5>
+                <h5 style="margin: 0;"><?php echo __('Let\'s get started by connecting your podcast. ','powerpress'); ?> <a href="<?php echo esc_attr(powerpress_get_blubrry_signin_url($pp_nonce)); ?>">Connect Blubrry Account</a></h5>
             </div>
         </div>
             <hr  class="pp_align-center" />

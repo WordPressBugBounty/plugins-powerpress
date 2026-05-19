@@ -21,6 +21,7 @@ import { initContentLinksManager } from './modules/pci/ContentLinksManager.js';
 // ============================================
 
 import { toggleVisibility, initCharCounter } from './utils/dom-utils.js';
+import { initMediaEdit } from './modules/post-editor/EpisodeEnclosureManager.js';
 
 // ============================================
 //          GLOBAL EXPORTS
@@ -64,3 +65,9 @@ document.querySelectorAll('[id^="powerpress_shownotes_"]').forEach(ta => {
     ta.addEventListener('input', grow);
     grow();
 });
+
+// ============================================
+//          MEDIA EDIT INIT
+// ============================================
+
+initMediaEdit();

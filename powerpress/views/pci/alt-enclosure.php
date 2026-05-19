@@ -122,8 +122,9 @@ $program_keyword = $DataSource['program_keyword'] ?? $GeneralSettings['blubrry_p
                         </div>
                         <a class="button-blubrry"
                             id="ep-box-connect-account-<?php echo $FeedSlug; ?>"
+                            style="background: transparent; border: none; color: inherit;"
                             title="<?php echo esc_attr(__('Blubrry Services Integration', 'powerpress')); ?>"
-                            href="<?php echo esc_attr(add_query_arg('_wpnonce', $pp_nonce, admin_url("admin.php?page=powerpressadmin_onboarding.php&step=blubrrySignin&from=new_post"))); ?>">
+                            href="<?php echo esc_attr(powerpress_get_blubrry_signin_url($pp_nonce)); ?>">
                             <div id="ep-box-connect-account-button-<?php echo $FeedSlug; ?>"><?php echo __('Connect to Blubrry', 'powerpress'); ?></div>
                         </a>
                     </div>

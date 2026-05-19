@@ -12,7 +12,7 @@ function episode_box_top($EnclosureURL, $FeedSlug, $ExtraData, $GeneralSettings,
         $style_attr = "";
         $padding = "";
     } else {
-        $style1 = "display: inline-block";
+        $style1 = "";
         $style2 = "display: none";
         $style3 = "display: none";
         $style4 = "display: block";
@@ -55,22 +55,21 @@ function episode_box_top($EnclosureURL, $FeedSlug, $ExtraData, $GeneralSettings,
         <div id="pp-media-blubrry-container-<?php echo $FeedSlug; ?>" <?php echo $style_attr; ?>>
             <div id="pp-selected-media-text-<?php echo $FeedSlug; ?>">
                 <div id="media-input-<?php echo $FeedSlug; ?>">
-                    <div id="pp-url-input-container-<?php echo $FeedSlug; ?>" style="<?php echo $style1 ?>">
-                        <div id="pp-url-input-label-container-<?php echo $FeedSlug; ?>">
+                    <div id="pp-url-input-container-<?php echo $FeedSlug; ?>" class="row align-items-center" style="<?php echo $style1 ?>">
+                        <div id="pp-url-input-label-container-<?php echo $FeedSlug; ?>" class="col">
                             <input type="hidden" id="powerpress_url_<?php echo $FeedSlug; ?>" title="<?php echo esc_attr(__('File Media or URL')); ?>"
                                 name="Powerpress[<?php echo $FeedSlug; ?>][url]" placeholder="https://example.com/path/to/media.mp3"
                                 value="<?php echo esc_attr($EnclosureURL); ?>" />
-                            <input type="text" id="powerpress_url_display_<?php echo $FeedSlug; ?>" title="<?php echo esc_attr(__('File Media or URL')); ?>"
+                            <input type="text" id="powerpress_url_display_<?php echo $FeedSlug; ?>" data-feed-slug="<?php esc_attr_e($FeedSlug); ?>" title="<?php echo esc_attr(__('File Media or URL')); ?>"
                                 name="null" placeholder="https://example.com/path/to/media.mp3"
-                                value="<?php echo esc_attr($EnclosureURL); ?>" onchange="powerpress_updateMediaInput(this); return false;" />
+                                value="<?php echo esc_attr($EnclosureURL); ?>" />
                         </div>
-                        <div id="pp-change-media-file-<?php echo $FeedSlug; ?>" style="display: none;">
-                            <div id="save-media-<?php echo $FeedSlug; ?>" class="pp-blue-button"
-                                onclick="powerpress_saveMediaFile(this); return false;"><?php echo esc_html(__('VERIFY', 'powerpress')); ?></div>
+                        <div id="pp-change-media-file-<?php echo $FeedSlug; ?>" class="col-auto" style="display: none;">
+                            <div id="save-media-<?php echo $FeedSlug; ?>" data-feed-slug="<?php esc_attr_e($FeedSlug); ?>" data-action="save" class="pp-blue-button"><?php echo esc_html(__('VERIFY', 'powerpress')); ?></div>
+                            <button id="cancel-media-edit-<?php echo $FeedSlug; ?>" data-feed-slug="<?php esc_attr_e($FeedSlug); ?>" data-action="cancel" type="button" class="pp-media-edit-details"><b><?php echo esc_html(__('CANCEL', 'powerpress')); ?></b></button>
                         </div>
-                        <div id="select-media-file-<?php echo $FeedSlug; ?>" style="<?php echo $style1 ?>">
-                            <div id="continue-to-episode-settings-<?php echo $FeedSlug; ?>" class="pp-blue-button"
-                                onclick="powerpress_continueToEpisodeSettings(this); return false;"><?php echo esc_html(__('VERIFY', 'powerpress')); ?></div>
+                        <div id="select-media-file-<?php echo $FeedSlug; ?>" class="col-auto" style="<?php echo $style1 ?>">
+                            <div id="continue-to-episode-settings-<?php echo $FeedSlug; ?>" data-feed-slug="<?php esc_attr_e($FeedSlug); ?>" data-action="continue" class="pp-blue-button"><?php echo esc_html(__('VERIFY', 'powerpress')); ?></div>
                         </div>
                     </div>
                     <div style="<?php echo $style3 ?>" title="<?php echo esc_attr($EnclosureURL); ?>"
@@ -93,47 +92,36 @@ function episode_box_top($EnclosureURL, $FeedSlug, $ExtraData, $GeneralSettings,
                 </div>
             </div>
             <div id="ep-box-blubrry-service-<?php echo $FeedSlug; ?>" style="<?php echo $style4; ?>">
-                <?php if ($GeneralSettings['blubrry_hosting']) { ?>
-                    <div id="ep-box-blubrry-connected-<?php echo $FeedSlug; ?>">
-                        <img class="ep-box-blubrry-icon" src="<?php echo powerpress_get_root_url(); ?>images/blubrry_icon.png" alt="" />
-                        <div class="ep-box-blubrry-info-container">
+                <?php
+                $is_hosting_connected = !empty($GeneralSettings['blubrry_hosting']);
+                $pp_nonce = $is_hosting_connected ? '' : powerpress_login_create_nonce();
+                $service_container_id = $is_hosting_connected
+                    ? 'ep-box-blubrry-connected-' . $FeedSlug
+                    : 'ep-box-blubrry-connect-' . $FeedSlug;
+                ?>
+                <div id="<?php echo $service_container_id; ?>">
+                    <img class="ep-box-blubrry-icon" src="<?php echo powerpress_get_root_url(); ?>images/blubrry_icon.png" alt="" />
+                    <div class="ep-box-blubrry-info-container">
+                        <?php if ($is_hosting_connected) { ?>
                             <h4 class="blubrry-connect-info"><?php echo __('Your Blubrry account is connected', 'powerpress'); ?></h4>
                             <p class="blubrry-connect-info"><?php echo __('Select or upload your media to your Blubrry hosting account.', 'powerpress'); ?></p>
-                        </div>
+                        <?php } else { ?>
+                            <h4 class="blubrry-connect-info"><?php echo __('If you host with Blubrry', 'powerpress'); ?></h4>
+                            <p class="blubrry-connect-info"><?php echo __('You can select a media file from your computer by connecting your hosting account.', 'powerpress'); ?></p>
+                        <?php } ?>
+                    </div>
+                    <?php if ($is_hosting_connected) { ?>
                         <a id="pp-change-media-link-<?php echo $FeedSlug; ?>"
                             href="<?php echo admin_url(); ?>?action=powerpress-jquery-media&podcast-feed=<?php echo $FeedSlug; ?>&KeepThis=true&TB_iframe=true&modal=false"
                             class="thickbox">
                             <div id="change-media-button-<?php echo $FeedSlug; ?>"><?php echo esc_html(__('CHOOSE FILE', 'powerpress')); ?></div>
                         </a>
-                    </div>
-                <?php } else {
-                    $pp_nonce = powerpress_login_create_nonce();
-                ?>
-                    <div id="ep-box-blubrry-connect-<?php echo $FeedSlug; ?>" style="<?php echo $style4; ?>">
-                        <img class="ep-box-blubrry-icon" src="<?php echo powerpress_get_root_url(); ?>images/blubrry_icon.png" alt="" />
-                        <div class="ep-box-blubrry-info-container">
-                            <h4 class="blubrry-connect-info"><?php echo __('If you host with Blubrry', 'powerpress'); ?></h4>
-                            <p class="blubrry-connect-info"><?php echo __('You can select a media file from your computer by connecting your hosting account.', 'powerpress'); ?></p>
-                        </div>
-                        <a class="button-blubrry" id="ep-box-connect-account-<?php echo $FeedSlug; ?>" title="<?php echo esc_attr(__('Blubrry Services Integration', 'powerpress')); ?>" href="<?php echo esc_attr(add_query_arg('_wpnonce', $pp_nonce, admin_url("admin.php?page=powerpressadmin_onboarding.php&step=blubrrySignin&from=new_post"))); ?>">
+                    <?php } else { ?>
+                        <a class="button-blubrry" id="ep-box-connect-account-<?php echo $FeedSlug; ?>" style="background: transparent; border: none; color: inherit;" title="<?php echo esc_attr(__('Blubrry Services Integration', 'powerpress')); ?>" href="<?php echo esc_attr(powerpress_get_blubrry_signin_url($pp_nonce)); ?>">
                             <div id="ep-box-connect-account-button-<?php echo $FeedSlug; ?>"><?php echo __('Connect to Blubrry', 'powerpress'); ?></div>
                         </a>
-                    </div>
-                    <div id="ep-box-min-blubrry-connect-<?php echo $FeedSlug; ?>" style="<?php echo $style2; ?>">
-                        <div id="pp-connect-account-<?php echo $FeedSlug; ?>">
-                            <a id="pp-connect-account-link-<?php echo $FeedSlug; ?>" class="pp-media-edit-details button-blubrry" title="<?php echo esc_attr(__("Blubrry Services Integration", "powerpress")); ?>" href="<?php echo esc_attr(add_query_arg('_wpnonce', $pp_nonce, admin_url("admin.php?page=powerpressadmin_onboarding.php&step=blubrrySignin&from=new_post"))); ?>">
-                                <b><?php echo esc_html(__('Connect Blubrry Account', 'powerpress')); ?></b>
-                            </a>
-                        </div>
-                        <div id="pp-cancel-container-<?php echo $FeedSlug; ?>">
-                            <div id="pp-cancel-media-<?php echo $FeedSlug; ?>">
-                                <button id="cancel-media-edit-<?php echo $FeedSlug; ?>" class="pp-media-edit-details"
-                                    onclick="powerpress_cancelMediaEdit(this); return false;"><b><?php echo esc_html(__('CANCEL', 'powerpress')); ?></b></button>
-
-                            </div>
-                        </div>
-                    </div>
-                <?php } ?>
+                    <?php } ?>
+                </div>
             </div>
         </div>
         <div id="pp-warning-messages">
@@ -168,8 +156,7 @@ function episode_box_top($EnclosureURL, $FeedSlug, $ExtraData, $GeneralSettings,
         <div id="media-file-details-<?php echo $FeedSlug; ?>" style="<?php echo $style3; ?>">
             <div>
                 <div id="edit-media-file-<?php echo $FeedSlug; ?>" style="<?php echo $style3 ?>">
-                    <button id="pp-edit-media-button-<?php echo $FeedSlug; ?>" class="media-details"
-                        onclick="powerpress_changeMediaFile(event, this); return false;"><?php echo esc_html(__('Edit Media File', 'powerpress')); ?></button>
+                    <button id="pp-edit-media-button-<?php echo $FeedSlug; ?>" data-feed-slug="<?php esc_attr_e($FeedSlug); ?>" data-action="edit" type="button" class="media-details"><?php echo esc_html(__('Edit Media File', 'powerpress')); ?></button>
                 </div>
                 <div id="show-hide-media-details-<?php echo $FeedSlug; ?>">
                     <!--<div class="ep-box-line-bold"></div>-->
@@ -1532,10 +1519,6 @@ function notes_tab($FeedSlug, $object, $GeneralSettings, $ExtraData)
                     }
                     return false;
                 }
-
-                jQuery(document).ready(function() {
-
-                });
 
                 // -->
             </script>

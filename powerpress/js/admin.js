@@ -1,9 +1,3 @@
-function powerpress_verifyMedia(el) {
-    let feed_slug = el.id.replace("verify-button-", "");
-    powerpress_get_media_info(feed_slug);
-}
-
-
 /**
  * Sanitize and encode all HTML in a user-submitted string to prevent XSS
  * https://portswigger.net/web-security/cross-site-scripting/preventing
@@ -24,7 +18,6 @@ var sanitizeHTML = function (str) {
 var __ = (typeof wp !== 'undefined' && wp.i18n && wp.i18n.__) ? wp.i18n.__ : function(s) { return s; };
 
 var interval = false;
-var verify_interval = false;
 
 jQuery(window).on("load", function(){
     let url = sanitizeHTML(jQuery("#verify-account-url").val());
@@ -314,18 +307,6 @@ function powerpress_toggleMetamarksSettings(el) {
     }
 }
 
-function powerpress_verifyButtonColor(feed_slug) {
-    let verify_button = jQuery("#save-media-" + feed_slug);
-    let other_v_button = jQuery("#continue-to-episode-settings-" + feed_slug);
-    if (jQuery("#powerpress_url_" + feed_slug).val().length > 0) {
-        verify_button.attr("style", "background-color: #0c74d5; color: white;");
-        other_v_button.attr("style", "background-color: #0c74d5; color: white;");
-    } else {
-        verify_button.attr("style", "background-color: #fafafa; color: #263238; border: 1px solid black;");
-        other_v_button.attr("style", "background-color: #fafafa; color: #263238; border: 1px solid black;");
-    }
-}
-
 function powerpress_showHideMediaDetails(el) {
     let feed_slug = el.id.replace("show-details-link-", "");
     let show_det = jQuery("#show-details-link-" + feed_slug);
@@ -364,138 +345,6 @@ function powerpress_showHideAppleAdvanced(el) {
     el.id = new_id;
     let div = jQuery("#apple-advanced-settings-" + feed_slug);
     div.toggleClass('pp-hidden-settings');
-}
-
-function powerpress_changeMediaFile(evt, el) {
-    evt.preventDefault();
-    let feed_slug = el.id.replace("pp-edit-media-button-", "");
-    let input = jQuery("#pp-url-input-container-" + feed_slug);
-    input.removeAttr("style");
-    input.attr("style", "display: inline-block");
-    let show_input = jQuery("#powerpress_url_show_" + feed_slug);
-    show_input.removeAttr("style");
-    show_input.attr("style", "display: none");
-    let edit_media = jQuery("#edit-media-file-" + feed_slug);
-    edit_media.removeAttr("style");
-    edit_media.attr("style", "display: none");
-    let buttons = jQuery("#pp-change-media-file-" + feed_slug);
-    buttons.removeAttr("style");
-    buttons.attr("style", "display: inline-block");
-    let blubrry_info = jQuery("#ep-box-blubrry-service-" + feed_slug);
-    blubrry_info.removeAttr("style");
-    blubrry_info.attr("style", "display: block");
-    let container = jQuery("#pp-media-blubrry-container-" + feed_slug);
-    container.attr("style", "background-color: #f1f4f9; padding: 2ch;");
-    if(!verify_interval) {
-        verify_interval = setInterval(function() { powerpress_verifyButtonColor(feed_slug); })
-    }
-}
-
-//save button for edit media link
-function powerpress_cancelMediaEdit(el) {
-    let feed_slug = el.id.replace("cancel-media-edit-", "");
-    let display_filename = jQuery("#ep-box-filename-" + feed_slug);
-    let link = sanitizeHTML(display_filename.val());
-    let input = jQuery("#pp-url-input-container-" + feed_slug);
-    let url_field = jQuery("#powerpress_url_" + feed_slug + " > input");
-    let show_input = jQuery("#powerpress_url_show_" + feed_slug);
-    let edit_media = jQuery("#edit-media-file-" + feed_slug);
-    let select_file = jQuery("#select-media-file-" + feed_slug);
-    let buttons = jQuery("#pp-change-media-file-" + feed_slug);
-    let warning = jQuery("#file-change-warning-" + feed_slug);
-    let blubrry_info = jQuery("#ep-box-blubrry-service-" + feed_slug);
-    let container = jQuery("#pp-media-blubrry-container-" + feed_slug);
-    if(verify_interval) {
-        clearInterval(verify_interval);
-        verify_interval = false;
-    }
-    url_field.val(link);
-    warning.css('display', 'none');
-    input.removeAttr("style");
-    input.attr("style", "display: none");
-    show_input.css("display", "inline-block");
-    edit_media.removeAttr("style");
-    edit_media.attr("style", "display: inline-block");
-    select_file.removeAttr("style");
-    select_file.attr("style", "display: none");
-    buttons.removeAttr("style");
-    buttons.attr("style", "display: none");
-    blubrry_info.removeAttr("style");
-    blubrry_info.attr("style", "display: none");
-    container.removeAttr("style");
-}
-
-//save button for edit media link
-function powerpress_saveMediaFile(el) {
-    let feed_slug = el.id.replace("save-media-", "");
-    let link = sanitizeHTML(jQuery("#powerpress_url_display_" + feed_slug).val());
-    let warning = jQuery("#file-change-warning-" + feed_slug);
-
-    if (link !== '') {
-        // call verification
-        powerpress_get_media_info(feed_slug);
-        if(verify_interval) {
-            clearInterval(verify_interval);
-            verify_interval = false;
-        }
-        warning.css('display', 'none');
-    } else {
-        warning.css('display', 'block');
-        warning.addClass("error");
-    }
-}
-
-//Display all tabs along with an empty field for media
-function powerpress_skipToEpisodeSettings(feed_slug) {
-    let tab_container = jQuery("#tab-container-" + feed_slug);
-    let warning = jQuery("#file-select-warning-" + feed_slug);
-    let details = jQuery("#media-file-details-" + feed_slug);
-    let blu_container = jQuery("#pp-media-blubrry-container-" + feed_slug);
-    let connect_info = jQuery("#ep-box-blubrry-connect-" + feed_slug);
-    let connect_info_small = jQuery("#ep-box-min-blubrry-connect-" + feed_slug);
-    tab_container.removeAttr("style");
-    tab_container.attr("style", "display: block");
-    warning.removeAttr("style");
-    warning.attr("style", "display: none");
-    details.removeAttr("style");
-    details.attr("style", "display: inline-block");
-    blu_container.removeAttr("style");
-    blu_container.attr("style", "background-color: #f1f4f9; padding: 2ch;");
-    if(verify_interval) {
-        clearInterval(verify_interval);
-        verify_interval = false;
-    }
-    if (connect_info.length) {
-        connect_info.attr("style", "display: none");
-        connect_info_small.removeAttr("style");
-    }
-}
-
-// event listener to ensure that the hidden media URL input matches the other
-function powerpress_updateMediaInput(el) {
-    let hidden_input_id = el.id.replace("display_", "");
-    jQuery('#' + hidden_input_id).val(el.value);
-}
-
-//Continue button for adding media to a post
-function powerpress_continueToEpisodeSettings(el) {
-    let feed_slug = el.id.replace("continue-to-episode-settings-", "");
-    let link = sanitizeHTML(jQuery("#powerpress_url_display_" + feed_slug).val());
-    let warning = jQuery("#file-select-warning-" + feed_slug);
-
-    if (link !== '') {
-        // call verification 
-        powerpress_get_media_info(feed_slug);
-        if(verify_interval) {
-            clearInterval(verify_interval);
-            verify_interval = false;
-        }
-        warning.removeAttr("style");
-        warning.attr("style", "display: none");
-    } else {
-        warning.css('display', 'block');
-        warning.addClass("error");
-    }
 }
 
 //keeps art previews up to date

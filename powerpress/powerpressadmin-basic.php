@@ -144,14 +144,14 @@ jQuery(document).ready(function($) {
 
 <div id="powerpress_settings_page" class="powerpress_tabbed_content">
     <div class="pp-tab">
-        <button id="welcome-tab" class="tablinks active" onclick="powerpress_openTab(event, 'settings-welcome')"><?php echo htmlspecialchars(__('Welcome', 'powerpress')); ?></button>
+        <button type="button" id="welcome-tab" class="tablinks active" onclick="powerpress_openTab(event, 'settings-welcome')"><?php echo htmlspecialchars(__('Welcome', 'powerpress')); ?></button>
         <!-- #tab1 deprecated. was episodes tab -->
-        <button id="feeds-tab" class="tablinks" onclick="powerpress_openTab(event, 'settings-feeds')"><?php echo htmlspecialchars(__('Feeds', 'powerpress')); ?></button>
-        <button id="website-tab" class="tablinks" onclick="powerpress_openTab(event, 'settings-website')"><?php echo htmlspecialchars(__('Website', 'powerpress')); ?></button>
-        <button id="destinations-tab" class="tablinks" onclick="powerpress_openTab(event, 'settings-destinations')"><?php echo htmlspecialchars(__('Destinations', 'powerpress')); ?></button>
-        <!-- <button id="analytics-tab" class="tablinks" onclick="openTab(event, 'settings-analytics')"><?php echo htmlspecialchars(__('Analytics', 'powerpress')); ?></button> -->
-        <button id="advanced-tab" class="tablinks" onclick="powerpress_openTab(event, 'settings-advanced')"><?php echo htmlspecialchars(__('Advanced', 'powerpress')); ?></button>
-        <button id="make-money-tab" class="tablinks" onclick="powerpress_openTab(event, 'settings-make-money')"><?php echo htmlspecialchars(__('Make Money', 'powerpress')); ?></button>
+        <button type="button" id="feeds-tab" class="tablinks" onclick="powerpress_openTab(event, 'settings-feeds')"><?php echo htmlspecialchars(__('Feeds', 'powerpress')); ?></button>
+        <button type="button" id="website-tab" class="tablinks" onclick="powerpress_openTab(event, 'settings-website')"><?php echo htmlspecialchars(__('Website', 'powerpress')); ?></button>
+        <button type="button" id="destinations-tab" class="tablinks" onclick="powerpress_openTab(event, 'settings-destinations')"><?php echo htmlspecialchars(__('Destinations', 'powerpress')); ?></button>
+        <!-- <button type="button" id="analytics-tab" class="tablinks" onclick="openTab(event, 'settings-analytics')"><?php echo htmlspecialchars(__('Analytics', 'powerpress')); ?></button> -->
+        <button type="button" id="advanced-tab" class="tablinks" onclick="powerpress_openTab(event, 'settings-advanced')"><?php echo htmlspecialchars(__('Advanced', 'powerpress')); ?></button>
+        <button type="button" id="make-money-tab" class="tablinks" onclick="powerpress_openTab(event, 'settings-make-money')"><?php echo htmlspecialchars(__('Make Money', 'powerpress')); ?></button>
         <?php
         $hasChannels = isset($General['channels']) && $General['channels'] == 1;
         $hasCats = isset($General['cat_casting']) && $General['cat_casting'] == 1;
@@ -161,14 +161,14 @@ jQuery(document).ready(function($) {
 
         if ((!$hasChannels && !$hasCats && !$hasTax && !$hasPT) || $slug == 'podcast') {
         ?>
-        <button id="live-item-tab" class="tablinks" onclick="powerpress_openTab(event, 'settings-live-item')"><?php echo htmlspecialchars(__('Live Item', 'powerpress')); ?></button>
+        <button type="button" id="live-item-tab" class="tablinks" onclick="powerpress_openTab(event, 'settings-live-item')"><?php echo htmlspecialchars(__('Live Item', 'powerpress')); ?></button>
         <?php } ?>
-        <button id="experimental-tab" class="tablinks" onclick="powerpress_openTab(event, 'settings-experimental')"><?php echo htmlspecialchars(__('Experimental', 'powerpress')); ?></button>
+        <button type="button" id="experimental-tab" class="tablinks" onclick="powerpress_openTab(event, 'settings-experimental')"><?php echo htmlspecialchars(__('Experimental', 'powerpress')); ?></button>
     </div>
 	
 	<div id="settings-welcome" class="pp-tabcontent active">
         <?php powerpress_render_sidenav_container('welcome', 'Blubrry Services', $General); ?>
-        <button style="display: none;" id="welcome-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'welcome-all')"><img class="pp-nav-icon" style="width: 22px;" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/rss-symbol.svg"><?php echo htmlspecialchars(__('Hidden button', 'powerpress')); ?></button>
+        <button type="button" style="display: none;" id="welcome-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'welcome-all')"><img class="pp-nav-icon" style="width: 22px;" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/rss-symbol.svg"><?php echo htmlspecialchars(__('Hidden button', 'powerpress')); ?></button>
         <div id="welcome-all" class="pp-sidenav-tab active">
 	        <?php powerpressadmin_welcome($General, $FeedSettings); ?>
         </div>
@@ -179,13 +179,13 @@ jQuery(document).ready(function($) {
             <?php powerpress_render_sidenav_toggle('feeds', 'More Feed Settings and Blubrry Services'); ?>
             <div class="pp-sidenav">
                 <div class="pp-sidenav-extra"><p class="pp-sidenav-extra-text"><b><?php echo htmlspecialchars(__('FEED SETTINGS', 'powerpress')); ?></b></p></div>
-                <button id="feeds-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'feeds-feeds')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/megaphone_gray.svg"><?php echo htmlspecialchars(__('Podcast Feeds', 'powerpress')); ?></button>
-                <button class="pp-sidenav-tablinks" id="feeds-settings-tab" onclick="sideNav(event, 'feeds-settings')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/option_bar_settings_gray.svg"><?php echo htmlspecialchars(__('Feed Settings', 'powerpress')); ?></button>
-                <button class="pp-sidenav-tablinks" id="feeds-artwork-tab" onclick="sideNav(event, 'feeds-artwork')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/camera_gray.svg"><?php echo htmlspecialchars(__('Podcast Artwork', 'powerpress')); ?></button>
-                <button class="pp-sidenav-tablinks" id="feeds-seo-tab" onclick="sideNav(event, 'feeds-seo')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/fileboard_checklist_gray.svg"><?php echo htmlspecialchars(__('Podcast SEO', 'powerpress')); ?></button>
-                <button class="pp-sidenav-tablinks" id="feeds-basic-tab" onclick="sideNav(event, 'feeds-basic')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/edit_gray.svg"><?php echo htmlspecialchars(__('Basic Show Information', 'powerpress')); ?></button>
-                <button class="pp-sidenav-tablinks" id="feeds-rating-tab" onclick="sideNav(event, 'feeds-rating')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/star_favorite_gray.svg"><?php echo htmlspecialchars(__('Rating Settings', 'powerpress')); ?></button>
-                <button class="pp-sidenav-tablinks" id="feeds-apple-tab" onclick="sideNav(event, 'feeds-apple')"><span id="apple-icon-feed" class="destinations-side-icon" style="margin-left: 2px;"></span><span class="destination-side-text" style="margin-left: 6px;"><?php echo htmlspecialchars(__('Apple Settings', 'powerpress')); ?></span></button>
+                <button type="button" id="feeds-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'feeds-feeds')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/megaphone_gray.svg"><?php echo htmlspecialchars(__('Podcast Feeds', 'powerpress')); ?></button>
+                <button type="button" class="pp-sidenav-tablinks" id="feeds-settings-tab" onclick="sideNav(event, 'feeds-settings')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/option_bar_settings_gray.svg"><?php echo htmlspecialchars(__('Feed Settings', 'powerpress')); ?></button>
+                <button type="button" class="pp-sidenav-tablinks" id="feeds-artwork-tab" onclick="sideNav(event, 'feeds-artwork')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/camera_gray.svg"><?php echo htmlspecialchars(__('Podcast Artwork', 'powerpress')); ?></button>
+                <button type="button" class="pp-sidenav-tablinks" id="feeds-seo-tab" onclick="sideNav(event, 'feeds-seo')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/fileboard_checklist_gray.svg"><?php echo htmlspecialchars(__('Podcast SEO', 'powerpress')); ?></button>
+                <button type="button" class="pp-sidenav-tablinks" id="feeds-basic-tab" onclick="sideNav(event, 'feeds-basic')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/edit_gray.svg"><?php echo htmlspecialchars(__('Basic Show Information', 'powerpress')); ?></button>
+                <button type="button" class="pp-sidenav-tablinks" id="feeds-rating-tab" onclick="sideNav(event, 'feeds-rating')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/star_favorite_gray.svg"><?php echo htmlspecialchars(__('Rating Settings', 'powerpress')); ?></button>
+                <button type="button" class="pp-sidenav-tablinks" id="feeds-apple-tab" onclick="sideNav(event, 'feeds-apple')"><span id="apple-icon-feed" class="destinations-side-icon" style="margin-left: 2px;"></span><span class="destination-side-text" style="margin-left: 6px;"><?php echo htmlspecialchars(__('Apple Settings', 'powerpress')); ?></span></button>
                 <?php
                 powerpressadmin_edit_blubrry_services($General);
                 ?>
@@ -247,11 +247,11 @@ jQuery(document).ready(function($) {
             <?php powerpress_render_sidenav_toggle('website', 'More Website Settings and Blubrry Services'); ?>
             <div class="pp-sidenav">
                 <div class="pp-sidenav-extra"><p class="pp-sidenav-extra-text"><b><?php echo htmlspecialchars(__('WEBSITE SETTINGS', 'powerpress')); ?></b></p></div>
-                <button id="website-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'website-settings')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/desktop_gray.svg"><?php echo htmlspecialchars(__('Website Settings', 'powerpress')); ?></button>
-                <button class="pp-sidenav-tablinks" id="website-blog-tab" onclick="sideNav(event, 'website-blog')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/file_gray.svg"><?php echo htmlspecialchars(__('Blog Posts and Pages', 'powerpress')); ?></button>
-                <button class="pp-sidenav-tablinks" id="website-subscribe-tab" onclick="sideNav(event, 'website-subscribe')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/profile_plus_round_gray.svg"><?php echo htmlspecialchars(__('Subscribe Page', 'powerpress')); ?></button>
-                <button class="pp-sidenav-tablinks" id="website-shortcodes-tab" onclick="sideNav(event, 'website-shortcodes')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/connection_pattern_gray.svg"><?php echo htmlspecialchars(__('PowerPress Shortcodes', 'powerpress')); ?></button>
-                <button class="pp-sidenav-tablinks" id="website-new-window-tab" onclick="sideNav(event, 'website-new-window')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/play_gray.svg"><?php echo htmlspecialchars(__('Play in New Window', 'powerpress')); ?></button>
+                <button type="button" id="website-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'website-settings')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/desktop_gray.svg"><?php echo htmlspecialchars(__('Website Settings', 'powerpress')); ?></button>
+                <button type="button" class="pp-sidenav-tablinks" id="website-blog-tab" onclick="sideNav(event, 'website-blog')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/file_gray.svg"><?php echo htmlspecialchars(__('Blog Posts and Pages', 'powerpress')); ?></button>
+                <button type="button" class="pp-sidenav-tablinks" id="website-subscribe-tab" onclick="sideNav(event, 'website-subscribe')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/profile_plus_round_gray.svg"><?php echo htmlspecialchars(__('Subscribe Page', 'powerpress')); ?></button>
+                <button type="button" class="pp-sidenav-tablinks" id="website-shortcodes-tab" onclick="sideNav(event, 'website-shortcodes')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/connection_pattern_gray.svg"><?php echo htmlspecialchars(__('PowerPress Shortcodes', 'powerpress')); ?></button>
+                <button type="button" class="pp-sidenav-tablinks" id="website-new-window-tab" onclick="sideNav(event, 'website-new-window')"><img class="pp-nav-icon" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/play_gray.svg"><?php echo htmlspecialchars(__('Play in New Window', 'powerpress')); ?></button>
                 <?php
                 powerpressadmin_edit_blubrry_services($General);
                 ?>
@@ -360,7 +360,7 @@ jQuery(document).ready(function($) {
         <?php powerpress_render_sidenav_container('make-money', 'Blubrry Services', $General); ?>
         <?php
         $publisher_origin = rtrim(powerpress_get_publish_url(), '/'); ?>
-        <button style="display: none;" id="make-money-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'make-money-all')"><img class="pp-nav-icon" style="width: 22px;" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/rss-symbol.svg"><?php echo htmlspecialchars(__('Hidden button', 'powerpress')); ?></button>
+        <button type="button" style="display: none;" id="make-money-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'make-money-all')"><img class="pp-nav-icon" style="width: 22px;" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/rss-symbol.svg"><?php echo htmlspecialchars(__('Hidden button', 'powerpress')); ?></button>
 
         <div id="make-money-all" class="pp-sidenav-tab active">
             <div class="pp_container">
@@ -448,7 +448,7 @@ function powerpressadmin_live_item_options($Feed)
         }
     </style>
     <div style="margin-left: 10px;">
-        <button style="display: none;" id="live-item-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'live-item-all')"><img class="pp-nav-icon" style="width: 22px;" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/rss-symbol.svg"><?php echo htmlspecialchars(__('Hidden button', 'powerpress')); ?></button>
+        <button type="button" style="display: none;" id="live-item-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'live-item-all')"><img class="pp-nav-icon" style="width: 22px;" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/rss-symbol.svg"><?php echo htmlspecialchars(__('Hidden button', 'powerpress')); ?></button>
         <div id="live-item-all" class="pp-sidenav-tab active" style="width: 100%;">
             <h1 class="pp-heading"><?php echo __('Live Item Tag', 'powerpress'); ?></h1>
             <?php if ($litError) {
@@ -659,7 +659,7 @@ function goToPodcastSEO() {
 </script>
 <div style="margin-left: 10px;">
 
-    <button style="display: none;" id="advanced-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'advanced-all')"><img class="pp-nav-icon" style="width: 22px;" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/rss-symbol.svg"><?php echo htmlspecialchars(__('Hidden button', 'powerpress')); ?></button>
+    <button type="button" style="display: none;" id="advanced-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'advanced-all')"><img class="pp-nav-icon" style="width: 22px;" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/rss-symbol.svg"><?php echo htmlspecialchars(__('Hidden button', 'powerpress')); ?></button>
 	<div id="advanced-all" class="pp-sidenav-tab active">
         <h1 class="pp-heading"><?php echo __('Advanced Settings', 'powerpress'); ?></h1>
 
@@ -874,7 +874,7 @@ function powerpressadmin_experimental_options($General, $feed_slug = 'podcast', 
         }
     </style>
     <div style="margin-left: 10px;">
-        <button style="display: none;" id="experimental-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'experimental-all')"><img class="pp-nav-icon" style="width: 22px;" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/rss-symbol.svg"><?php echo htmlspecialchars(__('Hidden button', 'powerpress')); ?></button>
+        <button type="button" style="display: none;" id="experimental-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'experimental-all')"><img class="pp-nav-icon" style="width: 22px;" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/rss-symbol.svg"><?php echo htmlspecialchars(__('Hidden button', 'powerpress')); ?></button>
         <div id="experimental-all" class="pp-sidenav-tab active" style="width: 100%;">
             <div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center;">
                 <h1 class="pp-heading"><?php echo __('Value4Value (V4V)', 'powerpress'); ?></h1>

@@ -18,22 +18,26 @@
             $actType = '';
         }
 
+        // build from_string once, used by every branch below
+        $from_string = '';
+        if (isset($_GET['from'])) {
+            $from_string = "&from=" . $_GET['from'];
+            if ($_GET['from'] == 'powerpressadmin_basic') {
+                $tab_string = isset($_GET['tab']) ? "&tab=" . htmlspecialchars($_GET['tab']) : "";
+                $sidenav_tab_string = isset($_GET['sidenav-tab']) ? "&sidenav-tab=" . htmlspecialchars($_GET['sidenav-tab']) : "";
+                $from_string .= $tab_string;
+                $from_string .= $sidenav_tab_string;
+            } elseif ($_GET['from'] == 'new_post' && !empty($_GET['post_id'])) {
+                $from_string .= "&post_id=" . (int)$_GET['post_id'];
+            }
+        }
+
         if (!isset($_GET['code']) && !isset($_GET['error']) && !isset($_POST['Settings'])) {
             $result = $auth->getTemporaryCredentials();
             // Okay we got it!
             if ($result !== false && !empty($result['temp_client_id']) && !empty($result['temp_client_secret'])) {
                 $state = md5(rand(0, 999999) . time());
                 update_option('powerpress_temp_client', array('temp_client_id' => $result['temp_client_id'], 'temp_client_secret' => $result['temp_client_secret'], 'state' => $state));
-                $from_string = '';
-                if (isset($_GET['from'])) {
-                    $from_string = "&from=" . $_GET['from'];
-                    if ($_GET['from'] == 'powerpressadmin_basic') {
-                        $tab_string = isset($_GET['tab']) ? "&tab=" . htmlspecialchars($_GET['tab']) : "";
-                        $sidenav_tab_string = isset($_GET['sidenav-tab']) ? "&sidenav-tab=" . htmlspecialchars($_GET['sidenav-tab']) : "";
-                        $from_string .= $tab_string;
-                        $from_string .= $sidenav_tab_string;
-                    }
-                }
                 $url_string = "admin.php?page={$_GET['page']}&step=blubrrySignin{$from_string}" . (isset($_GET['blubrry_create']) ? '&blubrry_create=true' : '');
                 $redirect_uri = add_query_arg('_wpnonce', $_REQUEST['_wpnonce'], admin_url($url_string));
                 update_option('powerpress_blubrry_api_redirect_uri', $redirect_uri);
@@ -48,7 +52,11 @@
                     echo '<script>window.location.href = "' . admin_url("admin.php?page=" . htmlspecialchars($_GET['from']) . "{$tab_string}{$sidenav_tab_string}") . '";</script>';
                     exit;
                 } elseif (isset($_GET['from']) && $_GET['from'] == 'new_post') {
-                    echo '<script>window.location.href = "' . admin_url('post-new.php') . '";</script>';
+                    $return_post_id = !empty($_GET['post_id']) ? (int)$_GET['post_id'] : 0;
+                    $return_url = ($return_post_id && current_user_can('edit_post', $return_post_id))
+                        ? admin_url("post.php?post={$return_post_id}&action=edit")
+                        : admin_url('post-new.php');
+                    echo '<script>window.location.href = "' . $return_url . '";</script>';
                     exit;
                 } elseif (isset($_GET['from']) && $_GET['from'] == 'hosting_plugin') {
                     echo '<script>window.location.href = "' . admin_url('admin.php?page=powerpress-site-setup') . '";</script>';
@@ -134,16 +142,6 @@
                     } else {
                         foreach ($results_programs as $null => $row) {
                             $Programs[$row['program_keyword']] = $row['program_title'];
-                        }
-                    }
-                    $from_string = '';
-                    if (isset($_GET['from'])) {
-                        $from_string = "&from=" . $_GET['from'];
-                        if ($_GET['from'] == 'powerpressadmin_basic') {
-                            $tab_string = isset($_GET['tab']) ? "&tab={$_GET['tab']}" : "";
-                            $sidenav_tab_string = isset($_GET['sidenav-tab']) ? "&sidenav-tab={$_GET['sidenav-tab']}" : "";
-                            $from_string .= $tab_string;
-                            $from_string .= $sidenav_tab_string;
                         }
                     }
                     wp_enqueue_style('powerpress_onboarding_styles', POWERPRESS_ABSPATH . '/css/onboarding.css'); ?>
@@ -342,12 +340,20 @@
                     $tab_string = isset($_GET['tab']) ? "&tab=" . htmlspecialchars($_GET['tab']) : "";
                     $sidenav_tab_string = isset($_GET['sidenav-tab']) ? "&sidenav-tab=" . htmlspecialchars($_GET['sidenav-tab']) : "";
                     echo '<script>window.location.href = "' . admin_url("admin.php?page=" . htmlspecialchars($_GET['from']) . "{$tab_string}{$sidenav_tab_string}") . '";</script>';
+                    exit;
                 } elseif (isset($_GET['from']) && $_GET['from'] == 'new_post') {
-                    echo '<script>window.location.href = "' . admin_url('post-new.php') . '";</script>';
+                    $return_post_id = !empty($_GET['post_id']) ? (int)$_GET['post_id'] : 0;
+                    $return_url = ($return_post_id && current_user_can('edit_post', $return_post_id))
+                        ? admin_url("post.php?post={$return_post_id}&action=edit")
+                        : admin_url('post-new.php');
+                    echo '<script>window.location.href = "' . $return_url . '";</script>';
+                    exit;
                 } elseif (isset($_GET['from']) && $_GET['from'] == 'hosting_plugin') {
                     echo '<script>window.location.href = "' . admin_url('admin.php?page=powerpress-site-setup') . '";</script>';
+                    exit;
                 }
                 echo '<script>window.location.href = "' . admin_url("admin.php?page=powerpressadmin_basic$migrate_string") . '";</script>';
+                exit;
             }
             // Clear cached statistics
             delete_option('powerpress_stats');

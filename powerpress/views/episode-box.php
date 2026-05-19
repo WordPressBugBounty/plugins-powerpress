@@ -246,14 +246,14 @@ function powerpress_meta_box($object, $box)
     }
     episode_box_top($EnclosureURL, $FeedSlug, $ExtraData, $GeneralSettings, $EnclosureLength, $DurationHH, $DurationMM, $DurationSS, $PCITranscriptURL);
     echo "<div id=\"tab-container-$FeedSlug\" style=\"$style\">";
-    echo "<div class=\"pp-tab\">";
+    echo "<div class=\"pp-tab d-flex\">";
     $titles = array("info" => esc_attr(__("Episode Info", "powerpress")), "artwork" => esc_attr(__("Episode Artwork", "powerpress")), "website" => esc_attr(__("Website Display", "powerpress")), "advanced" => esc_attr(__("Advanced", "powerpress")), 'chapters' => esc_attr(__("Chapters & Transcript", "powerpress")), 'vts' => esc_attr(__("Value Time Splits", "powerpress")));
-    echo "<button class=\"tablinks active\" id=\"0$FeedSlug\" title='{$titles['info']}' onclick=\"powerpress_openTab(event, 'seo-$FeedSlug')\" id=\"defaultOpen-$FeedSlug\">" . esc_html(__('Episode Info', 'powerpress')) . "</button>";
-    echo "<button class=\"tablinks\" id=\"1$FeedSlug\" title='{$titles['artwork']}' onclick=\"powerpress_openTab(event, 'artwork-$FeedSlug')\">" . esc_html(__('Episode Artwork', 'powerpress')) . "</button>";
-    echo "<button class=\"tablinks\" id=\"2$FeedSlug\" title='{$titles['website']}' onclick=\"powerpress_openTab(event, 'display-$FeedSlug')\">" . esc_html(__('Website Display', 'powerpress')) . "</button>";
-    echo "<button class=\"tablinks\" id=\"3$FeedSlug\" title='{$titles['advanced']}' onclick=\"powerpress_openTab(event, 'notes-$FeedSlug')\">" . esc_html(__('Advanced', 'powerpress')) . "</button>";
-    echo "<button class=\"tablinks\" id=\"4$FeedSlug\" title='{$titles['chapters']}' onclick=\"powerpress_openTab(event, 'chapters-$FeedSlug')\">" . esc_html(__('Chapters & Transcript', 'powerpress')) . "</button>";
-    echo "<button class=\"tablinks\" id=\"5$FeedSlug\" title='{$titles['vts']}' onclick=\"powerpress_openTab(event, 'vts-$FeedSlug')\">" . esc_html(__('Value Time Splits', 'powerpress')) . "</button>";
+    echo "<button type=\"button\" class=\"tablinks active\" id=\"0$FeedSlug\" title='{$titles['info']}' onclick=\"powerpress_openTab(event, 'seo-$FeedSlug')\" id=\"defaultOpen-$FeedSlug\">" . esc_html(__('Episode Info', 'powerpress')) . "</button>";
+    echo "<button type=\"button\" class=\"tablinks\" id=\"1$FeedSlug\" title='{$titles['artwork']}' onclick=\"powerpress_openTab(event, 'artwork-$FeedSlug')\">" . esc_html(__('Episode Artwork', 'powerpress')) . "</button>";
+    echo "<button type=\"button\" class=\"tablinks\" id=\"2$FeedSlug\" title='{$titles['website']}' onclick=\"powerpress_openTab(event, 'display-$FeedSlug')\">" . esc_html(__('Website Display', 'powerpress')) . "</button>";
+    echo "<button type=\"button\" class=\"tablinks\" id=\"3$FeedSlug\" title='{$titles['advanced']}' onclick=\"powerpress_openTab(event, 'notes-$FeedSlug')\">" . esc_html(__('Advanced', 'powerpress')) . "</button>";
+    echo "<button type=\"button\" class=\"tablinks\" id=\"4$FeedSlug\" title='{$titles['chapters']}' onclick=\"powerpress_openTab(event, 'chapters-$FeedSlug')\">" . esc_html(__('Chapters & Transcript', 'powerpress')) . "</button>";
+    echo "<button type=\"button\" class=\"tablinks\" id=\"5$FeedSlug\" title='{$titles['vts']}' onclick=\"powerpress_openTab(event, 'vts-$FeedSlug')\">" . esc_html(__('Value Time Splits', 'powerpress')) . "</button>";
     echo "</div>";
     seo_tab($FeedSlug, $ExtraData, $iTunesExplicit, $seo_feed_title, $GeneralSettings, $iTunesAuthor, $iTunesBlock, $object);
     artwork_tab($FeedSlug, $ExtraData, $object, $CoverImage, $GeneralSettings);
@@ -285,17 +285,7 @@ function powerpress_meta_box($object, $box)
 
     echo "</div>"; // close powerpress_podcast_box
     if ($EnclosureURL) {
-        echo "<script type=\"text/javascript\">";
-        echo "jQuery(document).ready(function($) {";
-        echo "powerpress_verifyMedia({id: 'verify-button-$FeedSlug'});";
-        echo "});";
-        echo "</script>";
-    } else {
-        echo "<script type=\"text/javascript\">";
-        echo "jQuery(document).ready(function($) {";
-        echo "verify_interval = setInterval(function() { powerpress_verifyButtonColor('$FeedSlug'); })";
-        echo "});";
-        echo "</script>";
+        echo '<input type="hidden" class="pp-init-verify-media" data-feed-slug="' . esc_attr($FeedSlug) . '" />';
     }
     if( !empty($GeneralSettings['episode_box_background_color'][$FeedSlug]) ) {
         echo "<script type=\"text/javascript\">";
@@ -311,11 +301,7 @@ function powerpress_meta_box($object, $box)
         echo "});";
         echo "</script>";
     }
-    if( !empty($GeneralSettings['skip_to_episode_settings']) ) {
-        echo "<script type=\"text/javascript\">";
-        echo "jQuery(document).ready(function($) {";
-        echo "powerpress_skipToEpisodeSettings(\"$FeedSlug\");";
-        echo "});";
-        echo "</script>";
+    if (!empty($GeneralSettings['skip_to_episode_settings'])) {
+        echo '<input type="hidden" class="pp-init-skip-to-episode" data-feed-slug="' . esc_attr($FeedSlug) . '" />';
     }
 }

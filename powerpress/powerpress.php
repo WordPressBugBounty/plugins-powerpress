@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.16.5
+Version: 11.16.6
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -134,7 +134,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.16.5' );
+define('POWERPRESS_VERSION', '11.16.6' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -795,6 +795,17 @@ if (!function_exists('powerpress_getAccessToken')) {
     }
 }
 
+if (!function_exists('powerpress_clear_blubrry_caches')) {
+    function powerpress_clear_blubrry_caches($program_keyword = '') {
+        delete_transient('powerpress_programs_list');
+        delete_transient('powerpress_programs_api_error');
+        delete_transient('powerpress_no_stats_programs');
+        if (!empty($program_keyword)) {
+            delete_transient('powerpress_program_info_' . md5($program_keyword));
+        }
+    }
+}
+
 if (!function_exists('powerpress_save_settings')) {
     function powerpress_save_settings($SettingsNew = false, $field = 'powerpress_general')
     {
@@ -1348,7 +1359,7 @@ function powerpress_rss2_head()
         echo "\t".'<itunes:type>'. esc_html($Feed['itunes_type']) .'</itunes:type>'.PHP_EOL;
     }
 
-    if( !empty($Feed['email']) && (!isset($Feed['pp_enable_email']) || $Feed['pp_enable_email'] == 1))
+    if( !empty($Feed['email']) && (!isset($Feed['pp_enable_email']) || $Feed['pp_enable_email'] == 1) && !empty($powerpress_feed['itunes_talent_name']) )
     {
         echo "\t".'<itunes:owner>'.PHP_EOL;
         echo "\t\t".'<itunes:name>' . esc_html($powerpress_feed['itunes_talent_name']) . '</itunes:name>'.PHP_EOL;
@@ -3408,9 +3419,9 @@ function powerpress_init_block() {
                 }
                 foreach ($GeneralSettings['custom_feeds'] as $slug => $title) {
                     if (!empty($attributes['feed_slug']) && $attributes['feed_slug'] == $slug) {
-                        $return .= '<option value="' . $slug . '" class="pp-block-select" selected>' . 'Channel: ' . $title . '</p>';
+                        $return .= '<option value="' . $slug . '" class="pp-block-select" selected>' . 'Channel: ' . $title . '</option>';
                     } else {
-                        $return .= '<option value="' . $slug . '" class="pp-block-select">' . 'Channel: ' . $title . '</p>';
+                        $return .= '<option value="' . $slug . '" class="pp-block-select">' . 'Channel: ' . $title . '</option>';
                     }
                 }
                 $return .= "</select>";
@@ -6155,6 +6166,9 @@ function powerpress_enqueue_assets(array $assets): void {
 
         // register and enqueue
         if ($type === 'script') {
+            if (!in_array('wp-i18n', $deps, true)) {
+                $deps[] = 'wp-i18n';
+            }
             $args = [
                 'in_footer' => $config['footer'] ?? true,
                 'strategy' => $config['strategy'] ?? 'defer',

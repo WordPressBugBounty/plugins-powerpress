@@ -55,7 +55,9 @@ class PowerPressProgramCard
         $this->load_feed_settings();
 
         // 4. LOAD DATA
-        if (!$this->deferred) {
+        if (!$this->has_blubrry_auth) {
+            $this->program_keyword = $override_program ?: $this->default_program_keyword;
+        } elseif (!$this->deferred) {
             $this->load_stats_data($override_program);
         } else {
             $this->program_keyword = $override_program ?: $this->default_program_keyword;
@@ -111,7 +113,19 @@ class PowerPressProgramCard
 
         if ($results && is_array($results)) {
             if (isset($results['error'])) {
-                $api_error = $results['message'] ?? $results['error'];
+                $err = $results['message'] ?? $results['error'];
+                if (!empty($err)) {
+                    $reset_url = wp_nonce_url(
+                        admin_url('admin.php?page=powerpress/powerpressadmin_tools.php&action=powerpress-reset-blubrry-connection'),
+                        'powerpress-reset-blubrry-connection'
+                    );
+                    $err = sprintf(
+                        __('Service unavailable (%1$s). <a href="%2$s">Reset and reconnect your Blubrry account</a>.', 'powerpress'),
+                        esc_html((string)$err),
+                        esc_url($reset_url)
+                    );
+                }
+                $api_error = $err;
             } else {
                 foreach ($results as $row) {
                     if (isset($row['program_keyword']) && isset($row['program_title'])) {
@@ -288,8 +302,7 @@ class PowerPressProgramCard
                 $api_error = get_transient('powerpress_programs_api_error');
                 $stats_url = esc_url($this->stats_base_url);
                 if ($api_error) {
-                    $safe_error = esc_html($api_error);
-                    $error_msg = "{$safe_error}";
+                    $error_msg = $api_error;
                 } else {
                     $visit = __('Multi-program mode is enabled but no programs were found. Please visit', 'powerpress');
                     $suffix = __('to see your statistics.', 'powerpress');
@@ -388,7 +401,19 @@ class PowerPressProgramCard
                 $no_stats_programs[$keyword] = true;
                 set_transient('powerpress_no_stats_programs', $no_stats_programs, DAY_IN_SECONDS);
             } else {
-                $this->stats_content = ['error' => $new_content['error']];
+                $err = $new_content['error'];
+                if (!empty($err)) {
+                    $reset_url = wp_nonce_url(
+                        admin_url('admin.php?page=powerpress/powerpressadmin_tools.php&action=powerpress-reset-blubrry-connection'),
+                        'powerpress-reset-blubrry-connection'
+                    );
+                    $err = sprintf(
+                        __('Statistics unavailable (%1$s). <a href="%2$s">Reset and reconnect your Blubrry account</a>.', 'powerpress'),
+                        esc_html((string)$err),
+                        esc_url($reset_url)
+                    );
+                }
+                $this->stats_content = ['error' => $err];
             }
             return;
         }

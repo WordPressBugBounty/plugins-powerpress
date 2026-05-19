@@ -241,9 +241,6 @@ div[id^="pp-pos-label"], div[id^="pp-type-label"] {
 
 div[id^="select-media-file"] {
     vertical-align: top;
-    padding-top: 1vh;
-    padding-left: 10px;
-    float: right;
 }
 
 a[id^="pp-change-media-link"], div[id^="save-media"] {
@@ -284,14 +281,21 @@ div[id^="ep-info-not-apple"] {
 .pp-blue-button {
     display: inline-block;
     border-radius: 4px;
-    background-color: #0c74d5;
-    color: white;
+    background-color: #fafafa;
+    color: #263238;
+    border: 1px solid black;
     font-family: Roboto, sans-serif;
     font-size: 16px;
     font-weight: 500;
     padding: 1ch 2em 1ch 2em;
     cursor: pointer;
     text-align: center;
+}
+
+.pp-blue-button.pp-action-active {
+    background-color: #0c74d5;
+    color: white;
+    border-color: #0c74d5;
 }
 
 .pp-gray-button {
@@ -435,9 +439,6 @@ div[id^="pp-selected-media-text"] {
 
 div[id^="pp-change-media-file"] {
     vertical-align: top;
-    margin-top: 1vh;
-    margin-left: 10px;
-    float: right;
 }
 
 div[class^="ep-box-line"] {
@@ -780,14 +781,6 @@ textarea[id^="powerpress_summary_"]::-webkit-scrollbar-thumb {
     border: grey 1px solid;
 }
 
-div[id^="pp-url-input-container-"] {
-    width: 100%;
-}
-
-div[id^="pp-url-input-label-container"] {
-    display: inline-block;
-    width: calc(100% - 175px);
-}
 
 input[id^="powerpress_url_"], div[id^="powerpress_url_"], input[id^="powerpress_url_"]:focus {
     width: 100%;

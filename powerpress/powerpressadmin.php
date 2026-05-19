@@ -32,6 +32,18 @@ function powerpress_login_create_nonce() {
     return wp_create_nonce( 'powerpress-link-blubrry' );
 }
 
+/** oauth signin url for "connect to blubrry" links, preserves $post->ID if set */
+function powerpress_get_blubrry_signin_url($nonce) {
+    $args = ['_wpnonce' => $nonce];
+    if (!empty($GLOBALS['post']->ID)) {
+        $args['post_id'] = (int) $GLOBALS['post']->ID;
+    }
+    return add_query_arg(
+        $args,
+        admin_url('admin.php?page=powerpressadmin_onboarding.php&step=blubrrySignin&from=new_post')
+    );
+}
+
 /**
  * Returns array of languages supported by RevAI
  * @return array
@@ -145,45 +157,6 @@ function powerpress_page_message_add_notice($msg, $classes='inline', $escape=tru
 		$g_powerpress_page_message = '<div class="updated fade powerpress-notice '.$classes.'">'. esc_html($msg) . '</div>' . $g_powerpress_page_message;
 	else
 		$g_powerpress_page_message = '<div class="updated fade powerpress-notice '.$classes.'">'. ($msg) . '</div>' . $g_powerpress_page_message;
-}
-
-if (!function_exists('powerpress_getAccessToken')) {
-    function powerpress_getAccessToken()
-    {
-        // Look at the creds and use the latest access token, if its not the latest refresh it...
-        $creds = get_option('powerpress_creds', array());
-        if (!empty($creds['access_token']) && !empty($creds['access_expires']) && $creds['access_expires'] > time()) { // If access token did not expire
-            return $creds['access_token'];
-        }
-
-        if (!empty($creds['refresh_token']) && !empty($creds['client_id']) && !empty($creds['client_secret'])) {
-
-            // Create new access token with refresh token here...
-            require_once('powerpressadmin-auth.class.php');
-            $auth = new PowerPressAuth();
-            $resultTokens = $auth->getAccessTokenFromRefreshToken($creds['refresh_token'], $creds['client_id'], $creds['client_secret']);
-
-            if (!empty($resultTokens['access_token']) && !empty($resultTokens['expires_in'])) {
-                powerpress_save_settings(
-                    array(
-                        'access_token' => $resultTokens['access_token'], 
-                        'access_expires' => (time() + $resultTokens['expires_in'] - 10)
-                    ), 
-                    'powerpress_creds'
-                );
-
-                return $resultTokens['access_token'];
-            } else {
-                //if their refresh token is expired, sign them out so they can re-authenticate
-                delete_option('powerpress_creds');
-                powerpress_page_message_add_error(__('Your account has been logged out due to inactivity with Blubrry services.', 'powerpress'));
-                powerpress_page_message_print();
-            }
-        }
-
-        // If we failed to get credentials, return false
-        return false;
-    }
 }
 
 function powerpress_page_message_print()
@@ -1746,11 +1719,35 @@ function powerpress_admin_init()
 				}; break;
 				case 'powerpress-clear-update_plugins': {
 					check_admin_referer('powerpress-clear-update_plugins');
-					
+
 					delete_option('update_plugins'); // OLD method
 					delete_option('_site_transient_update_plugins'); // New method
 					powerpress_page_message_add_notice( sprintf( __('Plugins Update Cache cleared successfully. You may now to go the %s page to see the latest plugin versions.', 'powerpress'), '<a href="'. admin_url() .'plugins.php" title="'.  __('Manage Plugins', 'powerpress') .'">'.  __('Manage Plugins', 'powerpress') .'</a>'), 'inline', false );
-					
+
+				}; break;
+				case 'powerpress-reset-blubrry-connection': {
+					check_admin_referer('powerpress-reset-blubrry-connection');
+
+					delete_option('powerpress_creds');
+					powerpress_clear_blubrry_caches();
+					$general = get_option('powerpress_general', array());
+					unset(
+						$general['blubrry_username'],
+						$general['blubrry_auth'],
+						$general['blubrry_program_keyword'],
+						$general['blubrry_hosting']
+					);
+					update_option('powerpress_general', $general);
+
+					$signin_nonce = wp_create_nonce('powerpress-link-blubrry');
+					$signin_url = add_query_arg(
+						'_wpnonce',
+						$signin_nonce,
+						admin_url('admin.php?page=powerpressadmin_onboarding.php&step=blubrrySignin&from=tools')
+					);
+					wp_safe_redirect($signin_url);
+					exit;
+
 				}; break;
 				case 'powerpress-ios11-fields': {
 					check_admin_referer('powerpress-ios11-fields');
@@ -4652,11 +4649,8 @@ function powerpress_refresh_stats_ajax()
     $program_keyword = isset($_POST['program_keyword']) ? sanitize_text_field($_POST['program_keyword']) : '';
     $stacked = !empty($_POST['stacked']);
 
-    // clear program info cache so card data refreshes too
-    if (!empty($program_keyword)) {
-        delete_transient('powerpress_program_info_' . md5($program_keyword));
-    }
-    delete_transient('powerpress_programs_list');
+    // clear blubrry caches so card data refreshes too
+    powerpress_clear_blubrry_caches($program_keyword);
 
     require_once(POWERPRESS_ABSPATH . '/powerpressadmin-program-card.class.php');
     $programCard = new PowerPressProgramCard('podcast', $program_keyword, false);

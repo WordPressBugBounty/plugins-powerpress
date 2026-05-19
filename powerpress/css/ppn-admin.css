@@ -110,7 +110,7 @@
 
 .ppn-admin small {
 	font-size: 100%;
-	padding: 0 auto;
+	padding: 0;
 	margin-bottom: 10%;
 	color: var(--pp-color-gray-500);
 	font-style: italic;
@@ -440,7 +440,7 @@ dialog.ppn-dialog .container-fluid hr {
 /* LAYOUT */
 
 .pageTitle {
-	padding: 0 auto;
+	padding: 0;
 	font-size: 220%;
 	letter-spacing: 1px;
 	line-height: 100%;
