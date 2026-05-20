@@ -3,11 +3,11 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.16.6
+Version: 11.16.7
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
-Tested up to: 6.9
+Tested up to: 7.0
 Text Domain: powerpress
 Change Log:
 	Please see readme.txt for detailed change log.
@@ -134,7 +134,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.16.6' );
+define('POWERPRESS_VERSION', '11.16.7' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -2652,8 +2652,10 @@ function powerpress_rss2_item()
     {
         if( !defined('POWERPRESS_RAWVOICE_RSS') || POWERPRESS_RAWVOICE_RSS != false )
         {
+            if( !empty($EpisodeData['podcast_id']) )
+                echo "\t\t<rawvoice:pid>" . esc_html($EpisodeData['podcast_id']) . "</rawvoice:pid>" . PHP_EOL;
             if( !empty($EpisodeData['ishd']) )
-                echo "\t\t<rawvoice:isHD>yes</rawvoice:isHD>".PHP_EOL;;
+                echo "\t\t<rawvoice:isHD>yes</rawvoice:isHD>".PHP_EOL;
             if( !empty($EpisodeData['image']) )
                 echo "\t\t<rawvoice:poster url=\"". $EpisodeData['image'] ."\" />".PHP_EOL;
             if( !empty($EpisodeData['embed']) )
