@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.16.7
+Version: 11.16.8
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -134,7 +134,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.16.7' );
+define('POWERPRESS_VERSION', '11.16.8' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -3378,18 +3378,7 @@ function powerpress_init()
             $GLOBALS['ppn_object'] = new PowerPressNetwork('powerpressadmin_basic');
             $GLOBALS['ppn_object']->setDisplay();
 
-            if (is_admin()) {
-                // admin styles + js for network pages
-                powerpress_enqueue_assets([
-                    'powerpress-admin-css'      => ['path' => 'css/admin'],
-                    'ppn-admin'                 => ['path' => 'css/ppn-admin'],
-                    'powerpress-bootstrap-grid' => ['path' => 'css/bootstrap-grid'],
-                    'powerpress-network-js'     => ['type' => 'script', 'path' => 'js/network', 'module' => true, 'deps' => ['wp-i18n']],
-                    'material-icons-outlined'   => ['type' => 'style', 'url' => 'https://fonts.googleapis.com/icon?family=Material+Icons+Outlined'],
-                    'roboto-font'               => ['type' => 'style', 'url' => 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap'],
-                ]);
-            }
-
+            add_action('admin_enqueue_scripts', 'powerpress_network_admin_enqueue_scripts');
             // frontend styles enqueued conditionally via ShortCode.php
         }
     }
@@ -6213,5 +6202,23 @@ function powerpress_enqueue_assets(array $assets): void {
         add_action('wp_footer', $log_warnings);
     }
 }
+
+// ===================
+// NETWORK ASSET SETUP
+// ===================
+function powerpress_network_admin_enqueue_scripts() {
+    if (is_admin()) {
+        // admin styles + js for network pages
+        powerpress_enqueue_assets([
+            'powerpress-admin-css'      => ['path' => 'css/admin'],
+            'ppn-admin'                 => ['path' => 'css/ppn-admin'],
+            'powerpress-bootstrap-grid' => ['path' => 'css/bootstrap-grid'],
+            'powerpress-network-js'     => ['type' => 'script', 'path' => 'js/network', 'module' => true, 'deps' => ['wp-i18n']],
+            'material-icons-outlined'   => ['type' => 'style', 'url' => 'https://fonts.googleapis.com/icon?family=Material+Icons+Outlined'],
+            'roboto-font'               => ['type' => 'style', 'url' => 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap'],
+        ]);
+    }
+}
+
 
 // eof
