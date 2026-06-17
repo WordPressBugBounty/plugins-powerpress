@@ -2981,7 +2981,7 @@ function powerpress_edit_post($post_ID, $post)
 					$ToSerialize['gp_block'] = 1;
 				// Player Embed
 				if( isset($Powerpress['embed']) && trim($Powerpress['embed']) != '' )
-					$ToSerialize['embed'] = stripslashes($Powerpress['embed']); // we have to strip slahes if they are present befure we serialize the data
+					$ToSerialize['embed'] = SanitizeEmbed(stripslashes($Powerpress['embed'])); // we have to strip slahes if they are present befure we serialize the data
 				if( isset($Powerpress['image']) && trim($Powerpress['image']) != '' )
 					$ToSerialize['image'] = stripslashes($Powerpress['image']);
 				if( isset($Powerpress['no_player']) && $Powerpress['no_player'] )

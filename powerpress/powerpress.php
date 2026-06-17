@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.16.8
+Version: 11.16.9
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -134,7 +134,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.16.8' );
+define('POWERPRESS_VERSION', '11.16.9' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -618,66 +618,25 @@ function powerpress_rss2_ns()
 }
 
 function SanitizeEmbed($html) {
-    $dom = new DOMDocument();
-    libxml_use_internal_errors(true);
-    // force UTF-8 encoding
-    $html_encoded = '<?xml encoding="UTF-8"><div>' . $html . '</div>';
-    $dom->loadHTML($html_encoded, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-    $allowed_tags = ['iframe', 'div'];
-    $allowed_attrs = ['src', 'width', 'height', 'frameborder', 'allow', 'sandbox', 'referrerpolicy', 'loading', 'allowfullscreen', 'title', 'scrolling', 'alt'];
-
-    $xpath = new DOMXPath($dom);
-    $nodes = $xpath->query('//*');
-
-    for ($i = $nodes->length - 1; $i >= 0; $i--) {
-        $node = $nodes->item($i);
-        // remove unauthorized tags
-        if (!in_array($node->nodeName, $allowed_tags)) {
-            $node->parentNode->removeChild($node);
-            continue;
-        }
-
-        // clean attributes
-        if ($node->hasAttributes()) {
-            $attrsToRemove = [];
-            foreach ($node->attributes as $attr) {
-                // remove unauthorized attributes
-                if (!in_array($attr->name, $allowed_attrs)) {
-                    $attrsToRemove[] = $attr->name;
-                    continue;
-                }
-
-                // remove any attributes with xss
-                $bad_schemes = [
-                    'javascript:',
-                    'vbscript:',
-                    'data:',
-                    'file:',
-                    'mhtml:'
-                ];
-                foreach ($bad_schemes as $scheme) {
-                    if (stripos($attr->value, $scheme) !== false) {
-                        $attrsToRemove[] = $attr->name;
-                        continue 2;
-                    }
-                }
-            }
-            // Remove the bad attributes we found
-            foreach ($attrsToRemove as $attrName) {
-                $node->removeAttribute($attrName);
-            }
-        }
-    }
-
-    // remove the wrapper
-    $container = $dom->getElementsByTagName('div')->item(0);
-    $output = '';
-    if ($container) {
-        foreach ($container->childNodes as $child) {
-            $output .= $dom->saveHTML($child);
-        }
-    }
-    return $output;
+    $allowed_attrs = [
+        'src'             => true,
+        'width'           => true,
+        'height'          => true,
+        'frameborder'     => true,
+        'allow'           => true,
+        'sandbox'         => true,
+        'referrerpolicy'  => true,
+        'loading'         => true,
+        'allowfullscreen' => true,
+        'title'           => true,
+        'scrolling'       => true,
+        'alt'             => true,
+    ];
+    $allowed_html = [
+        'iframe' => $allowed_attrs,
+        'div'    => $allowed_attrs,
+    ];
+    return wp_kses($html, $allowed_html, ['http', 'https']);
 }
 
 
