@@ -699,3 +699,139 @@ function showHideTranscriptBox(setting_type, feed_slug){
 })();
 
 
+/**
+ * <podcast:updateFrequency>
+ * 
+ * most users will simply use the cadence selector, advanced input revealed by using custom option instaed
+ */
+(function() {
+    const PRESETS = {
+        daily: { freq: 'DAILY', interval: 1 },
+        weekly: { freq: 'WEEKLY', interval: 1 },
+        semiweekly: { freq: 'WEEKLY', interval: 1, byday: ['MO', 'TH'] },
+        biweekly: { freq: 'WEEKLY', interval: 2 },
+        monthly: { freq: 'MONTHLY', interval: 1 },
+        semimonthly: { freq: 'MONTHLY', interval: 1, bymonthday: [1, 15] },
+        bimonthly: { freq: 'MONTHLY', interval: 2 },
+    };
+
+    function setChipChecked(el, checked) {
+        if (!el) return;
+        el.checked = checked;
+        const label = el.closest('label');
+        if (!label) return;
+        label.style.background = checked ? '#1976d2' : '#fff';
+        label.style.color = checked ? '#fff' : '#333';
+    }
+
+    function applyCadencePreset(cadence) {
+        const customPanel = document.querySelector('[data-uf-custom-panel]');
+        const itunesComplete = document.querySelector('[data-uf-itunes-complete]');
+        const freqSelect = document.querySelector('[data-uf-freq]');
+        const intervalInput = document.getElementById(freqSelect ? freqSelect.id.replace(/_freq$/, '_interval') : '');
+
+        if (customPanel) customPanel.style.display = (cadence === 'custom') ? 'block' : 'none';
+
+        if (cadence === 'complete') {
+            if (itunesComplete) itunesComplete.value = '1';
+            return;
+        }
+        if (itunesComplete) itunesComplete.value = '';
+
+        if (cadence === '' || cadence === 'custom') return;
+
+        const preset = PRESETS[cadence];
+        if (!preset) return;
+
+        if (freqSelect && preset.freq) freqSelect.value = preset.freq;
+        if (intervalInput) intervalInput.value = preset.interval || 1;
+
+        document.querySelectorAll('[data-uf-day-chip]').forEach(function(chip) {
+            setChipChecked(chip, !!(preset.byday && preset.byday.indexOf(chip.value) !== -1));
+        });
+        document.querySelectorAll('[data-uf-day-cell]').forEach(function(cell) {
+            setChipChecked(cell, !!(preset.bymonthday && preset.bymonthday.indexOf(parseInt(cell.value, 10)) !== -1));
+        });
+        document.querySelectorAll('[data-uf-month-cell]').forEach(function(cell) {
+            setChipChecked(cell, false);
+        });
+
+        applyFreqVisibility();
+    }
+
+    function applyFreqVisibility() {
+        const freqSelect = document.querySelector('[data-uf-freq]');
+        const freq = freqSelect ? freqSelect.value : '';
+        document.querySelectorAll('[data-uf-show-for]').forEach(function(el) {
+            const allowed = el.getAttribute('data-uf-show-for').split(/\s+/);
+            el.style.display = allowed.indexOf(freq) !== -1 ? '' : 'none';
+        });
+        applyMonthlyPatternVisibility();
+    }
+
+    function applyMonthlyPatternVisibility() {
+        const freqSelect = document.querySelector('[data-uf-freq]');
+        const freq = freqSelect ? freqSelect.value : '';
+        const checked = document.querySelector('[data-uf-monthly-pattern]:checked');
+        const pattern = checked ? checked.value : '';
+        document.querySelectorAll('[data-uf-show-monthly-pattern]').forEach(function(el) {
+            const allowed = el.getAttribute('data-uf-show-monthly-pattern');
+            const freqMatches = (freq === 'MONTHLY' || freq === 'YEARLY');
+            el.style.display = (freqMatches && allowed === pattern) ? '' : 'none';
+        });
+    }
+
+    function applyEndsState() {
+        const checked = document.querySelector('[data-uf-ends]:checked');
+        const mode = checked ? checked.value : 'never';
+        const countInput = document.querySelector('[data-uf-ends-count]');
+        const untilInput = document.querySelector('[data-uf-ends-until]');
+        if (countInput) countInput.disabled = (mode !== 'count');
+        if (untilInput) untilInput.disabled = (mode !== 'until');
+    }
+
+    function bindChipToggle(selector) {
+        document.querySelectorAll(selector).forEach(function(input) {
+            const label = input.closest('label');
+            if (!label) return;
+            input.addEventListener('change', function() {
+                setChipChecked(input, input.checked);
+            });
+        });
+    }
+
+    function initUpdateFrequencyForm() {
+        const cadenceSelect = document.querySelector('[data-uf-cadence]');
+        if (!cadenceSelect) return;
+
+        cadenceSelect.addEventListener('change', function() {
+            applyCadencePreset(this.value);
+        });
+
+        const freqSelect = document.querySelector('[data-uf-freq]');
+        if (freqSelect) freqSelect.addEventListener('change', applyFreqVisibility);
+
+        document.querySelectorAll('[data-uf-monthly-pattern]').forEach(function(radio) {
+            radio.addEventListener('change', applyMonthlyPatternVisibility);
+        });
+
+        document.querySelectorAll('[data-uf-ends]').forEach(function(radio) {
+            radio.addEventListener('change', applyEndsState);
+        });
+
+        bindChipToggle('[data-uf-day-chip]');
+        bindChipToggle('[data-uf-day-cell]');
+        bindChipToggle('[data-uf-month-cell]');
+
+        applyFreqVisibility();
+        applyEndsState();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initUpdateFrequencyForm);
+    } else {
+        initUpdateFrequencyForm();
+    }
+})();
+
+

@@ -57,19 +57,13 @@ function powerpress_admin_migrate_get_files($clean=false, $exclude_blubrry=true)
 				$meta_id = $row['meta_id'];
 				$EpisodeData = powerpress_get_enclosure_data($row['post_id'], 'podcast', $row['meta_value'], false); // Get the enclosure data with no redirect added
 				
-				if( $exclude_blubrry && strstr($EpisodeData['url'], 'content.blubrry.com') )
+				if( $exclude_blubrry && preg_match('/(content[0-9]*|mc|ins|protected)\.blubrry\.(com|biz)/i', $EpisodeData['url']) )
 					continue; // Skip media hosted on blubrry in this case
-
-                if( $exclude_blubrry && strstr($EpisodeData['url'], 'ins.blubrry.com') )
-                    continue; // Skip media hosted on blubrry in this case
-
-                if( $exclude_blubrry && strstr($EpisodeData['url'], 'protected.blubrry.com') )
-                    continue; // Skip media hosted on blubrry in this case
 
 				if( !$clean )
 					$return[$meta_id] = $row;
 				if( !$exclude_blubrry )
-					$return[$meta_id]['on_blubrry'] = ( preg_match('/(ins|protected|content)\.blubrry\.com/i',$EpisodeData['url']) == 1 );
+					$return[$meta_id]['on_blubrry'] = ( preg_match('/(content[0-9]*|mc|ins|protected)\.blubrry\.(com|biz)/i', $EpisodeData['url']) == 1 );
 				$return[$meta_id]['src_url'] = $EpisodeData['url'];
 			}
 		}

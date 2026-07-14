@@ -707,19 +707,21 @@ function powerpressadmin_edit_feed_settings($FeedSettings, $General, $FeedAttrib
 
 <div class="pp-settings-section">
     <h2><?php echo __('Feed Landing Page URL', 'powerpress'); ?></h2>
-    <input class="pp-settings-text-input" type="text" name="Feed[url]"  value="<?php echo esc_attr( !empty($FeedSettings['url'])? $FeedSettings['url']:''); ?>" maxlength="255" />
+    <input class="pp-settings-text-input" type="text" name="Feed[url]"
+           value="<?php echo esc_attr(!empty($FeedSettings['url']) ? $FeedSettings['url'] : ''); ?>"
+           maxlength="255" />
     <label for="Feed[url]" class="pp-settings-label-under">
-<?php if( $cat_ID ) { ?>
-<?php echo __('Leave blank to use category page', 'powerpress'); ?>
-<?php } else { ?>
-<?php echo __('Leave blank to use home page', 'powerpress'); ?>
-<?php } ?>
-<?php if( $cat_ID ) { ?>
-    <p class="description"><?php echo __('Category page URL', 'powerpress'); ?>: <?php echo get_category_link($cat_ID); ?></p>
-<?php } else { ?>
-    <p class="description">e.g. <?php echo get_bloginfo('url'); ?>/custom-page/</p>
-<?php } ?>
+        <?php echo $cat_ID
+            ? __('Leave blank to use category page', 'powerpress')
+            : __('Leave blank to use home page', 'powerpress'); ?>
     </label>
+    <p class="description">
+        <?php if ($cat_ID): ?>
+            <?php echo __('Category page URL', 'powerpress'); ?>: <?php echo get_category_link($cat_ID); ?>
+        <?php else: ?>
+            e.g. <?php echo get_bloginfo('url'); ?>/custom-page/
+        <?php endif; ?>
+    </p>
 </div>
 
 <div class="pp-settings-section">

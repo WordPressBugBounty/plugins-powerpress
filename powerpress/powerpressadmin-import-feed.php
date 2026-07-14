@@ -5,7 +5,10 @@ function powerpress_admin_import_feed(){
     // If we have powerpress credentials, check if the account has been verified
     $creds = get_option('powerpress_creds');
     powerpress_check_credentials($creds);
-    wp_enqueue_script('powerpress-admin', powerpress_get_root_url() . 'js/admin.js', array(), POWERPRESS_VERSION );
+
+    powerpress_enqueue_assets([
+        'powerpress-admin' => ['type' => 'script', 'path' => 'js/admin'],
+    ]);
 	?>
 
     <div class="pp-card-body">

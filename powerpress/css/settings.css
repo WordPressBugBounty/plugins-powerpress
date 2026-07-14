@@ -903,13 +903,15 @@ input.pp-settings-radio-small + .pp-settings-subsection-no-border {
     margin-left: 0.5em;
 }
 
-input.pp-settings-text-input, textarea.pp-settings-text-input, input.pp-settings-text-input:focus, textarea.pp-settings-text-input:focus {
+input.pp-settings-text-input, textarea.pp-settings-text-input, select.pp-settings-text-input, input.pp-settings-text-input:focus, textarea.pp-settings-text-input:focus, select.pp-settings-text-input:focus {
+    display: block;
     border-radius: 4px;
     background-color: white;
     border: 1px solid #B1B1B1;
     font-size: 14px;
     padding: 2ch 1em 2ch 1em;
     width: 100%;
+    box-sizing: border-box;
 }
 
 input.pp-settings-text-input-less-wide, input.pp-settings-text-input-less-wide:focus {
@@ -1086,4 +1088,70 @@ h5.blubrry-stats-marketing-text {
     padding: 0.5ch 3em;
     border: 2px solid white;
     border-radius: 4px;
+}
+
+/* update frequency template */
+.pp-update-frequency .pp-uf-day-chips {
+    display: flex;
+    gap: var(--pp-spacing-sm, 8px);
+    margin-top: var(--pp-spacing-sm, 8px);
+}
+
+.pp-update-frequency .pp-uf-day-chip,
+.pp-update-frequency .pp-uf-day-of-month-cell,
+.pp-update-frequency .pp-uf-month-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--pp-color-gray-400, #ccc);
+    cursor: pointer;
+}
+
+.pp-update-frequency .pp-uf-day-chip {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+}
+
+.pp-update-frequency .pp-uf-day-of-month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 36px);
+    gap: var(--pp-spacing-xs, 4px);
+    margin-top: var(--pp-spacing-sm, 8px);
+}
+
+.pp-update-frequency .pp-uf-day-of-month-cell {
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+}
+
+.pp-update-frequency .pp-uf-month-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--pp-spacing-sm, 8px);
+    margin-top: var(--pp-spacing-sm, 8px);
+    max-width: 400px;
+}
+
+.pp-update-frequency .pp-uf-month-cell {
+    height: 36px;
+}
+
+.pp-update-frequency .pp-uf-day-chip input[type="checkbox"],
+.pp-update-frequency .pp-uf-day-of-month-cell input[type="checkbox"],
+.pp-update-frequency .pp-uf-month-cell input[type="checkbox"] {
+    display: none;
+}
+
+.pp-update-frequency .pp-uf-ends-group {
+    margin-top: 20px;
+}
+
+.pp-update-frequency .pp-uf-count-input {
+    width: 100px;
+}
+
+.pp-update-frequency .pp-uf-until-input {
+    width: 200px;
 }

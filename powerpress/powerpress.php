@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.16.9
+Version: 11.16.10
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -134,7 +134,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.16.9' );
+define('POWERPRESS_VERSION', '11.16.10' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -1564,41 +1564,67 @@ function powerpress_rss2_head()
             echo '>' . htmlspecialchars($address) . "</podcast:location>\n";
         }
 
-        if (!empty($Feed['update_frequency'])) {
-            if ($Feed['update_frequency'] == '1') {
-                $rrule = 'FREQ=DAILY';
-                $updateFrequency = 'Daily';
+        // ==========================================
+        // UPDATE FREQUENCY <podcast:updateFrequency>
+        //                  <rawvoice:frequency>
+        // ==========================================
 
-            } else if ($Feed['update_frequency'] == 2) {
-                $rrule = 'FREQ=WEEKLY';
-                $days = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-                $weekDays = $Feed['update_frequency_week'] ?? '';
-                $selectedDays = !empty($weekDays) ? explode(',', $weekDays) : [];
-                $byDays = [];
-                foreach ($selectedDays as $day) {
-                    $byDays[] = $days[(int) $day];
-                }
+        $freq_data = powerpress_normalize_update_frequency(
+            $Feed['update_frequency'] ?? null,
+            $Feed['update_frequency_week'] ?? null,
+            $Feed['update_frequency_month'] ?? null
+        );
 
-                if (!empty($byDays))
-                    $rrule .= ';BYDAY='.implode(',', $byDays);
+        if (!empty($freq_data['freq'])) {
+            // HANDLE RRULE ATTR
+            $rrule_parts = ['FREQ=' . $freq_data['freq']];
+            if (!empty($freq_data['byday']))
+                $rrule_parts[] = "BYDAY={$freq_data['byday']}";
 
-                $updateFrequency = 'Weekly';
+            if (!empty($freq_data['bymonth']))
+                $rrule_parts[] = "BYMONTH={$freq_data['bymonth']}";
+            
+            if (!empty($freq_data['bymonthday']))
+                $rrule_parts[] = "BYMONTHDAY={$freq_data['bymonthday']}";
+            
+            if (!empty($freq_data['count']))
+                $rrule_parts[] = 'COUNT=' . (int) $freq_data['count'];
+            
+            if (!empty($freq_data['interval']))
+                $rrule_parts[] = 'INTERVAL=' . (int) $freq_data['interval'];
+            
+            if (!empty($freq_data['until']))
+                $rrule_parts[] = "UNTIL={$freq_data['until']}";
 
-            } else if ($Feed['update_frequency'] == 3) {
-                $rrule = 'FREQ=MONTHLY';
-                $monthInterval = $Feed['update_frequency_month'] ?? 1;
-                
-                if (!empty($monthInterval))
-                    $rrule .= ';INTERVAL=' . $monthInterval;
-                
-                $updateFrequency = 'Monthly';
+            $rrule = implode(';', $rrule_parts);
+
+            // HANDLE DISPLAY FIELD
+            $display = $freq_data['display'] ?? ucfirst(strtolower($freq_data['freq']));
+            $attrs = ' rrule="' . esc_attr($rrule) . '"';
+
+            // HANDLE COMPLETE ATTR
+            if (!empty($Feed['itunes_complete'])) {
+                $attrs .= ' complete="true"';
             }
 
-            echo "\t<podcast:updateFrequency rrule=\"$rrule\">$updateFrequency</podcast:updateFrequency>\n";
+            // HANDLE DTSTART ATTR
+            if (!empty($Feed['dtstart'])) {
+                $attrs .= ' dtstart="' . esc_attr($Feed['dtstart']) . '"';
+            }
+
+            // OUTPUT PCI TAG
+            echo "\t<podcast:updateFrequency{$attrs}>" . esc_html($display) . "</podcast:updateFrequency>\n";
+
+            // OUTPUT RV TAG
+            if (!empty($Feed['frequency']) && in_array($freq_data['freq'], ['DAILY', 'WEEKLY', 'MONTHLY'], true)) {
+                echo "\t<rawvoice:frequency>" . htmlspecialchars($Feed['frequency']) . "</rawvoice:frequency>\n";
+            }
         }
 
-        if( !empty($Feed['frequency']) )
-            echo "\t<rawvoice:frequency>". htmlspecialchars($Feed['frequency']) ."</rawvoice:frequency>".PHP_EOL;
+        // =====================
+        // BLOCK <podcast:block>
+        //       <itunes:block>
+        // =====================
 
         if (isset($Feed['block'])) {
             if (isset($Feed['block_all']) && $Feed['block_all'] != 0) {
@@ -2031,7 +2057,9 @@ function powerpress_rss2_item()
                     $uri_url = !empty($uri_data['uri']) ? trim(htmlspecialchars($uri_data['uri'])) : '';
                     if (empty($uri_url)) continue;
 
-                    $uri_type = trim(htmlspecialchars(powerpress_get_contenttype($uri_url)));
+                    $uri_type = !empty($uri_data['contentType'])
+                        ? trim(htmlspecialchars($uri_data['contentType']))
+                        : trim(htmlspecialchars(powerpress_get_contenttype($uri_url)));
                     if ($uri_url === trim(htmlspecialchars($EpisodeData['url'])) || $uri_type === '') continue;
 
                     $episode_str .= "\t\t\t" . sprintf('<podcast:source uri="%s" contentType="%s"/>%s ', esc_url(powerpress_url_in_feed($uri_url)), $uri_type, PHP_EOL);
@@ -5948,14 +5976,9 @@ function powerpress_seconds_to_hms($secs)
     return sprintf('%02d:%02d:%02d', $h, $m, $s);
 }
 
-/*
-End Helper Functions
-*/
-
-
-/*
-Template Rendering Function
-*/
+// =========================
+// TEMPLATE RENDERING HELPER
+// =========================
 
 function powerpress_render_template($config) {
     $type = $config['type'];
@@ -5975,6 +5998,7 @@ function powerpress_render_template($config) {
         'txt_tag'            => 'txt-tag.php',
         'alternate_enclosure'=> 'alt-enclosure.php',
         'content_link'       => 'content-link.php',
+        'update_frequency'   => 'update-frequency.php',
     ];
 
     if (!isset($templates[$type])) {
@@ -5983,9 +6007,40 @@ function powerpress_render_template($config) {
 
     include(POWERPRESS_ABSPATH . "/views/pci/{$templates[$type]}");
 }
-//
-// END TEMPLATE RENDERER
-//
+
+// =====================================
+// UPDATE FREQUENCY NORMALIZATION HELPER
+// =====================================
+
+/** normalize legacy save pattern for feed output */
+function powerpress_normalize_update_frequency($value, $week_indices = null, $month_interval = null) {
+    if (is_array($value)) return $value;
+    if (empty($value)) return null;
+
+    $freq_map = [1 => 'DAILY', 2 => 'WEEKLY', 3 => 'MONTHLY'];
+    $value = (int) $value;
+    if (!isset($freq_map[$value])) return null;
+
+    $result = ['freq' => $freq_map[$value]];
+
+    if ($value === 2 && !empty($week_indices)) {
+        $code_lookup = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+        $codes = [];
+        foreach (explode(',', $week_indices) as $idx) {
+            $idx = (int) trim($idx);
+            if (isset($code_lookup[$idx]))
+                $codes[] = $code_lookup[$idx];
+        }
+        if (!empty($codes))
+            $result['byday'] = implode(',', $codes);
+    }
+
+    if ($value === 3 && !empty($month_interval)) {
+        $result['interval'] = (int) $month_interval;
+    }
+
+    return $result;
+}
 
 
 // Are we in the admin?

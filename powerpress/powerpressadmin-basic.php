@@ -1404,73 +1404,15 @@ function powerpressadmin_edit_funding($FeedSettings = false, $feed_slug='podcast
     </div>
 
     <div class="pp-settings-section col-12">
-        <h2><?php echo __('Episode Frequency', 'powerpress'); ?></h2>
-        <div class="row d-flex flex-row align-items-center justify-content-between">
-            <div class="form-group col-lg-5 mb-3">
-                <label for="dtstart" class="pp-settings-label">
-                    <?php echo __('Start Date', 'powerpress')?>
-                </label>
-                <input class="pp-settings-text-input" type="date" name="Feed[dtstart]" id="dtstart" value="<?php echo htmlspecialchars($FeedSettings['dtstart'] ?? ''); ?>">
-            </div>
-
-            <div class="form-check col-lg-5 mb-3">
-                <input type="hidden" name="Feed[is_complete]" value="false">
-                <input class="form-check-input" type="checkbox" name="Feed[is_complete]" id="complete" value="true" <?php echo !empty($FeedSettings['is_complete']) && $FeedSettings['is_complete'] === 'true' ? 'checked' : '' ?>>
-                <label class="form-check-label" for="complete" style="color: black; font-size: 1rem;">
-                    <?php echo __("Mark Show Complete", "powerpress"); ?>
-                </label>
-            </div>
-        </div>
-
-        <div class="row ml-0 mr-0">
-            <div class="form-check mr-4">
-                <input class="form-check-input" type="radio" name="Feed[update_frequency]" id="daily" value="1" <?php echo !empty($FeedSettings['update_frequency']) && $FeedSettings['update_frequency'] == '1' ? 'checked' : '' ?>>
-                <label class="form-check-label" for="daily" style="color: black; font-size: 1rem;">
-                    <?php echo __("Daily", "powerpress"); ?>
-                </label>
-            </div>
-            <div class="form-check mr-4">
-                <input class="form-check-input" type="radio" name="Feed[update_frequency]" id="weekly" value="2" <?php echo !empty($FeedSettings['update_frequency']) && $FeedSettings['update_frequency'] == '2' ? 'checked' : '' ?>>
-                <label class="form-check-label" for="weekly" style="color: black; font-size: 1rem;">
-                    <?php echo __("Weekly", "powerpress"); ?>
-                </label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="Feed[update_frequency]" id="monthly" value="3" <?php echo !empty($FeedSettings['update_frequency']) && $FeedSettings['update_frequency'] == '3' ? 'checked' : '' ?>>
-                <label class="form-check-label" for="monthly" style="color: black; font-size: 1rem;">
-                    <?php echo __("Monthly", "powerpress"); ?>
-                </label>
-            </div>
-        </div>
-        <div id="weekly-select" class="row ml-0 mr-0" style="display: <?php echo !empty($FeedSettings['update_frequency']) && $FeedSettings['update_frequency'] == '2' ? '' : 'none' ?>;">
-            <?php
-            $selectedDayList = explode(',', $FeedSettings['update_frequency_week'] ?? '');
-            $days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            $count = 0;
-            ?>
-            <div class="row ml-0 mr-0" style="margin-top: 20px;">
-                <?php
-                foreach ($days as $day) {
-                    ?>
-                    <div class="form-check" style="display: flex; align-items: center; margin-right: 10px;">
-                        <input class="form-check-input" type="checkbox" value="<?php echo $count;?>" name="Feed[freq-day-<?php echo $count; ?>]" id="freq-day-<?php echo $count; ?>" <?php echo in_array((string) $count, $selectedDayList) ? 'checked' : ''; ?>>
-                        <label class="form-check-label" for="freq-day-<?php echo $count; ?>" style="color: black; font-size: 1rem;">
-                            <?php echo __($day, "powerpress"); ?>
-                        </label>
-                    </div>
-                    <?php
-                    $count += 1;
-                }
-                ?>
-            </div>
-        </div>
-        <div id="monthly-frequency" class="row ml-0 mr-0" style="margin-top: 20px; display: <?php echo !empty($FeedSettings['update_frequency']) && $FeedSettings['update_frequency'] == '3' ? '' : 'none' ?>;">
-            <label class="mt-2 pp-settings-label" for="update_frequency_month">
-                <?php echo __("Monthly Frequency", "powerpress"); ?>
-            </label>
-            <input class="pp-settings-text-input" required min="1" step="1" value="<?php echo $FeedSettings['update_frequency_month'] ?? '1'; ?>"
-                   name="Feed[update_frequency_month]" id="update_frequency_month" type="number" />
-        </div>
+        <?php
+        powerpress_render_template([
+            'type' => 'update_frequency',
+            'context' => 'channel',
+            'FeedSlug' => $feed_slug,
+            'Data' => $FeedSettings,
+            'NamePrefix' => 'Feed',
+        ]);
+        ?>
     </div>
 
     <div class="pp-settings-section col-12">
