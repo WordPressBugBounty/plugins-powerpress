@@ -3271,7 +3271,7 @@ function powerpress_edit_post($post_ID, $post)
                         $ToSerialize['pci_chapters_url'] = $chapterURL;
 
                     }
-                } else if (!empty($Powerpress['pci_chapters_url'])) {
+                } else if (!empty($Powerpress['pci_chapters_url']) && SSRFCheck($chapterURL, $feed_slug, false, "chapters URL")) {
                     // if the transcript has not been changed, carry it through
                     $ToSerialize['pci_chapters'] = 1;
                     $ToSerialize['pci_chapters_manual'] = !empty($Powerpress['chapters']['manual']) ? 1 : 0;

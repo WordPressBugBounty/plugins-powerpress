@@ -862,7 +862,7 @@ function chapters_tab($EnclosureURL, $FeedSlug, $object, $GeneralSettings, $PCIT
                             onclick="showHideTranscriptBox('chapters', '<?php echo $FeedSlug; ?>');" />
                         <?php echo esc_html(__('Edit chapters', 'powerpress')); ?>
                         <?php if (!empty($PCIChaptersURL)) { ?>
-                            - <a href="<?php echo $PCIChaptersURL ?>" title="Chapters Link" target="_blank"><?php echo $PCIChaptersURL; ?></a>
+                            - <a href="<?php echo esc_attr($PCIChaptersURL) ?>" title="Chapters Link" target="_blank"><?php echo esc_html($PCIChaptersURL); ?></a>
                         <?php } ?>
                     </p>
                 <?php } else { ?>
