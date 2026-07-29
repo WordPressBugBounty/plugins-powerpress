@@ -753,27 +753,36 @@ window.onload = function() {
 			?>
 			<p><?php
 
-			if( $QuotaData['published']['available'] > 0 ) // != $QuotaData['published']['total'] )
-			{
-				echo sprintf( __('Publishing space available: %s of (%s %%) of %s/month quota.', 'powerpress'),
-					'<em>'. powerpress_byte_size($QuotaData['published']['available']) .'</em>',
-					//'<em>'. powerpress_byte_size($QuotaData['published']['total']-$QuotaData['published']['available']) .'</em>',
-					'<em>'. round( ($QuotaData['published']['available']/$QuotaData['published']['total'])*100 ) .'</em>',
-					'<em>'. str_replace('.0', '', powerpress_byte_size($QuotaData['published']['total'])) .'</em>' );
-				//echo sprintf( __('You have %s available (%s published in the last 30 days) of your %s publish limit.', 'powerpress'),
-				//	'<em>'. powerpress_byte_size($QuotaData['published']['available']) .'</em>',
-				//	'<em>'. powerpress_byte_size($QuotaData['published']['total']-$QuotaData['published']['available']) .'</em>',
-				//	'<em>'. powerpress_byte_size($QuotaData['published']['total']) .'</em>' );
-			}
-			else if( $QuotaData['published']['available'] == 0 ) // Hosting account frozen
-			{
+            if (($QuotaData['published']['mode'] ?? 'bytes') == 'time') {
+                $availHrs = round($QuotaData['published']['available'] / 3600, 1);
+                $totalHrs = round($QuotaData['published']['total'] / 3600, 1);
 
-			}
-			else
-			{
-				echo sprintf( __('You have %s publish space available.', 'powerpress'),
-					'<em>'. powerpress_byte_size($QuotaData['published']['total']) .'</em>' );
-			}
+                echo sprintf(__('Publishing time available: %s of %s hours/month.', 'powerpress'), '<em>' . $availHrs . '</em>', '<em>' . $totalHrs . '</em>');
+            }
+
+            else {
+                if( $QuotaData['published']['available'] > 0 ) // != $QuotaData['published']['total'] )
+                {
+                    echo sprintf( __('Publishing space available: %s of (%s %%) of %s/month quota.', 'powerpress'),
+                        '<em>'. powerpress_byte_size($QuotaData['published']['available']) .'</em>',
+                        //'<em>'. powerpress_byte_size($QuotaData['published']['total']-$QuotaData['published']['available']) .'</em>',
+                        '<em>'. round( ($QuotaData['published']['available']/$QuotaData['published']['total'])*100 ) .'</em>',
+                        '<em>'. str_replace('.0', '', powerpress_byte_size($QuotaData['published']['total'])) .'</em>' );
+                    //echo sprintf( __('You have %s available (%s published in the last 30 days) of your %s publish limit.', 'powerpress'),
+                    //	'<em>'. powerpress_byte_size($QuotaData['published']['available']) .'</em>',
+                    //	'<em>'. powerpress_byte_size($QuotaData['published']['total']-$QuotaData['published']['available']) .'</em>',
+                    //	'<em>'. powerpress_byte_size($QuotaData['published']['total']) .'</em>' );
+                }
+                else if( $QuotaData['published']['available'] == 0 ) // Hosting account frozen
+                {
+
+                }
+                else
+                {
+                    echo sprintf( __('You have %s publish space available.', 'powerpress'),
+                        '<em>'. powerpress_byte_size($QuotaData['published']['total']) .'</em>' );
+                }
+            }
 			?>
 			</p>
 			<p><?php
@@ -789,14 +798,14 @@ window.onload = function() {
 				else if( $QuotaData['published']['status'] == 'UNLIMITED' )
 				{
 					echo '<p>';
-					echo __('Publishing Space Available: Unlimited (Professional Hosting)', 'powerpress');
-					echo '<p>';
+					echo __('Publishing Availability: Unlimited (Professional Hosting)', 'powerpress');
+					echo '</p>';
 				}
 				else
 				{
 					echo '<p>';
-					echo __('Publishing Space Available: Account has expired', 'powerpress');
-					echo '<p>';
+					echo __('Publishing Availability: Account has expired', 'powerpress');
+					echo '</p>';
 				}
 			?>
 		<?php }

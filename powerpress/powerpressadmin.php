@@ -3131,9 +3131,13 @@ function powerpress_edit_post($post_ID, $post)
                 if (!empty($Powerpress['chapters']['edit'])) {
                     if (!empty($Powerpress['chapters']['upload'])) {
                         if (isset($Powerpress['pci_chapters_url']) && trim($Powerpress['pci_chapters_url']) != '') {
-                            $ToSerialize['pci_chapters'] = 1;
-                            $ToSerialize['pci_chapters_url'] = stripslashes($Powerpress['pci_chapters_url']);
-                            $chapterURL = $ToSerialize['pci_chapters_url'];
+                            if (strpos($Powerpress['pci_chapters_url'], 'http') !== 0 || !SSRFCheck($chapterURL, $feed_slug, false, "chapters URL")) {
+                                powerpress_add_error(__('Chapters Error: Invalid URL.', 'powerpress'));
+                            } else {
+                                $ToSerialize['pci_chapters'] = 1;
+                                $ToSerialize['pci_chapters_url'] = stripslashes($Powerpress['pci_chapters_url']);
+                                $chapterURL = $ToSerialize['pci_chapters_url'];
+                            }
                         }
                     }
                     if (!empty($Powerpress['chapters']['manual'])) {
@@ -3271,13 +3275,17 @@ function powerpress_edit_post($post_ID, $post)
                         $ToSerialize['pci_chapters_url'] = $chapterURL;
 
                     }
-                } else if (!empty($Powerpress['pci_chapters_url']) && SSRFCheck($chapterURL, $feed_slug, false, "chapters URL")) {
+                } else if (!empty($Powerpress['pci_chapters_url'])) {
                     // if the transcript has not been changed, carry it through
-                    $ToSerialize['pci_chapters'] = 1;
-                    $ToSerialize['pci_chapters_manual'] = !empty($Powerpress['chapters']['manual']) ? 1 : 0;
-                    $ToSerialize['pci_chapters_url'] = stripslashes($Powerpress['pci_chapters_url']);
-                    $ToSerialize['write_chapters_to_id3'] = !empty($Powerpress['write_chapters_to_id3']) ? 1 : 0;
-                    $chapterURL = $ToSerialize['pci_chapters_url'];
+                    if (strpos($Powerpress['pci_chapters_url'], 'http') !== 0 || !SSRFCheck($chapterURL, $feed_slug, false, "chapters URL")) {
+                        powerpress_add_error(__('Chapters Error: Invalid URL.', 'powerpress'));
+                    } else {
+                        $ToSerialize['pci_chapters'] = 1;
+                        $ToSerialize['pci_chapters_manual'] = !empty($Powerpress['chapters']['manual']) ? 1 : 0;
+                        $ToSerialize['pci_chapters_url'] = stripslashes($Powerpress['pci_chapters_url']);
+                        $ToSerialize['write_chapters_to_id3'] = !empty($Powerpress['write_chapters_to_id3']) ? 1 : 0;
+                        $chapterURL = $ToSerialize['pci_chapters_url'];
+                    }
                 } else {
                     $chapterURL = '';
                 }
@@ -4549,9 +4557,9 @@ function powerpress_media_info_ajax()
     if( strpos($media_url, 'http://') !== 0 && strpos($media_url, 'https://') !== 0) {
         if (isset($MediaInfo['space_remaining']) && !$MediaInfo['space_remaining']) {
             if (empty($MediaInfo['error'])) {
-                $MediaInfo['error'] = __('Not enough storage space remaining to publish this file.', 'powerpress');
+                $MediaInfo['error'] = __('This file exceeds your monthly publishing limit.', 'powerpress'); 
             } else {
-                $MediaInfo['error'] .= ' ' . __('Not enough storage space remaining to publish this file.', 'powerpress');
+                $MediaInfo['error'] .= ' ' . __('This file exceeds your monthly publishing limit.', 'powerpress');
             }
         }
     }
