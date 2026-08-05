@@ -3131,7 +3131,7 @@ function powerpress_edit_post($post_ID, $post)
                 if (!empty($Powerpress['chapters']['edit'])) {
                     if (!empty($Powerpress['chapters']['upload'])) {
                         if (isset($Powerpress['pci_chapters_url']) && trim($Powerpress['pci_chapters_url']) != '') {
-                            if (strpos($Powerpress['pci_chapters_url'], 'http') !== 0 || !SSRFCheck($chapterURL, $feed_slug, false, "chapters URL")) {
+                            if (strpos($Powerpress['pci_chapters_url'], 'http') !== 0 || !SSRFCheck($Powerpress['pci_chapters_url'], $feed_slug, false, "chapters URL")) {
                                 powerpress_add_error(__('Chapters Error: Invalid URL.', 'powerpress'));
                             } else {
                                 $ToSerialize['pci_chapters'] = 1;
@@ -3277,7 +3277,7 @@ function powerpress_edit_post($post_ID, $post)
                     }
                 } else if (!empty($Powerpress['pci_chapters_url'])) {
                     // if the transcript has not been changed, carry it through
-                    if (strpos($Powerpress['pci_chapters_url'], 'http') !== 0 || !SSRFCheck($chapterURL, $feed_slug, false, "chapters URL")) {
+                    if (strpos($Powerpress['pci_chapters_url'], 'http') !== 0 || !SSRFCheck($Powerpress['pci_chapters_url'], $feed_slug, false, "chapters URL")) {
                         powerpress_add_error(__('Chapters Error: Invalid URL.', 'powerpress'));
                     } else {
                         $ToSerialize['pci_chapters'] = 1;

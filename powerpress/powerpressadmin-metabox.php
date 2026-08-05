@@ -776,7 +776,10 @@ function chapters_tab($EnclosureURL, $FeedSlug, $object, $GeneralSettings, $PCIT
             $chapters_req_url = $PCIChaptersURL;
         }
         // phpstan: file_get_contents returns false on failure (doesn't throw), suppress warning instead
-        $json = @file_get_contents($chapters_req_url);
+        $json = false;
+        if (SSRFCheck($chapters_req_url, $FeedSlug, false, "chapters URL")) {
+            $json = @wp_safe_remote_get($chapters_req_url);
+        }
 
         if ($json) {
             // phpstan: json_decode returns null on invalid JSON, check before accessing ['chapters']
