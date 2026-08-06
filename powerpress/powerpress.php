@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.17.1
+Version: 11.17.2
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -134,7 +134,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.17.1' );
+define('POWERPRESS_VERSION', '11.17.2' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -154,9 +154,6 @@ if( !defined('POWERPRESS_BLUBRRY_API_URL') )
 // Replace validator service with one that is more reliable here:
 define('POWERPRESS_FEEDVALIDATOR_URL', 'https://castfeedvalidator.com/?url=');
 
-// Display custom play image for quicktime media. Applies to on page player only.
-//define('POWERPRESS_PLAY_IMAGE', 'http://www.blubrry.com/themes/blubrry/images/player/PlayerBadge150x50NoBorder.jpg');
-
 if( !defined('POWERPRESS_CONTENT_ACTION_PRIORITY') )
     define('POWERPRESS_CONTENT_ACTION_PRIORITY', 10 );
 
@@ -171,8 +168,6 @@ if( !defined('POWERPRESS_LINK_SEPARATOR') )
     define('POWERPRESS_LINK_SEPARATOR', '|');
 if( !defined('POWERPRESS_TEXT_SEPARATOR') )
     define('POWERPRESS_TEXT_SEPARATOR', ':');
-if( !defined('POWERPRESS_PLAY_IMAGE') )
-    define('POWERPRESS_PLAY_IMAGE', 'play_video_default.jpg');
 if( !defined('PHP_EOL') )
     define('PHP_EOL', "\n"); // We need this variable defined for new lines.
 if( defined('POWERPRESS_DEBUG') ) {
@@ -3383,8 +3378,10 @@ function powerpress_init_block() {
 
             // first, dropdown to select feed if necessary
             $is_backend = defined('REST_REQUEST') && REST_REQUEST == true && filter_input(INPUT_GET, 'context', FILTER_SANITIZE_SPECIAL_CHARS) == 'edit';
+            $player_id = esc_attr( $attributes['id'] ?? '' );
+            $player_feed_slug = esc_attr( $attributes['feed_slug'] ?? '' );
             if ($is_backend && !empty($GeneralSettings['custom_feeds']) && !empty($attributes['id'])) {
-                $return .= "<select id='select-feed-{$attributes['id']}' disabled>";
+                $return .= "<select id='select-feed-{$player_id}' disabled>";
                 if (empty($attributes['feed_slug'])) {
                     $return .= '<option value="" class="pp-block-select">Channel: No selection</option>';
                 } else {
@@ -3408,7 +3405,7 @@ function powerpress_init_block() {
             // print shortcode on public side
             if (!$is_backend) {
                 if (!empty($attributes['feed_slug'])) {
-                    return '[powerpress channel="' . $attributes['feed_slug'] . '"]';
+                    return '[powerpress channel="' . $player_feed_slug . '"]';
                 }
                 return '';
             }
@@ -3416,8 +3413,8 @@ function powerpress_init_block() {
             if (!empty($attributes['feed_slug'])) {
                 // for editor, generate html from the shortcode and send it
                 $return .= "<div>";
-                $return .= "<p class='pp-block-error-{$attributes['id']}'></p><div class='pp-block-sample'>";
-                $return .= do_shortcode('[powerpress sample="1" channel="' . $attributes['feed_slug'] . '"]');
+                $return .= "<p class='pp-block-error-{$player_id}'></p><div class='pp-block-sample'>";
+                $return .= do_shortcode('[powerpress sample="1" channel="' . $player_feed_slug . '"]');
                 $return .= "</div></div>";
             }
 

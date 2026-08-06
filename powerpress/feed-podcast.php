@@ -178,7 +178,7 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'."\n"; 
 
 			// show_notes override: use if available, fall back to legacy summary, then excerpt/content
 			if ( !empty($EpisodeData['show_notes']) ) {
-				echo "\t\t<description>" . powerpress_format_itunes_value($EpisodeData['show_notes'], 'description') . "</description>\n";
+				echo "\t\t<description>" . powerpress_format_itunes_value(wpautop($EpisodeData['show_notes']), 'description') . "</description>\n";
 			} else if ( !empty($EpisodeData['summary']) ) {
 				// legacy itunes:summary data - preserve for existing episodes
 				echo "\t\t<description>" . powerpress_format_itunes_value($EpisodeData['summary'], 'description') . "</description>\n";
@@ -197,7 +197,7 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'."\n"; 
 		else {
 			// show_notes override: use if available, fall back to legacy summary, then excerpt
 			if ( !empty($EpisodeData['show_notes']) ) {
-				echo "\t\t<description>" . powerpress_format_itunes_value($EpisodeData['show_notes'], 'description') . "</description>\n";
+				echo "\t\t<description>" . powerpress_format_itunes_value(wpautop($EpisodeData['show_notes']), 'description') . "</description>\n";
 			} else if ( !empty($EpisodeData['summary']) ) {
 				// legacy itunes:summary data - preserve for existing episodes
 				echo "\t\t<description>" . powerpress_format_itunes_value($EpisodeData['summary'], 'description') . "</description>\n";

@@ -511,8 +511,33 @@ img[id^="pp-image-preview"] {
 
 img[id^="poster-pp-image-preview"] {
     width: 32vh;
-    height: 18vh; /* this needs to be 16:9 */
+    height: 18vh;
+    object-fit: contain;
     border: 3px solid #717171;
+}
+
+.powerpress-art-text input[class="pp-ep-box-input"] {
+    display: block;
+    clear: both;
+    margin-top: var(--pp-spacing-sm);
+    font-size: var(--pp-font-size-sm);
+}
+
+.powerpress-art-text .thickbox {
+    display: inline-block;
+    margin-top: var(--pp-spacing-lg);
+}
+
+.powerpress-art-preview .pp-section-subtitle {
+    font-weight: bold;
+}
+
+.powerpress-art-preview p[id*="image-preview-caption"] {
+    margin: var(--pp-spacing-xs);
+}
+
+div[class^="pp-tooltip"] .text-pp-tooltip.pp-tooltip-tall {
+    top: -150%;
 }
 
 .powerpress-art-text {
@@ -707,12 +732,13 @@ input[class="media-details-radio"]:checked:before {
 }
 
 label[class="ep-box-caption"] {
-    color: rgba(0,0,0,0.6);
-    font-family: Roboto, sans-serif;
-    font-size: 12px;
+    color: var(--pp-color-gray-600);
+    font-family: var(--pp-font-family);
+    font-size: var(--pp-font-size-sm);
     letter-spacing: 0.4px;
     font-weight: 300;
-    margin-left: 2em;
+    display: block;
+    margin: var(--pp-spacing-xs) 0 0;
 }
 
 label[class^="pp-ep-box-label"] {

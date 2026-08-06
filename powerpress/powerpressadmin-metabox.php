@@ -572,7 +572,7 @@ function artwork_tab($FeedSlug, $ExtraData, $object, $CoverImage, $GeneralSettin
                 $itunes_image_preview = $itunes_image;
             }
             if (!$CoverImage) {
-                $CoverImage_preview = powerpress_get_root_url() . 'images/pts_cover.jpg';
+                $CoverImage_preview = powerpress_get_root_url() . 'images/video_thumb_default.svg';
             } else {
                 $CoverImage_preview = $CoverImage;
             }
@@ -583,21 +583,16 @@ function artwork_tab($FeedSlug, $ExtraData, $object, $CoverImage, $GeneralSettin
             if (!isset($GeneralSettings['new_episode_box_itunes_image']) || $GeneralSettings['new_episode_box_itunes_image'] == 1) { ?>
                 <div class="pp-section-container">
                     <div class="powerpress-art-text">
-                        <h4 class="pp-section-title"
-                            style="display: inline-block; margin-bottom: 1em;"><?php echo esc_html(__('Apple Podcast Episode Artwork', 'powerpress')); ?></h4>
+                        <h4 class="pp-section-title"><?php echo esc_html(__('Apple Podcast Episode Artwork', 'powerpress')); ?></h4>
                         <div class="pp-tooltip-right">i
-                            <span class="text-pp-tooltip"
-                                style="top: -150%;"><?php echo esc_html(__('Episode artwork should be square and have dimensions between 1400 x 1400 pixels and 3000 x 3000 pixels.', 'powerpress')); ?></span>
+                            <span class="text-pp-tooltip pp-tooltip-tall"><?php echo esc_html(__('Episode artwork should be square and have dimensions between 1400 x 1400 pixels and 3000 x 3000 pixels.', 'powerpress')); ?></span>
                         </div>
-                        <br />
                         <input type="text" class="pp-ep-box-input" title="<?php echo esc_attr(__("Apple Image URL", "powerpress")); ?>"
                             id="powerpress_itunes_image_<?php echo $FeedSlug; ?>"
                             placeholder="<?php echo htmlspecialchars(__('e.g. http://example.com/path/to/image.jpg', 'powerpress')); ?>"
                             name="Powerpress[<?php echo $FeedSlug; ?>][itunes_image]"
                             value="<?php echo esc_attr($itunes_image); ?>"
-                            style="font-size: 90%;" size="250" oninput="powerpress_insertArtIntoPreview(this)" />
-                        <br />
-                        <br />
+                            size="250" oninput="powerpress_insertArtIntoPreview(this)" />
                         <a href="<?php echo $form_action_url; ?>" class="thickbox powerpress-itunes-image-browser"
                             id="powerpress_itunes_image_browser_<?php echo $FeedSlug; ?>"
                             title="<?php echo esc_attr(__('Select Apple Image', 'powerpress')); ?>">
@@ -605,11 +600,10 @@ function artwork_tab($FeedSlug, $ExtraData, $object, $CoverImage, $GeneralSettin
                         </a>
                     </div>
                     <div class="powerpress-art-preview">
-                        <p class="pp-section-subtitle" style="font-weight: bold;"><?php echo esc_html(__('PREVIEW', 'powerpress')); ?></p>
+                        <p class="pp-section-subtitle"><?php echo esc_html(__('PREVIEW', 'powerpress')); ?></p>
                         <img id="pp-image-preview-<?php echo $FeedSlug; ?>"
                             src="<?php echo esc_attr($itunes_image_preview); ?>" alt="No artwork selected" />
-                        <p id="pp-image-preview-caption-<?php echo $FeedSlug; ?>" class="pp-section-subtitle"
-                            style="font-weight: bold;margin: 3px;">
+                        <p id="pp-image-preview-caption-<?php echo $FeedSlug; ?>" class="pp-section-subtitle">
                             <?php if ($itunes_image) {
                                 echo get_filename_from_path(esc_attr($itunes_image));
                             } ?></p>
@@ -617,23 +611,20 @@ function artwork_tab($FeedSlug, $ExtraData, $object, $CoverImage, $GeneralSettin
                 </div>
                 <div class="ep-box-line-margin"></div>
             <?php }
-            if (isset($GeneralSettings['new_episode_box_cover_image']) && $GeneralSettings['new_episode_box_cover_image'] == 1) { ?>
+            if (!isset($GeneralSettings['new_episode_box_cover_image']) || $GeneralSettings['new_episode_box_cover_image'] == 1) { ?>
                 <div id="powerpress_thumbnail_container_<?php echo $FeedSlug; ?>" class="pp-section-container">
                     <div class="powerpress-art-text">
                         <h4 class="pp-section-title"><?php echo esc_html(__('Thumbnail Image', 'powerpress')); ?></h4>
                         <div class="pp-tooltip-right">i
                             <span class="text-pp-tooltip"><?php echo esc_html(__('This artwork only shows up if your podcast media is a video file.', 'powerpress')); ?></span>
                         </div>
-                        <br /> <br />
                         <input type="text" class="pp-ep-box-input" id="powerpress_image_<?php echo $FeedSlug; ?>"
                             name="Powerpress[<?php echo $FeedSlug; ?>][image]" title="<?php echo esc_attr(__("Poster image URL", "powerpress")); ?>"
                             value="<?php echo esc_attr($CoverImage); ?>"
                             placeholder="<?php echo htmlspecialchars(__('e.g. http://example.com/path/to/image.jpg', 'powerpress')); ?>"
-                            style="font-size: 90%;" size="250" oninput="powerpress_insertArtIntoPreview(this)" />
-                        <br />
+                            size="250" oninput="powerpress_insertArtIntoPreview(this)" />
                         <label class="ep-box-caption"
                             for="powerpress_image_<?php echo $FeedSlug; ?>"><?php echo esc_html(__('Poster image for video (m4v, mp4, ogv, webm, etc..)', 'powerpress')); ?></label>
-                        <br />
                         <a href="<?php echo $form_action_url; ?>" class="thickbox powerpress-image-browser"
                             id="powerpress_image_browser_<?php echo $FeedSlug; ?>"
                             title="<?php echo esc_attr(__('Select Poster Image', 'powerpress')); ?>">
@@ -641,12 +632,10 @@ function artwork_tab($FeedSlug, $ExtraData, $object, $CoverImage, $GeneralSettin
                         </a>
                     </div>
                     <div class="powerpress-art-preview">
-                        <p class="pp-section-subtitle"
-                            style="font-weight: bold;"><?php echo esc_html(__('PREVIEW', 'powerpress')); ?></p>
+                        <p class="pp-section-subtitle"><?php echo esc_html(__('PREVIEW', 'powerpress')); ?></p>
                         <img id="poster-pp-image-preview-<?php echo $FeedSlug; ?>"
                             src="<?php echo esc_attr($CoverImage_preview); ?>" alt="No thumbnail selected" />
-                        <p id="poster-pp-image-preview-caption-<?php echo $FeedSlug; ?>" class="pp-section-subtitle"
-                            style="font-weight: bold;margin: 3px;">
+                        <p id="poster-pp-image-preview-caption-<?php echo $FeedSlug; ?>" class="pp-section-subtitle">
                             <?php if ($CoverImage) {
                                 echo get_filename_from_path(esc_attr($CoverImage));
                             } ?></p>
@@ -771,14 +760,32 @@ function chapters_tab($EnclosureURL, $FeedSlug, $object, $GeneralSettings, $PCIT
     if ($PCIChapters == 1) {
         // first, check if the chapters are hosted on this site. if so, access them directly rather than over http
         if (strpos($PCIChaptersURL, wp_upload_dir()['baseurl']) !== false) {
+            $self_hosted = true;
             $chapters_req_url = str_replace(wp_upload_dir()['baseurl'], wp_upload_dir()['basedir'], $PCIChaptersURL);
         } else {
+            $self_hosted = false;
             $chapters_req_url = $PCIChaptersURL;
         }
         // phpstan: file_get_contents returns false on failure (doesn't throw), suppress warning instead
         $json = false;
-        if (SSRFCheck($chapters_req_url, $FeedSlug, false, "chapters URL")) {
-            $json = @wp_safe_remote_get($chapters_req_url);
+        if ($self_hosted || SSRFCheck($chapters_req_url, $FeedSlug, false, "chapters URL")) {
+            if ($self_hosted) {
+                $json = @file_get_contents($chapters_req_url);
+            } else {
+                $response = wp_safe_remote_get($chapters_req_url);
+                if (is_wp_error($response)) {
+                    $error = true;
+                    $statusMsg = "Unable to download the chapters file.";
+                }
+                $response_code = wp_remote_retrieve_response_code($response);
+                if ($response_code === 200) {
+                    $body = wp_remote_retrieve_body($response);
+                    $json = json_decode($body, true);
+                } else {
+                    $error = true;
+                    $statusMsg = "Unable to download the chapters file.";
+                }
+            }
         }
 
         if ($json) {

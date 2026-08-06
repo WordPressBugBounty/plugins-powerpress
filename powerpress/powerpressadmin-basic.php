@@ -17,7 +17,7 @@ function powerpress_admin_basic()
 
         // scripts
         'chartjs' => ['type' => 'script', 'path' => '3rdparty/chart.min', 'no_suffix' => true, 'version' => '4.4.1'],
-        'powerpress-admin' => ['type' => 'script', 'path' => 'js/admin'],
+        'powerpress-admin' => ['type' => 'script', 'path' => 'js/admin', 'deps' => ['jquery']],
         'powerpress-program-card' => ['type' => 'script', 'path' => 'js/program-card', 'deps' => ['chartjs'], 'module' => true],
     ]);
 

@@ -7,7 +7,7 @@ function powerpress_admin_import_feed(){
     powerpress_check_credentials($creds);
 
     powerpress_enqueue_assets([
-        'powerpress-admin' => ['type' => 'script', 'path' => 'js/admin'],
+        'powerpress-admin' => ['type' => 'script', 'path' => 'js/admin', 'deps' => ['jquery']],
     ]);
 	?>
 

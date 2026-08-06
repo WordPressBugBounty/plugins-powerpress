@@ -3040,7 +3040,7 @@ function powerpress_edit_post($post_ID, $post)
                 // Show Notes
                 if ( isset($Powerpress['show_notes']) && trim($Powerpress['show_notes']) != '' ) {
                     $show_notes = powerpress_trim_value(stripslashes($Powerpress['show_notes']), 'description');
-                    $ToSerialize['show_notes'] = sanitize_textarea_field($show_notes);
+                    $ToSerialize['show_notes'] = wp_kses_post($show_notes);
                 }
 
 				// Txt Tag

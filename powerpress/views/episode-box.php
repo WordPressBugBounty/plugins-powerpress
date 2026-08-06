@@ -19,6 +19,7 @@ function powerpress_admin_enqueue_scripts($hook)
             'powerpress-admin' => [
                 'type' => 'script',
                 'path' => 'js/admin',
+                'deps' => ['jquery'],
             ],
             'powerpress-post' => [
                 'type' => 'script',
