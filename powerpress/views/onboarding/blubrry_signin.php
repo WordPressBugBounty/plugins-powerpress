@@ -359,7 +359,7 @@
             delete_option('powerpress_stats');
 
             if (isset($Error))
-                powerpress_page_message_add_notice($Error, 'inline', false);
+                powerpress_page_message_add_notice($Error, 'inline');
 
 
         }

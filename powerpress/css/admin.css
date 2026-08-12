@@ -842,3 +842,21 @@ div[class^="pp-tooltip"] .text-pp-tooltip::after {
 	text-align: right;
 	margin-top: 1.5em;
 }
+
+/* ERROR DETAILS */
+.powerpress-error-details {
+	margin-top: 8px;
+	font-weight: normal;
+}
+.powerpress-error-details summary {
+	cursor: pointer;
+}
+.powerpress-error-details pre {
+	margin: 4px 0 0;
+	padding: 10px;
+	background: #f8f8f8;
+	border-left: 3px solid #dc3545;
+	font-family: monospace;
+	font-size: 12px;
+	white-space: pre-wrap;
+}

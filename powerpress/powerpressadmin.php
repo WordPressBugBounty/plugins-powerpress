@@ -91,82 +91,7 @@ function powerpress_revai_languages(){
     return $languages;
 }
 
-function IPAddressIsPublic($ip) {
-    if (empty($ip) || !is_string($ip))
-        return false;
-
-    // check IP for hostname is not in LAN
-    $longip = ip2long($ip);
-    if ($longip === false) {
-        return false;
-    }
-    if ($longip >= ip2long('192.168.0.0') && $longip <= ip2long('192.168.255.255')) {
-        return false;
-    }
-    // current network 0.0.0.0/8
-    if ($longip >= ip2long('0.0.0.0') && $longip <= ip2long('0.255.255.255')) {
-        return false;
-    }
-    // private 10.0.0.0/8
-    if ($longip >= ip2long('10.0.0.0') && $longip <= ip2long('10.255.255.255')) {
-        return false;
-    }
-    // private 172.16.0.0/12
-    if ($longip >= ip2long('172.16.0.0') && $longip <= ip2long('172.31.255.255')) {
-        return false;
-    }
-    // private 192.168.0.0/16
-    if ($longip >= ip2long('192.168.0.0') && $longip <= ip2long('192.168.255.255')) {
-        return false;
-    }
-    // link-local 169.254.0.0/16
-    if ($longip >= ip2long('169.254.0.0') && $longip <= ip2long('169.254.255.255')) {
-        return false;
-    }
-    // CGN/shared 100.64.0.0/10
-    if ($longip >= ip2long('100.64.0.0') && $longip <= ip2long('100.127.255.255')) {
-        return false;
-    }
-    // multicast 224.0.0.0/4
-    if ($longip >= ip2long('224.0.0.0') && $longip <= ip2long('239.255.255.255')) {
-        return false;
-    }
-    // broadcast
-    if ($longip === ip2long('255.255.255.255')) {
-        return false;
-    }
-
-    return true;
-}
-
 	
-function powerpress_page_message_add_error($msg, $classes='inline', $escape=true)
-{
-	global $g_powerpress_page_message;
-	if( $escape )
-		$g_powerpress_page_message .= '<div class="error powerpress-error '.$classes.'">'. esc_html($msg) . '</div>';
-	else
-		$g_powerpress_page_message .= '<div class="error powerpress-error '.$classes.'">'. ($msg) . '</div>';
-}
-
-function powerpress_page_message_add_notice($msg, $classes='inline', $escape=true)
-{
-	global $g_powerpress_page_message;
-	// Always pre-pend, since jQuery will re-order with first as last.
-	if( $escape )
-		$g_powerpress_page_message = '<div class="updated fade powerpress-notice '.$classes.'">'. esc_html($msg) . '</div>' . $g_powerpress_page_message;
-	else
-		$g_powerpress_page_message = '<div class="updated fade powerpress-notice '.$classes.'">'. ($msg) . '</div>' . $g_powerpress_page_message;
-}
-
-function powerpress_page_message_print()
-{
-	global $g_powerpress_page_message;
-	if( $g_powerpress_page_message )
-		echo $g_powerpress_page_message;
-	$g_powerpress_page_message = '';
-}
-
 function powerpress_admin_activate()
 {
 	$Settings = get_option('powerpress_general', array());
@@ -256,13 +181,13 @@ function powerpress_admin_init()
     // check for a message from programmatic sync
     $pp_progad_sync_error = get_option("pp_progad_sync_error");
     if ($pp_progad_sync_error) {
-        powerpress_add_error($pp_progad_sync_error);
+        powerpress_page_message_add_error($pp_progad_sync_error);
         delete_option('pp_progad_sync_error');
     }
 
     $pp_progad_sync_success = get_option("pp_progad_sync_success");
     if ($pp_progad_sync_success) {
-        powerpress_page_message_add_notice($pp_progad_sync_success, 'inline', false);
+        powerpress_page_message_add_notice($pp_progad_sync_success, 'inline');
         delete_option('pp_progad_sync_success');
     }
 
@@ -841,10 +766,10 @@ function powerpress_admin_init()
                     }
 
                     if ($split_total > 100)
-                        powerpress_add_error(__('Regular recipient splits exceed 100%. Please adjust split percentages.', 'powerpress'));
+                        powerpress_page_message_add_error(__('Regular recipient splits exceed 100%. Please adjust split percentages.', 'powerpress'));
 
                     if ($fee_split_total > 100)
-                        powerpress_add_error(__('Fee recipient splits exceed 100%. Please adjust fee percentages.', 'powerpress'));
+                        powerpress_page_message_add_error(__('Fee recipient splits exceed 100%. Please adjust fee percentages.', 'powerpress'));
 
 					// replace intaken Feed values with only validated data
                     $Feed['value_recipients'] = $valid_recipients;
@@ -982,7 +907,7 @@ function powerpress_admin_init()
                                     $Podping->publish($feed_url, $GeneralSettingsTemp['blubrry_program_keyword'], $reason);
                                 } catch (Exception $e) {
                                     if (defined('WP_DEBUG') && WP_DEBUG) {
-                                        powerpress_add_error($e->getMessage());
+                                        powerpress_page_message_add_error($e->getMessage());
                                     }
                                 }
 
@@ -1618,7 +1543,7 @@ function powerpress_admin_init()
                         }
                         wp_redirect(admin_url() . "admin.php?page=powerpressadmin_basic");
                     } else {
-                        powerpress_add_error("Unable to verify nonce");
+                        powerpress_page_message_add_error("Unable to verify nonce");
                     }
 
                 }; break;
@@ -1822,7 +1747,7 @@ function powerpress_admin_init()
 
 					delete_option('update_plugins'); // OLD method
 					delete_option('_site_transient_update_plugins'); // New method
-					powerpress_page_message_add_notice( sprintf( __('Plugins Update Cache cleared successfully. You may now to go the %s page to see the latest plugin versions.', 'powerpress'), '<a href="'. admin_url() .'plugins.php" title="'.  __('Manage Plugins', 'powerpress') .'">'.  __('Manage Plugins', 'powerpress') .'</a>'), 'inline', false );
+					powerpress_page_message_add_notice( sprintf( __('Plugins Update Cache cleared successfully. You may now to go the %s page to see the latest plugin versions.', 'powerpress'), '<a href="'. admin_url() .'plugins.php" title="'.  __('Manage Plugins', 'powerpress') .'">'.  __('Manage Plugins', 'powerpress') .'</a>'), 'inline');
 
 				}; break;
 				case 'powerpress-reset-blubrry-connection': {
@@ -1952,11 +1877,7 @@ function powerpress_admin_notices()
 		if (function_exists('sg_cachepress_purge_cache')) { sg_cachepress_purge_cache(); }
 		
 		foreach( $errors as $null => $error )
-		{
-?>
-<div class="updated"><p style="line-height: 125%;"><strong><?php echo $error; ?></strong></p></div>
-<?php
-		}
+			echo $error;
 	}
 }
 
@@ -2467,7 +2388,7 @@ function powerpress_edit_post($post_ID, $post)
         // we want to display the warning message
         $error = "PowerPress Warning: you may be exceeding your fields limit, a server setting that limits how many fields your pages can contain. Your current limit is ";
         $error .= ini_get('max_input_vars') . " <a href='https://blubrry.com/support/powerpress-documentation/warning-messages-explained/'>Learn more</a>";
-        powerpress_add_error($error);
+        powerpress_page_message_add_error($error);
     }
 
     $Episodes = ( isset($_POST['Powerpress'])? $_POST['Powerpress'] : false);
@@ -2480,7 +2401,7 @@ function powerpress_edit_post($post_ID, $post)
 		    $error = '';
 			$field = 'enclosure';
             if (!preg_match('/^[a-z0-9]+(?:(?:-|_)+[a-z0-9]+)*$/', $feed_slug)) {
-                powerpress_add_error('Invalid feed slug ' . htmlspecialchars($feed_slug));
+                powerpress_page_message_add_error('Invalid feed slug ' . htmlspecialchars($feed_slug));
                 continue;
             }
             $chapterURL = '';
@@ -2507,7 +2428,7 @@ function powerpress_edit_post($post_ID, $post)
 				        $error .= __('This episode ', 'powerpress');
                     }
 				    $error .= __('will not be included in any podcast feed.', 'powerpress');
-				    powerpress_add_error($error);
+				    powerpress_page_message_add_error($error);
 
                 } else if( empty($Powerpress['url']) && empty($Powerpress['itunes_image']) && empty($Powerpress['episode_title']) && empty($Powerpress['feed_title']) && empty($Powerpress['summary']) && empty($Powerpress['subtitle']) && empty(trim($Powerpress['show_notes'] ?? '')) ) {
 				    continue;
@@ -2519,7 +2440,7 @@ function powerpress_edit_post($post_ID, $post)
 				// skip youtube urls from when used as enclosures
 				if( !empty($MediaURL) && isYoutubeURL($MediaURL) ) {
 					$error = __('Error', 'powerpress') . ": " . __('YouTube links are not allowed as podcast media files. YouTube links should be used in the Embed field or as Content Links only.', 'powerpress');
-					powerpress_add_error($error);
+					powerpress_page_message_add_error($error);
 					continue; // Skip this enclosure entirely
 				}
 
@@ -2546,7 +2467,7 @@ function powerpress_edit_post($post_ID, $post)
 				if( !$ContentType && !empty($Powerpress['url']) )
 				{
 					$error = __('Error', 'powerpress') ." [" . htmlspecialchars($Powerpress['url']) . "]: " .__('Unable to determine content type of media (e.g. audio/mpeg). Verify file extension is correct and try again.', 'powerpress');
-					powerpress_add_error($error);
+					powerpress_page_message_add_error($error);
 					continue;
 				}
 
@@ -2570,7 +2491,7 @@ function powerpress_edit_post($post_ID, $post)
 						if( isset($MediaInfo['error']) )
 						{
 							$error = __('Blubrry Hosting Error (media info)', 'powerpress') . ': ' . $MediaInfo['error'];
-							powerpress_add_error($error, ['feed_slug' => $feed_slug, 'media_file' => $Powerpress['url']]);
+							powerpress_page_message_add_error($error, 'inline', ['feed_slug' => $feed_slug, 'media_file' => $Powerpress['url']]);
 							$MediaInfo = null;
 						}
 					}
@@ -2581,13 +2502,13 @@ function powerpress_edit_post($post_ID, $post)
 						if( isset($MediaInfo['error']) )
 						{
 							$error = __('Error', 'powerpress') . " (<a href=\"" . htmlspecialchars($MediaURL) . "\" target=\"_blank\">" . htmlspecialchars($MediaURL) . "</a>): {$MediaInfo['error']}";
-							powerpress_add_error($error);
+							powerpress_page_message_add_error($error);
 							$MediaInfo = null;
 						}
 						else if( empty($MediaInfo['length']) )
 						{
 							$error = __('Error', 'powerpress') . " (<a href=\"" . htmlspecialchars($MediaURL) . "\" target=\"_blank\">" . htmlspecialchars($MediaURL) . "</a>): " . __('Unable to obtain size of media.', 'powerpress');
-							powerpress_add_error($error);
+							powerpress_page_message_add_error($error);
 							$MediaInfo = null;
 						}
 					}
@@ -2681,7 +2602,7 @@ function powerpress_edit_post($post_ID, $post)
                                             $FileSize = $MediaInfo['length'];
                                         } else {
                                             $error = __('Blubrry Hosting Error (alternate enclosure media info)', 'powerpress') . ': ' . $MediaInfo['error'];
-                                            powerpress_add_error($error, ['feed_slug' => $feed_slug, 'media_file' => $MediaURL]);
+                                            powerpress_page_message_add_error($error, 'inline', ['feed_slug' => $feed_slug, 'media_file' => $MediaURL]);
                                         }
                                     }
 									// try if all else fails (skips unpublished)
@@ -2741,11 +2662,11 @@ function powerpress_edit_post($post_ID, $post)
 
                                 } else {
                                     $error = __('Error', 'powerpress') . " (<a href=\"" . htmlspecialchars($MediaURL) . "\" target=\"_blank\">" . htmlspecialchars($MediaURL) . "</a>): Youtube links not allowed for alternate enclosure. Please use a content link for this URL.";
-                                    powerpress_add_error($error);
+                                    powerpress_page_message_add_error($error);
                                 }
                             } else {
                                 $error = __('Error', 'powerpress') . " (<a href=\"" . htmlspecialchars($MediaURL) . "\" target=\"_blank\">" . htmlspecialchars($MediaURL) . "</a>): Invalid alternate enclosure URL.";
-                                powerpress_add_error($error);
+                                powerpress_page_message_add_error($error);
                             }
                         }
                     }
@@ -2790,10 +2711,10 @@ function powerpress_edit_post($post_ID, $post)
                     }
 
                     if ($split_total > 100)
-                        powerpress_add_error(__('Regular recipient splits exceed 100%. Please adjust split percentages.', 'powerpress'));
+                        powerpress_page_message_add_error(__('Regular recipient splits exceed 100%. Please adjust split percentages.', 'powerpress'));
 
                     if ($fee_split_total > 100)
-                        powerpress_add_error(__('Fee recipient splits exceed 100%. Please adjust fee percentages.', 'powerpress'));
+                        powerpress_page_message_add_error(__('Fee recipient splits exceed 100%. Please adjust fee percentages.', 'powerpress'));
 
                     $ToSerialize['value_recipients'] = $valid_recipients;
                 }
@@ -3113,26 +3034,26 @@ function powerpress_edit_post($post_ID, $post)
                     $ToSerialize['pci_transcript'] = 1;
                     if (isset($Powerpress['pci_transcript_url']) && trim($Powerpress['pci_transcript_url']) != '') {
                         if (strpos($Powerpress['pci_transcript_url'], 'http') !== 0) {
-                            powerpress_add_error(__('Transcript Error: Transcript should be a link, starting with http.', 'powerpress'));
+                            powerpress_page_message_add_error(__('Transcript Error: Transcript should be a link, starting with http.', 'powerpress'));
                         } else {
                             $ToSerialize['pci_transcript_url'] = str_replace(array('<', '>', '"', '\''), array('', '', '', ''), stripslashes($Powerpress['pci_transcript_url']));
                         }
                     }
                     if (isset($Powerpress['pci_transcript_language']) && trim($Powerpress['pci_transcript_language']) != '') {
-                        $ToSerialize['pci_transcript_language'] = stripslashes($Powerpress['pci_transcript_language']);
+                        $ToSerialize['pci_transcript_language'] = powerpress_valid_language(stripslashes($Powerpress['pci_transcript_language']));
                     }
                 }
                 if( isset($Powerpress['transcript']['generate']) && $Powerpress['transcript']['generate'] ) {
                     $ToSerialize['pci_transcript'] = 1;
                     if (isset($Powerpress['pci_transcript_language']) && trim($Powerpress['pci_transcript_language']) != '') {
-                        $ToSerialize['pci_transcript_language'] = stripslashes($Powerpress['pci_transcript_language']);
+                        $ToSerialize['pci_transcript_language'] = powerpress_valid_language(stripslashes($Powerpress['pci_transcript_language']));
                     }
                 }
                 if (!empty($Powerpress['chapters']['edit'])) {
                     if (!empty($Powerpress['chapters']['upload'])) {
                         if (isset($Powerpress['pci_chapters_url']) && trim($Powerpress['pci_chapters_url']) != '') {
                             if (strpos($Powerpress['pci_chapters_url'], 'http') !== 0 || !SSRFCheck($Powerpress['pci_chapters_url'], $feed_slug, false, "chapters URL")) {
-                                powerpress_add_error(__('Chapters Error: Invalid URL.', 'powerpress'));
+                                powerpress_page_message_add_error(__('Chapters Error: Invalid URL.', 'powerpress'));
                             } else {
                                 $ToSerialize['pci_chapters'] = 1;
                                 $ToSerialize['pci_chapters_url'] = stripslashes($Powerpress['pci_chapters_url']);
@@ -3186,7 +3107,7 @@ function powerpress_edit_post($post_ID, $post)
                             	$acceptable_extensions = ['jpg', 'jpeg', 'png'];
                             	if (!in_array(strtolower($ext), $acceptable_extensions)) {
                              	    $error = __('Error: invalid chapter image filetype ' . $ext . ' ' . $fileName . ' ' . print_r($existingIms, true), 'powerpress');
-                              	    powerpress_add_error($error);
+                              	    powerpress_page_message_add_error($error);
 									continue; // skip chapter when unacceptable type
                             	}
 							}
@@ -3278,7 +3199,7 @@ function powerpress_edit_post($post_ID, $post)
                 } else if (!empty($Powerpress['pci_chapters_url'])) {
                     // if the transcript has not been changed, carry it through
                     if (strpos($Powerpress['pci_chapters_url'], 'http') !== 0 || !SSRFCheck($Powerpress['pci_chapters_url'], $feed_slug, false, "chapters URL")) {
-                        powerpress_add_error(__('Chapters Error: Invalid URL.', 'powerpress'));
+                        powerpress_page_message_add_error(__('Chapters Error: Invalid URL.', 'powerpress'));
                     } else {
                         $ToSerialize['pci_chapters'] = 1;
                         $ToSerialize['pci_chapters_manual'] = !empty($Powerpress['chapters']['manual']) ? 1 : 0;
@@ -3316,12 +3237,12 @@ function powerpress_edit_post($post_ID, $post)
 					if( isset($MediaInfo['error']) )
 					{
 						$error = __('Error', 'powerpress') ." (" . htmlspecialchars($WebMSrc) . "): {$MediaInfo['error']}";
-						powerpress_add_error($error);
+						powerpress_page_message_add_error($error);
 					}
 					else if( empty($MediaInfo['length']) )
 					{
 						$error = __('Error', 'powerpress') ." (" . htmlspecialchars($WebMSrc) . "): ". __('Unable to obtain size of media.', 'powerpress');
-						powerpress_add_error($error);
+						powerpress_page_message_add_error($error);
 					}
 					else
 					{
@@ -3329,7 +3250,7 @@ function powerpress_edit_post($post_ID, $post)
 					}
 				}
 				
-				if( $Powerpress['set_duration'] == -1 )
+				if( ($Powerpress['set_duration'] ?? 0) == -1 )
 					unset($ToSerialize['duration']);
 				if( count($ToSerialize) > 0 ) // Lets add the serialized data
 					$EnclosureData .= "\n".serialize( $ToSerialize );
@@ -3442,7 +3363,7 @@ function powerpress_edit_post($post_ID, $post)
                     $Websub->publish($url);
                 } catch (Exception $e) {
                     if (defined('WP_DEBUG') && WP_DEBUG) {
-                        powerpress_add_error($e->getMessage());
+                        powerpress_page_message_add_error($e->getMessage());
                     }
                 }
             }
@@ -3460,7 +3381,7 @@ function powerpress_edit_post($post_ID, $post)
                         $Podping->publish($url, $GeneralSettings['blubrry_program_keyword']);
                     } catch (Exception $e) {
                         if (defined('WP_DEBUG') && WP_DEBUG) {
-                            powerpress_add_error($e->getMessage());
+                            powerpress_page_message_add_error($e->getMessage());
                         }
                     }
                 }
@@ -3573,10 +3494,12 @@ if( defined('POWERPRESS_DO_ENCLOSE_FIX') )
 // Do the iTunes pinging here...
 function powerpress_publish_post($post_id)
 {
-	// Delete scheduled _encloseme requests...
-	global $wpdb;
-	$wpdb->query("DELETE FROM {$wpdb->postmeta} WHERE meta_key = '_encloseme' ");
-	
+	if( !current_user_can('edit_post', $post_id) )
+		return;
+
+	// Delete scheduled _encloseme request for just this post
+	delete_post_meta($post_id, '_encloseme');
+
 	$GeneralSettings = get_option('powerpress_general');
 	if( isset($GeneralSettings['auto_enclose']) && $GeneralSettings['auto_enclose'] )
 	{
@@ -4389,101 +4312,14 @@ function powerpress_check_credentials($creds) {
     }
 }
 
-function SSRFCheck($url, $feed_slug, $echo_error = false, $media_label = "media url") {
-    // validate url parameter
-    if (!is_string($url) || empty($url)) return false;
-
-    $GeneralSettings = powerpress_get_settings('powerpress_general');
-    // Set the arguments for a HEAD request
-    $args = array(
-        'method' => 'HEAD',
-        'redirection' => 0, // Do not follow redirects
-        'headers' => array(
-            'User-Agent' => 'WordPress/PowerPress ' . POWERPRESS_VERSION, // Custom User-Agent header
-        ),
-    );
-    $redirect_count = 0;
-    $ssrf_valid = true;
-    do {
-        $UrlParts = parse_url($url);
-        if (!is_array($UrlParts) || empty($UrlParts['host'])) {
-            $ssrf_valid = false;
-            break;
-        }
-        $media_hostname = $UrlParts['host'];
-
-        // check if hostname is a trusted domain (bypass SSRF checks)
-        $is_trusted = false;
-        if( defined('POWERPRESS_TRUSTED_DOMAINS') ) {
-            foreach( POWERPRESS_TRUSTED_DOMAINS as $trusted_domain ) {
-                if( preg_match('/\.' . preg_quote($trusted_domain, '/') . '$/i', $media_hostname) ) {
-                    $is_trusted = true;
-                    break;
-                }
-            }
-        }
-
-        if( !$is_trusted ) {
-            $ip = gethostbyname($media_hostname);
-            // if DNS resolution failed, $ip equals hostname
-            if ($ip === $media_hostname) {
-                $ssrf_valid = false;
-            }
-            // check IP for hostname is not in LAN
-            if ($ssrf_valid && empty($GeneralSettings['powerpress_self_hosted_media']) && !IPAddressIsPublic($ip)) {
-                $ssrf_valid = false;
-            }
-        }
-        if ($ssrf_valid) {
-            $response = wp_safe_remote_head($url, $args);
-            if (is_wp_error($response)) {
-                $error_message = $response->get_error_message();
-                if ($error_message) {
-                    powerpress_add_error($error_message);
-                }
-                $httpCode = 500;
-                $headers = array();
-            } else {
-                $headers = wp_remote_retrieve_headers($response);
-                $httpCode = wp_remote_retrieve_response_code($response);
-            }
-            $url = false;
-            if ($httpCode >= 300 && $httpCode < 400) {
-                if (isset($headers['location'])) {
-                    $url = $headers['location'];
-                }
-            }
-        } else {
-            $url = false;
-        }
-        $redirect_count++;
-    } while ($url != false && $redirect_count <= 12);
-
-    if (!$ssrf_valid) {
-        $error = __("Invalid {$media_label}. Please ensure that your url is formatted correctly, e.g https://example.com/filename.mp3.", "powerpress");
-        if ($media_label == "media url") {
-            $error .= " " . __("You can still publish this episode, but will need to enter filesize and duration manually.", 'powerpress');
-        }
-        if ($echo_error) {
-            echo "$feed_slug\n";
-            echo $error;
-        } else {
-            powerpress_add_error($error);
-        }
-        return false;
-    }
-
-    return true;
-}
-
 function powerpress_media_info_ajax()
 {
     // Check for nonce security
     if (!isset($_POST['nonce'])) {
-        exit;
+        wp_die();
     }
     if ( ! wp_verify_nonce( $_POST['nonce'], 'powerpress-media-info' ) ) {
-        exit;
+        wp_die();
     }
     $feed_slug = htmlspecialchars($_POST['feed_slug']);
 	$hosting = $_POST['hosting'];
@@ -4506,7 +4342,7 @@ function powerpress_media_info_ajax()
 	}
 
     if (!empty($program_keyword) && !preg_match('/[A-Za-z0-9\_]+/', $program_keyword)) {
-        exit;
+        wp_die();
     }
 	if( strpos($media_url, 'http://') !== 0 && strpos($media_url, 'https://') !== 0 && $hosting != 1 ) // If the url entered does not start with a http:// or https://
 	{
@@ -4544,7 +4380,7 @@ function powerpress_media_info_ajax()
 		$error = __('Unable to determine content type of media (e.g. audio/mpeg). Verify file extension is correct and try again.', 'powerpress');
 		echo "$feed_slug\n";
 		echo $error;
-		exit;
+		wp_die();
 	}
 	
 	// Get media info here...
@@ -4555,9 +4391,16 @@ function powerpress_media_info_ajax()
 
     //If the file is unpublished, check to make sure the user has hosting space
     if( strpos($media_url, 'http://') !== 0 && strpos($media_url, 'https://') !== 0) {
-        if (isset($MediaInfo['space_remaining']) && !$MediaInfo['space_remaining']) {
+        if (!empty($MediaInfo['hosting_status'])) {
+            $hosting_status = esc_html($MediaInfo['hosting_status']);
             if (empty($MediaInfo['error'])) {
-                $MediaInfo['error'] = __('This file exceeds your monthly publishing limit.', 'powerpress'); 
+                $MediaInfo['error'] = $hosting_status;
+            } else {
+                $MediaInfo['error'] .= ' ' . $hosting_status;
+            }
+        } else if (isset($MediaInfo['space_remaining']) && !$MediaInfo['space_remaining']) {
+            if (empty($MediaInfo['error'])) {
+                $MediaInfo['error'] = __('This file exceeds your monthly publishing limit.', 'powerpress');
             } else {
                 $MediaInfo['error'] .= ' ' . __('This file exceeds your monthly publishing limit.', 'powerpress');
             }
@@ -4594,15 +4437,15 @@ function powerpress_media_info_ajax()
         } else {
             echo "\n";
         }
-        echo $orig_url ? htmlspecialchars($orig_url) : htmlspecialchars($MediaInfo['enclosure_url']) . "\n";
+        echo htmlspecialchars($orig_url ?: ($MediaInfo['enclosure_url'] ?? '')) . "\n";
         if (isset($MediaInfo['warnings']))
             echo $MediaInfo['warnings'];
 
         echo "\n"; // make sure this line is ended
-        exit;
+        wp_die();
 	}
 
-	exit;
+	wp_die();
 }
  
 add_action('wp_ajax_powerpress_media_info', 'powerpress_media_info_ajax');
@@ -5389,1107 +5232,6 @@ function powerpress_podpress_stats_exist()
 /*
 // Helper functions:
 */
-function powerpress_remote_fopen($url, $basic_auth = false, $post_args = array(), $timeout = 15, $custom_request = false, $force_curl=false )
-{
-	unset($GLOBALS['g_powerpress_remote_error']);
-	unset($GLOBALS['g_powerpress_remote_errorno']);
-	
-	if( ($force_curl || (defined('POWERPRESS_CURL') && POWERPRESS_CURL) ) && function_exists( 'curl_init' ) )
-	{
-		$curl = curl_init();
-		curl_setopt($curl, CURLOPT_URL, $url);
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($curl, CURLOPT_HEADER, 0);
-		
-		if ( version_compare( PHP_VERSION, '5.3.0') < 0 )
-		{
-			curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true); // Follow location redirection
-			curl_setopt($curl, CURLOPT_MAXREDIRS, 12); // Location redirection limit
-		}
-		else if ( !ini_get('open_basedir') )
-		{
-			curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true); // Follow location redirection
-			curl_setopt($curl, CURLOPT_MAXREDIRS, 12); // Location redirection limit
-		}
-		else
-		{
-			curl_setopt($curl, CURLOPT_FOLLOWLOCATION, false);
-			curl_setopt($curl, CURLOPT_MAXREDIRS, 0 );
-		}
-
-		curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 2 ); // Connect time out
-		curl_setopt($curl, CURLOPT_TIMEOUT, $timeout); // The maximum number of seconds to execute.
-		curl_setopt($curl, CURLOPT_USERAGENT, 'Blubrry PowerPress/'.POWERPRESS_VERSION);
-		curl_setopt($curl, CURLOPT_FAILONERROR, true);
-		if( preg_match('/^https:\/\//i', $url) != 0 )
-		{
-			curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2 );
-			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true );
-			curl_setopt($curl, CURLOPT_CAINFO, ABSPATH . WPINC . '/certificates/ca-bundle.crt');
-		}
-		// HTTP Authentication
-		if( $basic_auth )
-		{
-			curl_setopt( $curl, CURLOPT_HTTPHEADER, array('Authorization: Basic '.$basic_auth) );
-		}
-		// HTTP Post:
-		if( is_array($post_args) && count($post_args) > 0 )
-		{
-			$post_query = '';
-			foreach( $post_args as $name => $value )
-			{
-				if( $post_query != '' )
-					$post_query .= '&';
-				$post_query .= $name;
-				$post_query .= '=';
-				$post_query .= urlencode($value);
-			}
-			curl_setopt($curl, CURLOPT_POST, 1);
-			curl_setopt($curl, CURLOPT_POSTFIELDS, $post_query);
-		}
-		else if( $custom_request )
-		{
-			curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $custom_request);
-		}
-		
-		$content = curl_exec($curl);
-		$error = curl_errno($curl);
-		$error_msg = curl_error($curl);
-		$http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-
-
-		if (version_compare(PHP_VERSION, '8.0', '<')) {
-			curl_close($curl);
-		} else {
-			unset($curl);
-		}
-		if( $error )
-		{
-			$GLOBALS['g_powerpress_remote_error'] = $error_msg;
-			$GLOBALS['g_powerpress_remote_errorno'] = $http_code;
-			//echo 'error: '.$content;
-			
-			$decoded = json_decode($content);
-			if( !empty($decoded) )
-				return $content; // We can still return the error from the server at least
-			return false;
-		}
-		else if( $http_code > 399 )
-		{
-			//echo '40x';
-			$GLOBALS['g_powerpress_remote_error'] = "HTTP $http_code";
-			$GLOBALS['g_powerpress_remote_errorno'] = $http_code;
-			switch( $http_code )
-			{
-				case 400: $GLOBALS['g_powerpress_remote_error'] .= ' '. __("Bad Request", 'powerpress'); break;
-				case 401: $GLOBALS['g_powerpress_remote_error'] .= ' '. __("Unauthorized (Check that your username and password are correct)", 'powerpress'); break;
-				case 402: $GLOBALS['g_powerpress_remote_error'] .= ' '. __("Payment Required", 'powerpress'); break;
-				case 403: $GLOBALS['g_powerpress_remote_error'] .= ' '. __("Forbidden", 'powerpress'); break;
-				case 404: $GLOBALS['g_powerpress_remote_error'] .= ' '. __("Not Found", 'powerpress'); break;
-			}
-			
-			$decoded = json_decode($content);
-			if( !empty($decoded) )
-				return $content; // We can still return the error from the server at least
-			return false;
-		}
-		return $content;
-	}
-	
-	if( $force_curl )
-		return false; // Do not continue, we wanted to use cURL
-	
-	$options = array();
-	$options['timeout'] = $timeout;
-	$options['user-agent'] = 'Blubrry PowerPress/'.POWERPRESS_VERSION;
-	if( $basic_auth )
-		$options['headers']['Authorization'] = 'Basic '.$basic_auth;
-
-	if( is_array($post_args) && count($post_args) > 0 )
-	{
-		$options['body'] = $post_args;
-		$response = wp_remote_post( $url, $options );
-	}
-	else if($custom_request) {
-	    $options['method'] = $custom_request;
-	    $response = wp_remote_request($url,$options);
-    }
-	else
-	{
-		$response = wp_remote_get( $url, $options );
-	}
-	
-	if ( is_wp_error( $response ) )
-	{
-		$GLOBALS['g_powerpress_remote_errorno'] = $response->get_error_code();
-		$GLOBALS['g_powerpress_remote_error'] = $response->get_error_message();
-		return false;
-	}
-	
-	if( isset($response['response']['code']) && $response['response']['code'] > 399 )
-	{
-		$GLOBALS['g_powerpress_remote_error'] = "HTTP ".$response['response']['code'];
-		$GLOBALS['g_powerpress_remote_errorno'] = $response['response']['code'];
-		switch( $response['response']['code'] )
-		{
-			case 400: $GLOBALS['g_powerpress_remote_error'] .= ' '. __("Bad Request", 'powerpress'); break;
-			case 401: $GLOBALS['g_powerpress_remote_error'] .= ' '. __("Unauthorized (Check that your username and password are correct)", 'powerpress'); break;
-			case 402: $GLOBALS['g_powerpress_remote_error'] .= ' '. __("Payment Required", 'powerpress'); break;
-			case 403: $GLOBALS['g_powerpress_remote_error'] .= ' '. __("Forbidden", 'powerpress'); break;
-			case 404: $GLOBALS['g_powerpress_remote_error'] .= ' '. __("Not Found", 'powerpress'); break;
-			default: $GLOBALS['g_powerpress_remote_error'] .= ' '.$response['response']['message'];
-		}
-	}
-
-	return $response['body'];
-}
-
-// =====================
-// PUBLISHING FUNCTIONS
-// =====================
-
-/**
- * Fetch from API with automatic curl retry on failure
- *
- * @param string      $url      Full URL to fetch
- * @param string|null $auth     Basic auth string; null skips auth header
- * @param array       $post     POST data (optional)
- * @param int         $timeout  Timeout in seconds
- *
- * @return string|false Response body or false on failure
- */
-function powerpress_fetch_with_retry(string $url, ?string $auth, array $post = [], int $timeout = 30) {
-	$data = powerpress_remote_fopen($url, $auth, $post, $timeout);
-
-	// retry with curl if primary api failed
-	if (!$data && strpos($url, 'api.blubrry.com') !== false) {
-		$data = powerpress_remote_fopen($url, $auth, $post, $timeout, false, true);
-	}
-
-	return $data;
-}
-
-/**
- * Make a blubrry api request
- *
- * @param string $endpoint_path 	api endpoint path
- * @param array  $url_params 		Parameters for sprintf formatting of endpoint
- * @param array  $post_data 		POST data to send with request
- * @param array  $settings		 	PowerPress settings array
- * @param mixed  $creds		 		Credentials object/array
- * @param object $auth 				PowerPressAuth instance
- * @param array  $api_url_array 	Array of api urls to try
- * @param int    $timeout 			Request timeout in seconds (default 1800 = 30 min)
- * 
- * @return array|false Decoded JSON response or false on failure
- */
-function powerpress_api_request(string $endpoint_path, array $url_params, array $post_data, array $settings, $creds, $auth, array $api_url_array, int $timeout = 1800) {
-	// 1) BUILD REQUEST URL
-	if (strpos($endpoint_path, '?') !== false) {
-		// separate query string to avoid '%' being handled as format specifier in vsprintf
-		list($path_template, $query_string) = explode('?', $endpoint_path, 2);
-		$req_url = vsprintf($path_template, $url_params) . '?' . $query_string;
-	} else {
-		$req_url = vsprintf($endpoint_path, $url_params);
-	}
-	$req_url .= (strpos($req_url, '?') !== false ? '&' : '?') . 'format=json&cache=' . md5(rand(0, 999) . time());
-	$req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '&' . POWERPRESS_BLUBRRY_API_QSA : '');
-	$req_url .= (defined('POWERPRESS_PUBLISH_PROTECTED') ? '&protected=true' : '');
-
-	// 2) OAUTH PATH: use auth object directly
-	if ($creds) {
-		$access_token = powerpress_getAccessToken();
-		// pass false for empty post_data to avoid triggering POST request
-		return $auth->api($access_token, $req_url, $post_data ?: false, false, $timeout, true, true);
-	}
-
-	// 3) NON-OAUTH PATH: try each api url with retry
-	if (strpos($req_url, '/2/') === 0) {
-		$req_url = substr($req_url, 2);
-	}
-
-	foreach ($api_url_array as $api_url) {
-		$full_url = rtrim($api_url, '/') . $req_url;
-		$json_data = powerpress_fetch_with_retry($full_url, $settings['blubrry_auth'], $post_data, $timeout);
-		if ($json_data) {
-			return powerpress_json_decode($json_data);
-		}
-	}
-
-	return false;
-}
-
-/**
- * Process and write id3 tags for mp3 alternate enclosures
- *
- * @param array  $alternate_enclosure 	Alternate enclosure data
- * @param string $post_title 			Post title for id3 tags
- * @param string $program_keyword 		Blubrry program keyword
- * @param array  $settings 				PowerPress settings
- */
-function powerpress_process_alt_enclosure_tags($alternate_enclosure, $post_title, $program_keyword, $settings) {
-	$is_mp3 = ($alternate_enclosure['type'] == 'audio/mpg' || $alternate_enclosure['type'] == 'audio/mpeg');
-
-	if ($is_mp3 && !empty($settings['write_tags'])) {
-		$results = powerpress_write_tags($alternate_enclosure['url'], $post_title, $program_keyword);
-		if (isset($results['error'])) {
-			$error = __('Blubrry Hosting Error (alternate enclosure)', 'powerpress') . ': ' . $results['error'];
-			powerpress_add_error($error);
-		}
-	}
-}
-
-/**
- * Update alternate enclosure with published url and get updated media info
- *
- * @param array  $episode_data  	Episode data array (pass by ref)
- * @param int    $idx 				Index of alternate enclosure to update
- * @param string $new_alt_url   	New published url
- * @param string $feed_slug 		Feed slug for SSRF check
- * @param string $program_keyword 	Blubrry program keyword
- */
-function powerpress_update_alt_enclosure_url(&$episode_data, $idx, $new_alt_url, $feed_slug, $program_keyword) {
-	// SSRF check on new url
-	if (!SSRFCheck($new_alt_url, $feed_slug, false, 'alternate enclosure url basename')) return;
-
-	$episode_data['alternate_enclosure'][$idx]['url'] = $new_alt_url;
-	
-	// get media info for published file
-	$alt_media_info = powerpress_get_media_info($new_alt_url, $program_keyword);
-	if (!empty($alt_media_info['length'])) {
-		$episode_data['alternate_enclosure'][$idx]['length'] = $alt_media_info['length'];
-	}
-	
-	// remove hosting flag since alternate enclosure is now published
-	unset($episode_data['alternate_enclosure'][$idx]['hosting']);
-}
-
-/**
- * Build api post vars for alternate enclosures
- *
- * @param array  $alternate_enclosures 	Array of alternate enclosures
- * @param string $post_title 			Post title for ID3 tags
- * @param string $program_keyword 		Blubrry program keyword
- * @param array  $settings 				PowerPress settings
- * @param string $feed_slug 			Feed slug for SSRF check
- *
- * @return array Array of alternate enclosures formatted for api consumtion
- */
-function powerpress_build_alt_enclosure_post_vars($alternate_enclosures, $post_title, $program_keyword, $settings, $feed_slug) {
-	$api_alt_enclosures = [];
-
-	foreach ($alternate_enclosures as $alternate_enclosure) {
-		$process_main_enclosure = !empty($alternate_enclosure['hosting']) && $alternate_enclosure['hosting'] == '1';
-		$has_uris_to_process = false;
-
-		// uri processing
-		$uris_to_publish = [];
-		if (!empty($alternate_enclosure['uris']) && is_array($alternate_enclosure['uris'])) {
-			foreach ($alternate_enclosure['uris'] as $uri_data) {
-				if (is_array($uri_data)) {
-					$uri_value = !empty($uri_data['uri']) ? $uri_data['uri'] : '';
-					$uri_hosting = !empty($uri_data['hosting']) ? $uri_data['hosting'] : '';
-				} 
-
-				// process if hosting flag is set
-				if (!empty($uri_hosting) && $uri_hosting == '1' && !empty($uri_value)) {
-					// SSRF check
-					if (!SSRFCheck($uri_value, $feed_slug, false, 'alternate enclosure URI')) continue;
-
-					// Extract filename from URI
-					$uri_filename = powerpress_extract_filename($uri_value);
-
-					$uris_to_publish[] = [ 'filename' => $uri_filename ];
-					$has_uris_to_process = true;
-
-					// write id3 tags for mp3 files
-					$is_mp3 = ($alternate_enclosure['type'] == 'audio/mpg' || $alternate_enclosure['type'] == 'audio/mpeg');
-					if ($is_mp3 && !empty($settings['write_tags'])) {
-						$results = powerpress_write_tags($uri_value, $post_title, $program_keyword);
-						if (isset($results['error'])) {
-							$error = __('Blubrry Hosting Error (ID3 tags for URI)', 'powerpress') . ': ' . $results['error'];
-							powerpress_add_error($error);
-						}
-					}
-				}
-			}
-		}
-
-		if ($process_main_enclosure || $has_uris_to_process) {
-			// api expects 'size' not 'length'
-			$api_alt_enclosure = $alternate_enclosure;
-			$api_alt_enclosure['size'] = $alternate_enclosure['length'];
-
-			if ($process_main_enclosure) {
-				// SSRF check
-				if (!SSRFCheck($alternate_enclosure['url'], $feed_slug, false, 'alternate enclosure url')) continue;
-
-				// api expects filename not full url
-				$api_alt_enclosure['url'] = powerpress_extract_filename($alternate_enclosure['url']);
-
-				// write id3 tags for mp3 alternate enclosures
-				powerpress_process_alt_enclosure_tags($alternate_enclosure, $post_title, $program_keyword, $settings);
-			}
-
-			// add qualified uris array
-			$api_alt_enclosure['uris'] = $uris_to_publish;
-
-			$api_alt_enclosures[] = $api_alt_enclosure;
-		}
-	}
-
-	return $api_alt_enclosures;
-}
-
-/**
- * extract filename from url or return as-is if already filename
- *
- * @param string $url_or_file url or filename
- * @return string filename only (no path, no query string)
- */
-function powerpress_extract_filename($url_or_file) {
-	$parsed = parse_url($url_or_file);
-
-	// if has host, extract filename from path (parse_url already strips query string from path)
-	if (!empty($parsed['host'])) {
-		$path = $parsed['path'] ?? '';
-		$parts = explode('/', $path);
-		$filename = end($parts);
-	} else {
-		// no host - strip query string first, then extract filename
-		$qs_parts = explode('?', $url_or_file);
-		$parts = explode('/', $qs_parts[0]);
-		$filename = end($parts);
-	}
-
-	return sanitize_text_field($filename);
-}
-
-/**
- * Check if url is hosted on blubrry
- * 
- * @param string $url url to check
- * 
- * @return bool True if blubrry hosts, false otherwise
- */
-function powerpress_is_blubrry_hosted($url) {
-	// parse for host
-	$parsed = parse_url($url);
-
-	// no host means just a filename, cant determine if blubrry hosted
-	if (empty($parsed['host'])) return false;
-
-	$host = strtolower($parsed['host']);
-
-	// build list of blubrry domains based on trusted domains
-	$blubrry_prefixes = ['content.', 'content3.', 'ins.', 'mc.', 'media.', 'protected.'];
-	$blubrry_domains = [];
-	$domains_to_check = defined('POWERPRESS_TRUSTED_DOMAINS') ? POWERPRESS_TRUSTED_DOMAINS : ['blubrry.com'];
-	foreach( $domains_to_check as $domain ) {
-		foreach( $blubrry_prefixes as $prefix ) {
-			$blubrry_domains[] = $prefix . $domain;
-		}
-	}
-
-	return in_array($host, $blubrry_domains);
-}
-
-// =======================
-// MAIN PUBLISHING DRIVER
-// =======================
-
-/**
- * Check if a media file is already published on Blubrry
- *
- * handles the case where user manually set a file online via Blubrry publisher
- * before publishing the WordPress post
- *
- * @param string $filename        Filename to check
- * @param string $program_keyword Blubrry program keyword
- * @param array  $settings        PowerPress settings
- * @param array  $creds           Blubrry credentials
- * @param object $auth            PowerPressAuth instance
- *
- * @return array|false Array with 'url' and file info if published, false if not
- */
-function powerpress_check_media_published(string $filename, string $program_keyword, array $settings, $creds, $auth) {
-	// 1) BUILD API REQUEST URL
-	$req_url = sprintf('/2/media/%s/index.json?published=true&cache=%s',
-		urlencode($program_keyword),
-		md5(rand(0, 999) . time())
-	);
-	$req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '&' . POWERPRESS_BLUBRRY_API_QSA : '');
-
-	// 2) FETCH PUBLISHED MEDIA LIST
-	if ($creds) {
-		$access_token = powerpress_getAccessToken();
-		$results = $auth->api($access_token, $req_url);
-	} else {
-		$results = false;
-		foreach (powerpress_get_api_array() as $api_url) {
-			$full_url = rtrim($api_url, '/') . $req_url;
-			$json_data = powerpress_fetch_with_retry($full_url, $settings['blubrry_auth']);
-			if ($json_data) {
-				$results = powerpress_json_decode($json_data);
-				break;
-			}
-		}
-	}
-
-	if (!is_array($results)) return false;
-
-
-	// 3) FIND MATCHING FILENAME IN RESULTS
-	foreach ($results as $media_item) {
-		if (!is_array($media_item)) continue;
-
-		if (!empty($media_item['published']) &&
-			!empty($media_item['url']) &&
-			!empty($media_item['name']) &&
-			$media_item['name'] === $filename) {
-
-			$result = [
-				'url' => $media_item['url'],
-				'length' => $media_item['length'] ?? 0,
-				'published' => true
-			];
-			
-			// ensure podcast_id is saved to post meta
-			if (!empty($media_item['podcast_id'])) {
-				$result['podcast_id'] = $media_item['podcast_id'];
-			}
-			return $result;
-		}
-	}
-
-	return false;
-}
-
-function powerpress_process_hosting($post_id, $post_title)
-{
-	$error = false;
-	$settings = get_option('powerpress_general');
-	$creds = get_option('powerpress_creds');
-	require_once(POWERPRESS_ABSPATH .'/powerpressadmin-auth.class.php');
-	$auth = new PowerPressAuth();
-
-	// ===================
-	// BUILD CUSTOM FEEDS
-	// ===================
-
-	$custom_feeds = [];
-	if (!empty($settings['custom_feeds']) && is_array($settings['custom_feeds'])) {
-		$custom_feeds = $settings['custom_feeds'];
-	}
-	if (!isset($custom_feeds['podcast'])) {
-		$custom_feeds['podcast'] = 'podcast';
-	}
-
-	// add post type podcasting feeds if enabled
-	if (!empty($settings['posttype_podcasting'])) {
-		$feed_slug_post_types_array = get_option('powerpress_posttype-podcasting');
-		if (is_array($feed_slug_post_types_array)) {
-			// option stores feed_slug => [post_type => title], so iterate keys
-			foreach (array_keys($feed_slug_post_types_array) as $feed_slug) {
-				if (empty($custom_feeds[$feed_slug])) {
-					$custom_feeds[$feed_slug] = $feed_slug;
-				}
-			}
-		}
-	}
-
-	// ==================
-	// PROCESS EACH FEED
-	// ==================
-
-	$api_url_array = powerpress_get_api_array();
-
-	foreach ($custom_feeds as $feed_slug => $feed_title) {
-		$field = 'enclosure';
-		if ($feed_slug != 'podcast') {
-		$field = "_{$feed_slug}:enclosure";
-		}
-
-		$enclosure_data = get_post_meta($post_id, $field, true);
-		$post_guid = get_the_guid($post_id);
-		$post_time = get_post_time('U', false, $post_id);
-
-		if (!$enclosure_data) continue;
-
-		// =====================
-		// PARSE ENCLOSURE DATA
-		// =====================
-
-		$meta_parts = explode("\n", $enclosure_data, 4);
-
-		$enclosure_url = (count($meta_parts) > 0) ? trim($meta_parts[0]) : '';
-		$enclosure_size = (count($meta_parts) > 1) ? trim($meta_parts[1]) : '';
-		$enclosure_type = (count($meta_parts) > 2) ? trim($meta_parts[2]) : '';
-		// allowed_classes => false prevents php object injection via crafted serialized data
-		$episode_data = (count($meta_parts) > 3) ? unserialize($meta_parts[3], ['allowed_classes' => false]) : false;
-
-		if ($enclosure_type == '') {
-			$error = __('Blubrry Hosting Error (publish)', 'powerpress') . ': ' . __('Error occurred obtaining enclosure content type.', 'powerpress');
-			powerpress_add_error($error);
-		}
-		$episode_art = ($episode_data) ? ($episode_data['image'] ?? '') : '';
-
-		$program_keyword = (!empty($episode_data['program_keyword']) ? $episode_data['program_keyword'] : $settings['blubrry_program_keyword']);
-		$podcast_id = (!empty($episode_data['podcast_id'])) ? $episode_data['podcast_id'] : false;
-
-		// =====================
-		// SET PROCESSING FLAGS
-		// =====================
-
-		$publish_media = $episode_data && !empty($episode_data['hosting']);
-		$process_transcripts = !empty($_POST['Powerpress'][$feed_slug]['transcript']['edit']);
-		$process_chapters = !empty($_POST['Powerpress'][$feed_slug]['chapters']['edit']);
-		$process_alt_enclosures = !empty($_POST['Powerpress'][$feed_slug]['alternate_enclosure']);
-
-		if (!$publish_media && !$process_transcripts && !$process_chapters && !$process_alt_enclosures) continue;
-		$error = false;
-
-		// ========================================
-		// PROCESS MAIN MEDIA FILE
-		// ========================================
-
-		if ($publish_media) {
-			$is_mp3 = ($enclosure_type == 'audio/mpg' || $enclosure_type == 'audio/mpeg');
-			$skip_publish = false;
-			$enclosure_url = powerpress_extract_filename($enclosure_url);
-
-			// check if file was already published (user set online manually via publisher)
-			$already_published = powerpress_check_media_published($enclosure_url, $program_keyword, $settings, $creds, $auth);
-			if ($already_published && !empty($already_published['url'])) {
-				$enclosure_url = $already_published['url'];
-				unset($episode_data['hosting']);
-				$skip_publish = true;
-
-				if (!empty($already_published['length'])) {
-					$enclosure_size = $already_published['length'];
-				}
-
-				// save podcast_id from already published media
-				if (!empty($already_published['podcast_id'])) {
-					$episode_data['podcast_id'] = $already_published['podcast_id'];
-					$podcast_id = $already_published['podcast_id'];
-				}
-
-				// save updated enclosure data
-				$enclosure_data = $enclosure_url . "\n" . $enclosure_size . "\n" . $enclosure_type . "\n" . serialize($episode_data);
-				update_post_meta($post_id, $field, $enclosure_data);
-			}
-
-			// get media info (and write tags for mp3) if not already published
-			if (!$skip_publish) {
-				// mp3 files: write id3 tags and get info
-				$results = ($is_mp3 && !empty($settings['write_tags']))
-					? powerpress_write_tags($enclosure_url, $post_title, $program_keyword)
-					// non-mp3 files or mp3 w/o write_tags: get media info
-					: powerpress_get_media_info($enclosure_url, $program_keyword);
-
-				// process media results
-				if (is_array($results) && !isset($results['error'])) {
-					if (isset($results['duration']) && $results['duration']) {
-						$episode_data['duration'] = $results['duration'];
-					}
-					if (isset($results['content-type']) && $results['content-type']) {
-						$enclosure_type = $results['content-type'];
-					}
-					if (isset($results['length']) && $results['length']) {
-						$enclosure_size = $results['length'];
-					}
-				} else if (isset($results['error'])) {
-					$error = __('Blubrry Hosting Error (media info)', 'powerpress') . ': ' . $results['error'];
-					powerpress_add_error($error, ['feed_slug' => $feed_slug, 'media_file' => $enclosure_url]);
-				} else {
-					$error = __('Blubrry Hosting Error (media info)', 'powerpress') . ': ' . __('Unknown error occurred.', 'powerpress');
-					powerpress_add_error($error, ['feed_slug' => $feed_slug, 'media_file' => $enclosure_url]);
-				}
-			}
-
-			// ========================================
-			// PUBLISH MEDIA FILE TO BLUBRRY
-			// ========================================
-
-			if (!$skip_publish && $error == false) {
-			$post_vars = [
-				'episode_art' => $episode_art,
-				'podcast_post_date' => $post_time,
-				'podcast_title' => $post_title,
-				'podcast_subtitle' => $episode_data['subtitle'] ?? ''
-			];
-
-				// process alternate enclosures
-				if (!empty($episode_data['alternate_enclosure'])) {
-					$post_vars['alternate_enclosures'] = powerpress_build_alt_enclosure_post_vars(
-						$episode_data['alternate_enclosure'],
-						$post_title,
-						$program_keyword,
-						$settings,
-						$feed_slug
-					);
-				}
-
-				// extend execution time for publish request
-				@set_time_limit(60 * 20); // 20 minutes
-
-				// api request
-				$results = powerpress_api_request(
-					'/2/media/%s/%s?publish=true',
-					[urlencode($program_keyword), urlencode($enclosure_url)],
-					$post_vars,
-					$settings,
-					$creds,
-					$auth,
-					$api_url_array
-				);
-
-				// process publish results
-				if (is_array($results) && !isset($results['error'])) {
-					$enclosure_url = $results['media_url'];
-
-					// validate published url
-					$host = parse_url($results['media_url'], PHP_URL_HOST);
-					if (empty($host)) {
-						$error = __('Blubrry Hosting Error (publish): Please re-upload media file and re-publish post', 'powerpress');
-						powerpress_add_error($error);
-					}
-
-					unset($episode_data['hosting']);
-
-					// save podcast id 
-					if (!empty($results['podcast_id'])) {
-						$episode_data['podcast_id'] = $results['podcast_id'];
-					}
-
-					// update alternate enclosures with published urls
-					if (!empty($results['alternate_enclosures'])) {
-						foreach ($episode_data['alternate_enclosure'] as $idx => $alternate_enclosure) {
-							// SSRF check on path
-							if (!SSRFCheck($alternate_enclosure['url'], $feed_slug, false, 'alternate enclosure url basename')) continue;
-
-							$alt_filename = powerpress_extract_filename($alternate_enclosure['url']);
-							if (array_key_exists($alt_filename, $results['alternate_enclosures'])) {
-								$new_alt_url = $results['alternate_enclosures'][$alt_filename];
-								powerpress_update_alt_enclosure_url($episode_data, $idx, $new_alt_url, $feed_slug, $program_keyword);
-							}
-						}
-					}
-
-					// update uris in alternate enclosures with published urls
-					if (!empty($results['alternate_enclosure_uris'])) {
-						foreach ($episode_data['alternate_enclosure'] as $alt_idx => $alternate_enclosure) {
-							if (!empty($alternate_enclosure['uris']) && is_array($alternate_enclosure['uris'])) {
-								foreach ($alternate_enclosure['uris'] as $uri_idx => $uri_data) {
-									$uri_value = is_array($uri_data) && !empty($uri_data['uri']) ? $uri_data['uri'] : (is_string($uri_data) ? $uri_data : '');
-
-									if (!empty($uri_value)) {
-										$uri_filename = powerpress_extract_filename($uri_value);
-
-										if (array_key_exists($uri_filename, $results['alternate_enclosure_uris'])) {
-											$new_uri_url = $results['alternate_enclosure_uris'][$uri_filename];
-
-											// SSRF check on new uri url
-											if (SSRFCheck($new_uri_url, $feed_slug, false, 'alternate enclosure uri')) {
-												// update uri with published url and remove hosting flag
-												$episode_data['alternate_enclosure'][$alt_idx]['uris'][$uri_idx] = [
-													'uri' => $new_uri_url,
-													'hosting' => ''
-												];
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-
-					// save updated enclosure data
-					$enclosure_data = $enclosure_url . "\n" . $enclosure_size . "\n" . $enclosure_type . "\n" . serialize($episode_data);
-					update_post_meta($post_id, $field, $enclosure_data);
-
-				} else if (isset($results['error'])) {
-					$error = __('Blubrry Hosting Error (publish)', 'powerpress') . ': ' . $results['error'];
-					powerpress_add_error($error, ['feed_slug' => $feed_slug, 'media_file' => $enclosure_url]);
-				} else {
-					$error = __('Blubrry Hosting Error (publish)', 'powerpress') . ': ' . __('Unknown error occurred.', 'powerpress');
-					powerpress_add_error($error, ['feed_slug' => $feed_slug, 'media_file' => $enclosure_url]);
-				}
-			}
-
-		} else if (isset($episode_data['alternate_enclosure']) && !empty($episode_data['alternate_enclosure'])) {
-			// ========================================
-			// PUBLISH ALTERNATE ENCLOSURES ONLY
-			// ========================================
-
-			$post_vars = []; // init before use
-			$post_vars['publish_alt_enclosures'] = 1;
-			$post_vars['alternate_enclosures'] = powerpress_build_alt_enclosure_post_vars(
-				$episode_data['alternate_enclosure'],
-				$post_title,
-				$program_keyword,
-				$settings,
-				$feed_slug
-			);
-
-			if ($error == false && !empty($post_vars['alternate_enclosures'])) {
-				// get filename from main enclosure url
-				$filename = powerpress_extract_filename($enclosure_url);
-
-				// extend execution time
-				@set_time_limit(60 * 20); // 20 minutes
-
-				// api request
-				$results = powerpress_api_request(
-					'/2/media/%s/%s?altEnclosureOnly=1&publish=true',
-					array(urlencode($program_keyword), urlencode($filename)),
-					$post_vars,
-					$settings,
-					$creds,
-					$auth,
-					$api_url_array
-				);
-
-				// process publish results
-				if (is_array($results) && !isset($results['error'])) {
-					unset($episode_data['hosting']);
-
-					// save podcast id
-					if (!empty($results['podcast_id'])) {
-						$episode_data['podcast_id'] = $results['podcast_id'];
-					}
-
-					// update alternate enclosures with published urls
-					if (!empty($results['alternate_enclosures'])) {
-						foreach ($episode_data['alternate_enclosure'] as $idx => $alternate_enclosure) {
-							// ssrf check on path (consistent with main publish path)
-							if (!SSRFCheck($alternate_enclosure['url'], $feed_slug, false, 'alternate enclosure url basename')) continue;
-
-							$alt_filename = powerpress_extract_filename($alternate_enclosure['url']);
-							if (array_key_exists($alt_filename, $results['alternate_enclosures'])) {
-								$new_alt_url = $results['alternate_enclosures'][$alt_filename];
-								powerpress_update_alt_enclosure_url($episode_data, $idx, $new_alt_url, $feed_slug, $program_keyword);
-							}
-						}
-					}
-
-					// update uris in alternate enclosures with published urls
-					if (!empty($results['alternate_enclosure_uris'])) {
-						foreach ($episode_data['alternate_enclosure'] as $alt_idx => $alternate_enclosure) {
-							if (!empty($alternate_enclosure['uris']) && is_array($alternate_enclosure['uris'])) {
-								foreach ($alternate_enclosure['uris'] as $uri_idx => $uri_data) {
-									$uri_value = is_array($uri_data) && !empty($uri_data['uri']) ? $uri_data['uri'] : (is_string($uri_data) ? $uri_data : '');
-
-									if (!empty($uri_value)) {
-										$uri_filename = powerpress_extract_filename($uri_value);
-
-										if (array_key_exists($uri_filename, $results['alternate_enclosure_uris'])) {
-											$new_uri_url = $results['alternate_enclosure_uris'][$uri_filename];
-
-											// SSRF check on new uri url
-											if (SSRFCheck($new_uri_url, $feed_slug, false, 'alternate enclosure uri')) {
-												// update uri with published url and remove hosting flag
-												$episode_data['alternate_enclosure'][$alt_idx]['uris'][$uri_idx] = [
-													'uri' => $new_uri_url,
-													'hosting' => ''
-												];
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-
-					// save updated enclosure data
-					$enclosure_data = $enclosure_url . "\n" . $enclosure_size . "\n" . $enclosure_type . "\n" . serialize($episode_data);
-					update_post_meta($post_id, $field, $enclosure_data);
-
-				} else if (isset($results['error'])) {
-					$error = __('Blubrry Hosting Error (alternate enclosure)', 'powerpress') . ': ' . $results['error'];
-					powerpress_add_error($error, ['feed_slug' => $feed_slug, 'media_file' => $enclosure_url]);
-				} else {
-					$error = __('Blubrry Hosting Error (alternate enclosure)', 'powerpress') . ': ' . __('Unknown error occurred.', 'powerpress');
-					powerpress_add_error($error, ['feed_slug' => $feed_slug, 'media_file' => $enclosure_url]);
-				}
-			}
-		}
-
-		// ===================================================
-		// GET PODCAST ID FOR TRANSCRIPTS / CHAPTERS
-		// ===================================================
-
-		// update podcast_id from publish results if available (takes precedence)
-		// $results may not be set if neither publish path was taken
-		if (isset($results) && !empty($results['podcast_id'])) {
-			$episode_data['podcast_id'] = $results['podcast_id'];
-			$podcast_id = $results['podcast_id'];
-		} else if (empty($podcast_id)) {
-			// fallback: try to get from saved postmeta if not already set from episode_data
-			// enclosure format: url\nsize\ntype\nserialized_data
-			$postmeta_raw = get_post_meta($post_id, $field, true);
-			if (!empty($postmeta_raw) && is_string($postmeta_raw)) {
-				$postmeta_parts = explode("\n", $postmeta_raw);
-				if (count($postmeta_parts) > 3) {
-					// allowed_classes => false prevents php object injection via crafted serialized data
-					$postmeta_data = @unserialize($postmeta_parts[3], ['allowed_classes' => false]);
-					if (!empty($postmeta_data['podcast_id'])) {
-						$podcast_id = $postmeta_data['podcast_id'];
-					}
-				}
-			}
-		}
-
-		// build query for api calls
-		$podcast_search_and = $podcast_id ? "&podcast_id=" . intval($podcast_id) : "&media_url=" . urlencode($enclosure_url);
-
-        // ===========================================
-        // SETUP FOR TRANSCRIPT/CHAPTERS/PLAYER CACHE
-		// ===========================================
-
-		$blubrry_hosted_media = powerpress_is_blubrry_hosted($enclosure_url);
-		if (!empty($settings['blubrry_hosting']) && $blubrry_hosted_media) {
-			$enclosure_filename = powerpress_extract_filename($enclosure_url);
-
-			// build player cache purge url
-			if (!empty($podcast_id)) {
-				// with podcast_id, player looks up permalink/artwork server-side
-				$purge_url = "https://player.blubrry.com/?podcast_id=" . intval($podcast_id);
-				$purge_url .= "&media_url=" . urlencode($enclosure_url);
-				if (!empty($settings['player']) && $settings['player'] == 'blubrrymodern') {
-					$purge_url .= '&modern=1';
-				}
-			} else {
-				// w/o podcast_id, permalink/artwork passed in url so must be in purge url
-				$purge_url = "https://player.blubrry.com/?media_url=" . urlencode($enclosure_url);
-				if (!empty($settings['player']) && $settings['player'] == 'blubrrymodern') {
-					$purge_url .= '&modern=1';
-				}
-
-				// add permalink if available
-				$permalink = get_permalink($post_id);
-				if (!empty($permalink)) {
-					$purge_url .= '&podcast_link=' . urlencode($permalink);
-				}
-
-				// add episode artwork if enabled
-				if (!empty($episode_art) && isset($settings['bp_episode_image']) && $settings['bp_episode_image'] != false) {
-					$purge_url .= '&artwork_url=' . urlencode($episode_art);
-				}
-			}
-		}
-
-		$episode_data_modified = false;
-		$transcript_results = [];
-		$chapters_results = [];
-
-		// ========================================
-		// PROCESS TRANSCRIPTS
-		// ========================================
-
-		if ($process_transcripts) {
-			if (!empty($settings['blubrry_hosting']) && $blubrry_hosted_media) {
-				$should_process_transcript = !empty($_POST['Powerpress'][$feed_slug]['transcript']['generate']) ||
-					(!empty($_POST['Powerpress'][$feed_slug]['transcript']['upload']) &&
-					!empty($_POST['Powerpress'][$feed_slug]['pci_transcript_url']));
-
-				if ($should_process_transcript) {
-					// build transcript-specific query params
-					$transcript_query = $podcast_search_and;
-
-					// add transcript url to query string
-					if (!empty($_POST['Powerpress'][$feed_slug]['pci_transcript_url']) && !empty($_POST['Powerpress'][$feed_slug]['transcript']['upload'])) {
-						$transcript_query .= '&transcript_url=' . urlencode($_POST['Powerpress'][$feed_slug]['pci_transcript_url']);
-					}
-
-					// add language parameter
-					if (!empty($_POST['Powerpress'][$feed_slug]['pci_transcript_language'])) {
-						$transcript_query .= '&language=' . $_POST['Powerpress'][$feed_slug]['pci_transcript_language'];
-					}
-
-					// api request
-					$enc_keyword = urlencode($program_keyword);
-					$enc_filename = urlencode($enclosure_filename);
-					$transcript_results = powerpress_api_request(
-						"/2/media/{$enc_keyword}/{$enc_filename}?transcript=true{$transcript_query}&purge_transcript=1",
-						[],
-						[],
-						$settings,
-						$creds,
-						$auth,
-						$api_url_array
-					);
-
-					// save temporary transcription file url to feed
-					if (!empty($transcript_results['temp_transcription_file'])) {
-						$episode_data["pci_transcript_url"] = $transcript_results['temp_transcription_file'];
-						$episode_data["pci_transcript"] = 1;
-						$episode_data_modified = true;
-					}
-
-					// check for insufficient storage error
-					if (!empty($transcript_results['insufficient_transcription_storage'])) {
-						$error = 'Your episode was published without a transcript because you have reached your transcription limit. Limits are calculated based on transcripts generated for your total media published/replaced for the month.';
-						$error = __($error, 'powerpress');
-						powerpress_add_error($error);
-					}
-
-					// check for errors
-					if (isset($transcript_results['error'])) {
-						powerpress_add_error(__('Error generating transcript: ', 'powerpress') . $transcript_results['error']);
-					} else if (empty($transcript_results) || !is_array($transcript_results) || empty($transcript_results['temp_transcription_file'])) {
-						powerpress_add_error(__('Error generating transcript', 'powerpress'));
-					}
-
-					// display api messages
-					if (!empty($transcript_results['message'])) {
-						powerpress_add_error($transcript_results['message']);
-					}
-				}
-			}
-		}
-
-		// ==================
-		// PROCESS CHAPTERS
-		// ==================
-
-		if ($process_chapters) {
-			if (!empty($settings['blubrry_hosting']) && $blubrry_hosted_media && !empty($episode_data["pci_chapters_url"])) {
-				// build chapters query params
-				$enc_chapters_url = urlencode($episode_data['pci_chapters_url']);
-				$chapters_query = "{$podcast_search_and}&chapters_url={$enc_chapters_url}";
-
-                // ID3 CHAP/CTOC embed params
-                $chapters_body = [];
-                if (!empty($episode_data['write_chapters_to_id3'])) {
-                    $response = wp_remote_get($episode_data['pci_chapters_url'], ['timeout' => 5]);
-                    if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
-                        $chapters_json = wp_remote_retrieve_body($response);
-                        if ($chapters_json !== '') {
-                            $chapters_body = [
-                                'chapters_id3' => 1,
-                                'chapters_json' => $chapters_json,
-                            ];
-                        }
-                    }
-                }
-
-				// api request
-				$enc_keyword = urlencode($program_keyword);
-				$enc_filename = urlencode($enclosure_filename);
-				$chapters_results = powerpress_api_request(
-					"/2/media/{$enc_keyword}/{$enc_filename}?chapters=true{$chapters_query}&purge_chapters=1",
-					[],
-					$chapters_body,
-					$settings,
-					$creds,
-					$auth,
-					$api_url_array
-				);
-
-				// save new chapters url to feed
-				if (!empty($chapters_results['chapters_url'])) {
-					$episode_data["pci_chapters_url"] = $chapters_results['chapters_url'];
-
-					// try to detect podcast_id if not already set
-					if (empty($episode_data['podcast_id']) && !empty($chapters_results['podcast_id'])) {
-						$episode_data['podcast_id'] = $chapters_results['podcast_id'];
-					}
-
-					$episode_data_modified = true;
-				}
-
-				// check id3 result + error
-				if (isset($chapters_results['id3']) && empty($chapters_results['id3']['success'])) {
-					$id3_error = $chapters_results['id3']['error'] ?? __('unknown error', 'powerpress');
-					powerpress_add_error(sprintf(
-						__('Chapter embed into media file failed: %s', 'powerpress'),
-						esc_html($id3_error)
-					));
-				}
-
-				// display api messages/errors
-				if (!empty($chapters_results['message'])) {
-					powerpress_add_error($chapters_results['message']);
-				}
-				if (!empty($chapters_results['error'])) {
-					powerpress_add_error($chapters_results['error']);
-				}
-			}
-		}
-
-		// =================================
-		// SAVE EPISODE DATA
-		// =================================
-
-		if ($episode_data_modified) {
-			$enclosure_data = "{$enclosure_url}\n{$enclosure_size}\n{$enclosure_type}\n" . serialize($episode_data);
-			update_post_meta($post_id, $field, $enclosure_data);
-		}
-
-		// ================================
-		// UPDATE EPISODE TITLE IN BLUBRRY
-		// ================================
-
-		$should_update_title = $episode_data_modified || !empty($podcast_id);
-
-		if ($should_update_title) {
-			$post_array = [
-				'title' => $post_title,
-				'media_url' => $enclosure_url,
-				'podcast_post_date' => $post_time,
-				'episode_art' => $episode_art
-			];
-
-			if (!empty($podcast_id)) {
-				$post_array['podcast_id'] = $podcast_id;
-			}
-
-			// build endpoint w/ purge_url if available
-			$enc_keyword = urlencode($program_keyword);
-			$update_title_endpoint = "/2/episode/{$enc_keyword}/update-title/";
-			if (!empty($purge_url)) {
-				$update_title_endpoint .= "?purge_url=" . urlencode($purge_url);
-			}
-
-			$title_results = powerpress_api_request(
-				$update_title_endpoint,
-				[],
-				$post_array,
-				$settings,
-				$creds,
-				$auth,
-				$api_url_array
-			);
-
-			// check for title update errors
-			if (!is_array($title_results)) {
-				$error = __('Blubrry Hosting Error (update title)', 'powerpress') . ': ' . __('Failed to update episode title.', 'powerpress');
-				powerpress_add_error($error, ['feed_slug' => $feed_slug, 'media_file' => $enclosure_url]);
-			} else if (isset($title_results['error'])) {
-				$error = __('Blubrry Hosting Error (update title)', 'powerpress') . ': ' . $title_results['error'];
-				powerpress_add_error($error, ['feed_slug' => $feed_slug, 'media_file' => $enclosure_url]);
-			}
-		}
-	}
-}
-
-// ===========================
-// END PUBLISHING FUNCTIONS
-// ===========================
-
-function powerpress_json_decode($value)
-{
-    if (empty($value)) {
-        return [];
-    } elseif (is_array($value)) {
-        return $value;
-    } else {
-        return json_decode($value, true);
-    }
-}
-
 // Import podpress settings
 function powerpress_admin_import_podpress_settings()
 {
@@ -6865,147 +5607,6 @@ function powerpress_default_settings($Settings, $Section='basic')
 	return $Settings;
 }
 
-function powerpress_write_tags($file, $post_title, $program_keyword = false)
-{
-	// Use the Blubrry API to write ID3 tags. to the media...
-	
-	$Settings = get_option('powerpress_general');
-    $creds = get_option('powerpress_creds');
-    require_once(POWERPRESS_ABSPATH .'/powerpressadmin-auth.class.php');
-    $auth = new PowerPressAuth();
-	if( empty($program_keyword) && !empty($Settings['blubrry_program_keyword']) ) {
-		$program_keyword = $Settings['blubrry_program_keyword'];
-	}
-
-	$PostArgs = array();
-	$Fields = array('title','artist','album','genre','year','track','composer','copyright','url');
-	foreach( $Fields as $null => $field )
-	{
-		if( !empty($Settings[ 'tag_'.$field ]) )
-		{
-			if( $field == 'track' )
-			{
-				$TrackNumber = get_option('powerpress_track_number');
-				if( empty($TrackNumber) )
-					$TrackNumber = 1;
-				$PostArgs[ $field ] = $TrackNumber;
-				update_option('powerpress_track_number', ($TrackNumber+1) );
-			}
-			else
-			{
-				$PostArgs[ $field ] = $Settings[ 'tag_'.$field ];
-			}
-		}
-		else
-		{
-			switch($field)
-			{
-				case 'title': {
-					$PostArgs['title'] = $post_title;
-				}; break;
-				case 'album': {
-					$PostArgs['album'] = get_bloginfo('name');
-				}; break;
-				case 'genre': {
-					$PostArgs['genre'] = 'Podcast';
-				}; break;
-				case 'year': {
-					$PostArgs['year'] = date('Y');
-				}; break;
-				case 'artist':
-				case 'composer': {
-					if( !empty($Settings['itunes_talent_name']) )
-						$PostArgs[ $field ] = $Settings['itunes_talent_name'];
-				}; break;
-				case 'copyright': {
-					if( !empty($Settings['itunes_talent_name']) )
-						$PostArgs['copyright'] = '(c) '.$Settings['itunes_talent_name'];
-				}; break;
-				case 'url': {
-					$PostArgs['url'] = get_bloginfo('url');
-				}; break;
-			}
-		}
-	}
-							
-	// Get meta info via API
-    $Results = false;
-	$content = false;
-	$api_url_array = powerpress_get_api_array();
-    if ($creds) {
-        $accessToken = powerpress_getAccessToken();
-        $req_url = sprintf('/2/media/%s/%s?format=json&id3=true&cache=' . md5( rand(0, 999) . time() ) , urlencode($program_keyword), urlencode($file));
-        $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA')?'?'. POWERPRESS_BLUBRRY_API_QSA:'');
-        $Results = $auth->api($accessToken, $req_url, $PostArgs);
-        //$Results['error'] = print_r($Results, true);
-    } else {
-        foreach ($api_url_array as $index => $api_url) {
-            $req_url = sprintf('%s/media/%s/%s?format=json&id3=true&cache=' . md5( rand(0, 999) . time() ), rtrim($api_url, '/'), urlencode($program_keyword), urlencode($file));
-            $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '&' . POWERPRESS_BLUBRRY_API_QSA : '');
-            $content = powerpress_remote_fopen($req_url, $Settings['blubrry_auth'], $PostArgs);
-            if (!$content && $api_url == 'https://api.blubrry.com/') { // Lets force cURL and see if that helps...
-                $content = powerpress_remote_fopen($req_url, $Settings['blubrry_auth'], $PostArgs, 15, false, true);
-            }
-            if ($content != false)
-                break;
-        }
-
-        if ($content) {
-            $Results = powerpress_json_decode($content);
-        }
-    }
-    if ($Results && is_array($Results))
-        return $Results;
-	
-	return array('error'=>__('Error occurred writing MP3 ID3 Tags.', 'powerpress') );
-}
-
-function powerpress_get_media_info($file, $program_Keyword = false)
-{
-    require_once(POWERPRESS_ABSPATH .'/powerpressadmin-auth.class.php');
-    $auth = new PowerPressAuth();
-	$Settings = get_option('powerpress_general');
-    $creds = get_option('powerpress_creds');
-	if( empty($program_Keyword) && !empty($Settings['blubrry_program_keyword']) ) {
-		$program_Keyword = $Settings['blubrry_program_keyword'];
-	}
-
-	// api expects filename only, extract from url if needed
-	$file = powerpress_extract_filename($file);
-
-	$content = false;
-    $Results = array();
-    $api_url_array = powerpress_get_api_array();
-    
-    if ($creds) {
-        $accessToken = powerpress_getAccessToken();
-        $req_url = sprintf('/2/media/%s/%s?format=json&info=true', urlencode($program_Keyword), urlencode($file));
-        $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA')?'?'. POWERPRESS_BLUBRRY_API_QSA:'');
-        $Results = $auth->api($accessToken, $req_url, false);
-    } else {
-        foreach ($api_url_array as $index => $api_url) {
-            $req_url = sprintf('%s/media/%s/%s?format=json&info=true', rtrim($api_url, '/'), urlencode($program_Keyword), urlencode($file));
-            $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '&' . POWERPRESS_BLUBRRY_API_QSA : '');
-            $content = powerpress_remote_fopen($req_url, $Settings['blubrry_auth']);
-            if (!$content && $api_url == 'https://api.blubrry.com/') { // Lets force cURL and see if that helps...
-                $content = powerpress_remote_fopen($req_url, $Settings['blubrry_auth'], array(), 15, false, true);
-            }
-
-            if ($content != false)
-                break;
-        }
-
-        if ($content) {
-            $Results = powerpress_json_decode($content);
-        }
-    }
-
-    if ($Results && is_array($Results) && empty($Results['error']))
-        return $Results;
-
-	return array('error'=>__('Error occurred obtaining media information.', 'powerpress') );
-}
-
 // Call this function when there is no enclosure currently detected for the post but users set the option to auto-add first media file linked within post option is checked.
 function powerpress_do_enclose( $content, $post_ID, $use_last_media_link = false )
 {
@@ -7105,7 +5706,7 @@ function powerpress_get_media_info_local($media_file, $content_type='', $file_si
 			if( $return_warnings )
 				$warning_msg .= $warning;
 			else
-				powerpress_add_error( $warning );
+				powerpress_page_message_add_error( $warning );
 		}
 
 		if( $file_size == 0 )
@@ -7127,7 +5728,7 @@ function powerpress_get_media_info_local($media_file, $content_type='', $file_si
 				if( $return_warnings )
 					$warning_msg .= $warning;
 				else
-					powerpress_add_error( $warning );
+					powerpress_page_message_add_error( $warning );
 			}
 		}
 	}
@@ -7145,49 +5746,6 @@ function powerpress_get_media_info_local($media_file, $content_type='', $file_si
 	if( $return_warnings && $warning_msg != '' )
 		return array('content-type'=>$content_type, 'length'=>$file_size, 'duration'=>$duration, 'warnings'=>$warning_msg, 'enclosure_url' => $media_file);
 	return array('content-type'=>$content_type, 'length'=>$file_size, 'duration'=>$duration, 'enclosure_url' => $media_file);
-}
-
-function powerpress_add_error($error, $debug = [])
-{
-	$error = wp_kses($error, ['a' => ['href' => [], 'target' => [], 'rel' => []]]); // sanitize but allow links
-
-	// if debug context provided, build expandable details
-	if (!empty($debug)) {
-		$details = [];
-		if (!empty($debug['feed_slug']))
-			$details[] = 'Feed: ' . esc_html($debug['feed_slug']);
-
-		if (!empty($debug['media_file']))
-			$details[] = 'File: ' . esc_html($debug['media_file']);
-
-		if (!empty($GLOBALS['g_powerpress_remote_error']))
-			$details[] = 'Response: ' . esc_html($GLOBALS['g_powerpress_remote_error']);
-		
-
-		if (!empty($details)) {
-			$id = 'pp_err_' . rand(1000, 99999);
-			$details_text = implode("\n", $details);
-			$link_text = __('Show Details', 'powerpress');
-
-			$error .= <<<HTML
-				<a href="#" onclick="document.getElementById('{$id}').style.display='block';this.style.display='none';return false;">
-					{$link_text}
-				</a>
-				<div id="{$id}"
-					class="powerpress-error-details"
-					style="display:none; margin-top:8px; padding:10px; background:#f8f8f8; border-left:3px solid #dc3545; font-family:monospace; font-size:12px; white-space:pre-wrap;">
-					{$details_text}
-				</div>
-HTML;
-		}
-	}
-
-	$Errors = get_option('powerpress_errors');
-	if (!is_array($Errors)) {
-		$Errors = [];
-	}
-	$Errors[] = $error;
-	update_option('powerpress_errors', $Errors);
 }
 
 function powerpress_print_options($options,$selected=null, $return=false)
@@ -7255,16 +5813,6 @@ function powerpressadmin_new($span = false, $additional_style='')
         return '<span style="'.$style.'">'. __('New!', 'powerpress') .'</span>';
     }
 	return '<sup style="'.$style.'">'. __('New!', 'powerpress') .'</sup>';
-}
-
-function powerpressadmin_updated($updated_message)
-{
-	return '<div style="margin: 5px;"><sup style="color: #CC0000; font-weight: bold; font-size: 85%;">'. $updated_message .'</sup></div>';
-}
-
-function powerpressadmin_notice($updated_message)
-{
-	return '<sup style="color: #CC0000; font-weight: bold; font-size: 105%;">'. htmlspecialchars($updated_message) .'</sup>';
 }
 
 function powerpressadmin_community_news($items=4, $pp_settings=false)

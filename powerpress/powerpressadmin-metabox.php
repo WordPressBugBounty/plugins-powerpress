@@ -779,8 +779,7 @@ function chapters_tab($EnclosureURL, $FeedSlug, $object, $GeneralSettings, $PCIT
                 }
                 $response_code = wp_remote_retrieve_response_code($response);
                 if ($response_code === 200) {
-                    $body = wp_remote_retrieve_body($response);
-                    $json = json_decode($body, true);
+                    $json = wp_remote_retrieve_body($response);
                 } else {
                     $error = true;
                     $statusMsg = "Unable to download the chapters file.";

@@ -207,6 +207,11 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'."\n"; 
 		}
 		rss_enclosure();
 		apply_filters('rss2_item'.$FeedActionHook, '');
+
+		$ItemCount++;
+
+		if( empty($GLOBALS['powerpress_feed']['feed_maximizer_on']) && $ItemCount >= 10 && !empty($GLOBALS['powerpress_feed']['maximize_feed']) )
+			$GLOBALS['powerpress_feed']['feed_maximizer_on'] = true;
 ?>
 	</item>
 <?php

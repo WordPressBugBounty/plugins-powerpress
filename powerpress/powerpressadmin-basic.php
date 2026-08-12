@@ -875,7 +875,7 @@ function powerpressadmin_experimental_options($General, $feed_slug = 'podcast', 
     </style>
     <div style="margin-left: 10px;">
         <button type="button" style="display: none;" id="experimental-default-open" class="pp-sidenav-tablinks active" onclick="sideNav(event, 'experimental-all')"><img class="pp-nav-icon" style="width: 22px;" alt="" src="<?php echo powerpress_get_root_url(); ?>images/settings_nav_icons/rss-symbol.svg"><?php echo htmlspecialchars(__('Hidden button', 'powerpress')); ?></button>
-        <div id="experimental-all" class="pp-sidenav-tab active" style="width: 100%;">
+        <div id="experimental-all" class="pp-sidenav-tab active">
             <div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center;">
                 <h1 class="pp-heading"><?php echo __('Value4Value (V4V)', 'powerpress'); ?></h1>
                 <a href="https://blubrry.com/support/podcasting-2-0-introduction/" style="color: inherit; text-decoration: none;" target="_blank"><div class="pp-tooltip-right" style="height: 20px; width: 20px; margin: 1ch 0 0 1ch;">i</div></a>

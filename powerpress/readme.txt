@@ -4,7 +4,7 @@ Tags: podcast, apple podcasts, podcast rss feed, spotify, podcast publishing
 Requires at least: 3.6
 Requires PHP: 5.2
 Tested up to: 7.0
-Stable tag: 11.17.2
+Stable tag: 11.17.3
 Donate link: https://blubrry.com/services/podcast-hosting/
 License: GPLv2 or later
 
@@ -165,12 +165,20 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 
 == Changelog ==
 
+= 11.17.3 = 
+* Quota Warning fixes
+* Logging Update
+* Security improvements
+
 = 11.17.2 =
 * Released on 08/06/2026
 * Security improvement recommended by Dmitrii Ignatyev
 * Add jquery dependency to admin asset enqueue to resolve tab switching error
 * Add new line support for shownotes input field on post editor
 * Add new default video thumbnail in post editor
+* Update error handling for the updated media verification response in post editor
+* Added in depth publish failure logging
+* Extracted publishing logic to its own class and file for testability
 
 = 11.17.1 =
 * Additional security improvement recommended by Meher Sudhakar Abbireddi

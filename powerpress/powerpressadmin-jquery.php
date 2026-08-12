@@ -298,7 +298,7 @@ function powerpress_admin_jquery_init()
             }
 			powerpress_admin_jquery_header( __('Select Media', 'powerpress'), true );
             if( $Error ) {
-                powerpress_page_message_add_notice($Error, 'inline', false);
+                powerpress_page_message_add_notice($Error, 'inline');
 				powerpress_page_message_print();
             } else {
 ?>
@@ -608,12 +608,12 @@ window.onload = function() {
 					}
 
 					$message .= '<p style="text-align: center;"><strong><a href="'. $results['quota']['expires']['renew_link'] .'" target="_blank" style="text-decoration: underline;">'. __('Renew Media Hosting Service', 'powerpress') . '</a></strong></p>';
-					powerpress_page_message_add_notice( $message, 'inline', false );
+					powerpress_page_message_add_notice( $message, 'inline');
 					powerpress_page_message_print();
 				}
 				else if($blubrryProgramKeyword == '!selectPodcast') {
                     $message = '<p style="text-align: center;"><strong>Please Select A Program</strong></p>';
-                    powerpress_page_message_add_notice( $message, 'inline', false );
+                    powerpress_page_message_add_notice( $message, 'inline');
                     powerpress_page_message_print();
                 }
 				else if( empty($results) )
@@ -629,7 +629,7 @@ window.onload = function() {
 						$message .= '<p>'.__('Unable to connect to service.','powerpress').'</p>';
 
 					// Print an erro here
-					powerpress_page_message_add_notice( $message, 'inline', false );
+					powerpress_page_message_add_notice( $message, 'inline');
 					powerpress_page_message_print();
 				}
 
@@ -1115,7 +1115,7 @@ window.onload = function() {
 			delete_option('powerpress_stats');
 
 			if( $Error )
-				powerpress_page_message_add_notice( $Error, 'inline', false );
+				powerpress_page_message_add_notice( $Error, 'inline');
 
 			if( $Close )
 			{
