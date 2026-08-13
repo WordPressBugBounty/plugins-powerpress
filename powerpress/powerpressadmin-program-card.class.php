@@ -8,28 +8,28 @@
 class PowerPressProgramCard
 {
     // CONFIGURATION
-    private array $general_settings;
-    private array $feed_settings;
-    private string $feed_slug;
-    private bool $deferred = false;
-    private bool $has_blubrry_auth = false;
+    private $general_settings;
+    private $feed_settings;
+    private $feed_slug;
+    private $deferred = false;
+    private $has_blubrry_auth = false;
 
     // PROGRAM DATA
-    private bool $network_mode = false;
-    private string $program_keyword = '';
-    private string $default_program_keyword = '';
-    private array $programs = [];
-    private array $programs_full = [];
-    private array $program_info = [];
+    private $network_mode = false;
+    private $program_keyword = '';
+    private $default_program_keyword = '';
+    private $programs = [];
+    private $programs_full = [];
+    private $program_info = [];
 
     // STATS DATA
-    private array $stats_content = [];
+    private $stats_content = [];
     // URL CONFIG
-    private string $stats_base_url = 'https://stats.blubrry.com/';
+    private $stats_base_url = 'https://stats.blubrry.com/';
 
-    /* =========================================
-                     INITIALIZATION
-       ========================================= */
+    /* ==============
+       INITIALIZATION
+       ============== */
 
     public function __construct(string $feed_slug = 'podcast', string $override_program = '', bool $deferred = false) {
         // 1. LOAD SETTINGS
@@ -86,9 +86,9 @@ class PowerPressProgramCard
         return $this->program_keyword;
     }
 
-    /* =========================================
-                      PROGRAM DATA
-       ========================================= */
+    /* ============
+       PROGRAM DATA
+       ============ */
 
     /** fetches program list from api w/ transient caching */
     private function fetch_programs(): array {
@@ -259,9 +259,9 @@ class PowerPressProgramCard
         ];
     }
 
-    /* =========================================
-                       STATS DATA
-       ========================================= */
+    /* ==========
+       STATS DATA
+       ========== */
 
     private function load_stats_data(string $override_program = ''): void {
         $settings = $this->general_settings;
@@ -629,9 +629,9 @@ class PowerPressProgramCard
         return $this->stats_content['stats_tier'] ?? 'basic';
     }
 
-    /* =========================================
-                      MAIN RENDER
-       ========================================= */
+    /* ===========
+       MAIN RENDER
+       =========== */
 
     public function render(string $new_post_query_string = ''): void {
         ?>
@@ -653,9 +653,9 @@ class PowerPressProgramCard
         <?php
     }
 
-    /* =========================================
-                 STATS WIDGET RENDERING
-       ========================================= */
+    /* ======================
+       STATS WIDGET RENDERING
+       ====================== */
 
     public function render_stats_widget(bool $stacked = false): void {
         // no widget when not connected
@@ -1000,9 +1000,9 @@ class PowerPressProgramCard
         <?php
     }
 
-    /* =========================================
-                SHOW INFO CARD RENDERING
-       ========================================= */
+    /* ========================
+       SHOW INFO CARD RENDERING
+       ======================== */
 
      private function render_show_info_card(): void {
         $podcast_title = $this->program_info['title'] ?: __('Podcast', 'powerpress');
@@ -1061,9 +1061,9 @@ class PowerPressProgramCard
         return date_i18n(get_option('date_format'), $ts);
     }
 
-    /* =========================================
-                 AJAX RESPONSE METHODS
-       ========================================= */
+    /* =====================
+       AJAX RESPONSE METHODS
+       ===================== */
 
     public function get_stats_widget_html(bool $stacked = false): string {
         ob_start();
@@ -1081,17 +1081,17 @@ class PowerPressProgramCard
         return $this->program_info;
     }
 
-    /* =========================================
-                       ACCESSORS
-       ========================================= */
+    /* =========
+       ACCESSORS
+       ========= */
 
     public function is_network_mode(): bool { return $this->network_mode; }
     public function get_programs(): array { return $this->programs; }
     public function get_current_program_keyword(): string { return $this->program_keyword; }
 
-    /* =========================================
-                   DELTA CACHE HELPERS
-       ========================================= */
+    /* ===================
+       DELTA CACHE HELPERS
+       =================== */
 
     /** determines how many days to fetch based on cache gap */
     private function calculate_stats_delta(array $cached_days, string $today, int $max_days): array {
