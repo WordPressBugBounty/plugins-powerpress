@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.17.4
+Version: 11.17.5
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -134,7 +134,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.17.4' );
+define('POWERPRESS_VERSION', '11.17.5' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -1087,13 +1087,18 @@ function powerpress_page_message_store($html, $prepend = false)
 	if (!is_array($messages))
 		$messages = [];
 
+	if (in_array($html, $messages, true))
+		return;
+
 	// jquery re-orders with first as last, so notices go on the front
 	if ($prepend)
 		array_unshift($messages, $html);
 	else
 		$messages[] = $html;
 
-	update_option('powerpress_errors', $messages);
+    // wp pulls every autoload row in one query on every request, frontend + feeds included
+    // nothing outside wp-admin reads or renders this option so we can safely set autoload to false so its called on demand in the admin only
+	update_option('powerpress_errors', $messages, false);
 }
 
 function powerpress_page_message_add_error($msg, $classes = 'inline', $debug = [])

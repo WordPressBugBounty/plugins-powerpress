@@ -141,7 +141,8 @@ function powerpress_admin_init()
 
 	if( !current_user_can(POWERPRESS_CAPABILITY_MANAGE_OPTIONS) )
 	{
-		powerpress_page_message_add_error( __('You do not have sufficient permission to manage options.', 'powerpress') );
+		if( isset($_GET['page']) && strstr($_GET['page'], 'powerpress') !== false )
+			powerpress_page_message_add_error( __('You do not have sufficient permission to manage options.', 'powerpress') );
 		return;
 	}
 
@@ -1870,7 +1871,10 @@ function powerpress_admin_notices()
 	{
 		if( !delete_option('powerpress_errors') ) {
 			// If for some reason we cannot delete this record, maybe we can at least update it with a blank value...
-			update_option('powerpress_errors', '');
+
+            // wp pulls every autoload row in one query on every request, frontend + feeds included
+            // nothing outside wp-admin reads or renders this option so we can safely set autoload to false so its called on demand in the admin only
+			update_option('powerpress_errors', '', false);
 		}
 		
 		// Clear the SG cachepress plugin:
