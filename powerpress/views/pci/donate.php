@@ -87,8 +87,8 @@ label[class^="pp-label"] {
 
 
     <div id="donation-collapse-<?php echo $FeedSlug; ?>"
-        data-state="<?php echo $default_state; ?>"
-        style="display: <?php echo $default_display; ?>;">
+        data-state="<?php echo (!empty($config['context']) && $config['context'] === 'channel') ? 'visible' : $default_state; ?>"
+        style="display: <?php echo (!empty($config['context']) && $config['context'] === 'channel') ? '' : $default_display; ?>;">
         <!-- MAIN INPUTS -->
         <div class="col-12 justify-content-center align-items-start"
             style="margin-top: 10px; margin-bottom: 10px;">
