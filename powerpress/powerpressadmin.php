@@ -141,8 +141,6 @@ function powerpress_admin_init()
 
 	if( !current_user_can(POWERPRESS_CAPABILITY_MANAGE_OPTIONS) )
 	{
-		if( isset($_GET['page']) && strstr($_GET['page'], 'powerpress') !== false )
-			powerpress_page_message_add_error( __('You do not have sufficient permission to manage options.', 'powerpress') );
 		return;
 	}
 
@@ -1863,6 +1861,20 @@ function delete_post_refresh_player($postId) {
 
 add_action('admin_init', 'powerpress_admin_init');
 add_action('wp_trash_post', 'delete_post_refresh_player');
+
+// wp 7.1 sends document-isolation-policy on post.php/post-new.php for chromium + https,
+// editor becomes cross-origin isolated and the thickbox media picker cant reach self.parent,
+// opt the post screens out so the picker, upload + artwork pages keep working
+function powerpress_client_side_media_processing_enabled($enabled) {
+	global $pagenow;
+
+	if (in_array($pagenow, ['post.php', 'post-new.php'], true)) {
+		return false;
+	}
+
+	return $enabled;
+}
+add_filter('wp_client_side_media_processing_enabled', 'powerpress_client_side_media_processing_enabled');
 
 function powerpress_admin_notices()
 {
@@ -4481,7 +4493,6 @@ function powerpress_save_stats_program_ajax()
 
     // check user capabilities
     if (!current_user_can(POWERPRESS_CAPABILITY_MANAGE_OPTIONS)) {
-		powerpress_page_message_add_error( __('You do not have sufficient permission to manage options.', 'powerpress') );
         wp_send_json_error(__('You do not have sufficient permission to manage options.', 'powerpress'));
         return;
     }
@@ -4490,7 +4501,6 @@ function powerpress_save_stats_program_ajax()
     $stacked = !empty($_POST['stacked']);
 
     if (empty($program_keyword)) {
-		powerpress_page_message_add_error( __('No program selected to display stats.', 'powerpress') );
         wp_send_json_error(__('No program selected to display stats.', 'powerpress'));
         return;
     }
