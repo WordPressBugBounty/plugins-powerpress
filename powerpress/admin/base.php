@@ -26,6 +26,7 @@ if (!empty($_GET['tab'])) {
         <button class="<?php echo $tab == 'programs' ? 'tabActive' : 'tabInactive' ?>" id="programsTab" data-ppn-action="showPPNTab" data-tab="programs">Shows</button>
         <button class="<?php echo $tab == 'groups' ? 'tabActive' : 'tabInactive' ?>" id="groupsTab" data-ppn-action="showPPNTab" data-tab="groups">Groups</button>
         <button class="<?php echo $tab == 'requests' ? 'tabActive' : 'tabInactive' ?>" id="requestsTab" data-ppn-action="showPPNTab" data-tab="requests">Requests</button>
+        <button class="<?php echo $tab == 'manage' ? 'tabActive' : 'tabInactive' ?>" id="manageTab" data-ppn-action="showPPNTab" data-tab="manage">Manage</button>
     </div>
 
     <div class="tabContent" style="<?php echo $tab == 'programs' ? 'display:block' : 'display:none' ?>" id="programs">
@@ -36,6 +37,9 @@ if (!empty($_GET['tab'])) {
     </div>
     <div class="tabContent" style="<?php echo $tab == 'requests' ? 'display:block' : 'display:none' ?>" id="requests">
         <?php echo $requests_html; ?>
+    </div>
+    <div class="tabContent" style="<?php echo $tab == 'manage' ? 'display:block' : 'display:none' ?>" id="manage">
+        <?php echo $manage_html; ?>
     </div>
 </div>
 

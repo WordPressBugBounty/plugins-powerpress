@@ -18,7 +18,7 @@
  *   INIT
  *   EVENT DELEGATION
  */
-import { ppCopyText, showToast } from './utils/dom-utils.js';
+import { ppCopyText, showToast, initCharCounter } from './utils/dom-utils.js';
 import { escapeHtml } from './utils/sanitize.js';
 
 // ============
@@ -712,6 +712,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // AUTO-INIT
     ppnInitSubmitApp();
+
+    document.querySelectorAll('[data-char-counter]').forEach(function(input) {
+        var warnAt = input.dataset.charWarn ? parseInt(input.dataset.charWarn, 10) : null;
+        initCharCounter(input.id, input.dataset.charCounter, warnAt);
+    });
 
     var editForm = document.getElementById('editForm') || document.getElementById('createForm');
     if (editForm) {

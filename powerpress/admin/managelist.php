@@ -105,11 +105,11 @@ usort($checkedShows, function($a, $b) {
             <form method="POST" action="#/" id="<?php echo $formId; ?>">
 
                 <h4 class="ppn-manage__field-label"><?php esc_html_e('Group Name', 'powerpress');?></h4>
-                <input id="editListTitle" name="<?php echo $titleName; ?>" type="text" value="<?php echo $titleValue; ?>" class="ppn-manage__page-link">
+                <input id="editListTitle" name="<?php echo $titleName; ?>" type="text" maxlength="255" value="<?php echo $titleValue; ?>" class="ppn-manage__page-link">
 
                 <h4 class="ppn-manage__field-label"><?php esc_html_e('Group Description', 'powerpress');?></h4>
-                <textarea id="editListDescription" name="<?php echo $descName; ?>" rows="4" maxlength="500" class="ppn-manage__page-link"><?php echo $descValue; ?></textarea>
-                <p class="description" style="color: #999;"><?php esc_html_e('500 character limit', 'powerpress'); ?></p>
+                <textarea id="editListDescription" name="<?php echo $descName; ?>" rows="4" maxlength="255" data-char-counter="editListDescriptionCount" data-char-warn="230" class="ppn-manage__page-link"><?php echo $descValue; ?></textarea>
+                <p class="description" style="color: #999;"><span id="editListDescriptionCount">0</span> <?php esc_html_e('of 255 characters', 'powerpress'); ?></p>
 
                 <?php if (!$new_group) { ?>
                     <h4 class="ppn-manage__field-label"><?php esc_html_e('Group Page Link', 'powerpress'); ?></h4>

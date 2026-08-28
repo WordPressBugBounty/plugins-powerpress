@@ -471,4 +471,12 @@ class PowerpressNetworkDataBus{
         $requestUrl = $apiUrl . '2/powerpress/network/token';
         return PowerpressNetworkDataBus::getCacheOrCallAPI($creds, null, $requestUrl, true);
     }
+
+    /** updates the network record's own title and description */
+    static function updateNetwork(string $apiUrl, $creds, array $networkInfo, array $update) {
+        $title = urlencode($update['editNetworkTitle']);
+        $description = urlencode($update['editNetworkDescription']);
+        $requestUrl = $apiUrl . '2/powerpress/network/' . $networkInfo['network_id'] . '/edit?title=' . $title . '&description=' . $description;
+        return PowerpressNetworkDataBus::getCacheOrCallAPI($creds, null, $requestUrl, true);
+    }
 }

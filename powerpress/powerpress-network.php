@@ -118,7 +118,7 @@ class PowerPressNetwork
 		return $response;
     }
 
-    static function getHTML($filename, $props, $networkInfo, $accountInfo, $shows_html = '', $groups_html = '', $requests_html = '', $secondary_props = array())
+    static function getHTML($filename, $props, $networkInfo, $accountInfo, $shows_html = '', $groups_html = '', $requests_html = '', $secondary_props = array(), $manage_html = '')
     {
         if (is_file(dirname(__FILE__) . '/shortcodes/views/' . $filename)) {
             ob_start();
@@ -571,6 +571,13 @@ class PowerPressNetwork
 
         $accountInfo = $this->apiBus->getNetworkOwnerInformation($apiUrl, $creds, $networkInfo, $needDirectAPI);
 
+        // pull the network record on admin load w/ 1 hour throttle
+        if (!empty($networkId) && !get_transient('ppn_network_info_synced')) {
+            set_transient('ppn_network_info_synced', 1, HOUR_IN_SECONDS);
+            self::syncNetworkInfo($this->apiBus->getSpecificNetworkInAccount($apiUrl, $creds, $networkInfo, true), $networkInfo);
+            $networkTitle = $networkInfo['network_title'];
+        }
+
         if ($passSignIn) { //If the user pass the signin section
             if ( empty($networkId) ){
                 $status = 'List Networks';
@@ -614,11 +621,37 @@ class PowerPressNetwork
                 );
             }
 
+            if (isset($_POST['editNetworkTitle'])) { //Edit Network record
+                $update = [
+                    'editNetworkTitle' => mb_substr(wp_unslash($_POST['editNetworkTitle']), 0, 255),
+                    'editNetworkDescription' => mb_substr(wp_unslash($_POST['editNetworkDescription'] ?? ''), 0, 255),
+                ];
+                $props = $this->apiBus->updateNetwork($apiUrl, $creds, $networkInfo, $update);
+                $needDirectAPI = true;
+
+                if ($props !== false && empty($props['danger'])) {
+                    // set local data for shortcodes
+                    update_option('powerpress_network_title', $props['network_title']);
+                    $this->insertOption('network_description', $props['network_description']);
+                    delete_option('ppn-cache n');
+                    delete_option('ppn-cache n-'.$networkInfo['network_id']);
+                    $networkInfo['network_title'] = $props['network_title'];
+                    $networkTitle = $props['network_title'];
+
+                    // set transient to prevent load sync + send success to user
+                    set_transient('ppn_network_info_synced', 1, HOUR_IN_SECONDS);
+                    update_option('ppn_manage_notice', ['text' => __('Network details saved.', 'powerpress'), 'error' => false]);
+                } else {
+                    $failure = (is_array($props) && !empty($props['alert'])) ? $props['alert'] : __('Could not save network details. Please try again.', 'powerpress');
+                    update_option('ppn_manage_notice', ['text' => $failure, 'error' => true]);
+                }
+            }
+
             if (isset ($_POST['changeOrCreate']) && $_POST['changeOrCreate'] == true) {
                 if (isset($_POST['newListTitle'])) { //Create New List
                     $create = array(
-                            'newListTitle' => wp_unslash($_POST['newListTitle']),
-                            'newListDescription' => mb_substr(wp_unslash($_POST['newListDescription']), 0, 500),
+                            'newListTitle' => mb_substr(wp_unslash($_POST['newListTitle']), 0, 255),
+                            'newListDescription' => mb_substr(wp_unslash($_POST['newListDescription']), 0, 255),
                     );
                     $props = $this->apiBus->createNewList($apiUrl, $creds, $networkInfo, $create);
                     $needDirectAPI = true;
@@ -635,8 +668,8 @@ class PowerPressNetwork
 
                 if (isset($_POST['editListTitle'])) { //Edit List
                     $update = array(
-                            'editListTitle'  => wp_unslash($_POST['editListTitle']),
-                            'editListDescription'=> mb_substr(wp_unslash($_POST['editListDescription']), 0, 500)
+                            'editListTitle'  => mb_substr(wp_unslash($_POST['editListTitle']), 0, 255),
+                            'editListDescription'=> mb_substr(wp_unslash($_POST['editListDescription']), 0, 255)
                     );
                     $props = $this->apiBus->updateList($apiUrl, $creds, $networkInfo, $update);
                     $needDirectAPI = true;
@@ -830,6 +863,32 @@ class PowerPressNetwork
         update_option('powerpress_network', $result);
     }
 
+    /** refresh the cached network title and description from api response */
+    static function syncNetworkInfo($fetched, array &$networkInfo): void {
+        if (!is_array($fetched) || !empty($fetched['error'])) {
+            return;
+        }
+
+        foreach (['network_title', 'network_description'] as $key) {
+            if (!array_key_exists($key, $fetched)) {
+                continue;
+            }
+
+            $value = (string) $fetched[$key];
+            if ($value === (string) ($networkInfo[$key] ?? '')) {
+                continue;
+            }
+
+            $networkInfo[$key] = $value;
+            if ($key === 'network_title') {
+                update_option('powerpress_network_title', $value);
+                continue;
+            }
+
+            self::insertOption($key, $value);
+        }
+    }
+
     static function insertOption ($key, $value)
     {
         $result = get_option ('powerpress_network');
@@ -863,7 +922,8 @@ class PowerPressNetwork
                 $shows_html = $this->getHTML('programs.php', $program_props, $networkInfo, $accountInfo, '', '', '', $list_props);
                 $groups_html = $this->getHTML('lists.php', $list_props, $networkInfo, $accountInfo);
                 $requests_html = $this->getHTML('applications.php', $application_props, $networkInfo, $accountInfo);
-                echo $this->getHTML('base.php', $props, $networkInfo, $accountInfo, $shows_html, $groups_html, $requests_html);
+                $manage_html = $this->getHTML('managenetwork.php', $props, $networkInfo, $accountInfo);
+                echo $this->getHTML('base.php', $props, $networkInfo, $accountInfo, $shows_html, $groups_html, $requests_html, [], $manage_html);
                 break;
             case 'List Programs':
                 echo $this->getHTML('programs.php', $props, $networkInfo, $accountInfo);
