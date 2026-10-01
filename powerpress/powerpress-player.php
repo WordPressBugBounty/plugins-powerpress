@@ -54,12 +54,16 @@ function powerpressplayer_init($GeneralSettings)
 	if( !empty($GeneralSettings['seo_audio_objects']) || !empty($GeneralSettings['seo_video_objects']) )
 		add_filter('powerpress_player', 'powerpressplayer_mediaobjects_post', 1000, 3); // After everythign is added
 
-	if( isset($_GET['powerpress_pinw']) )
+	if (isset($_GET['powerpress_pinw'])
+		&& is_string($_GET['powerpress_pinw'])
+		&& strpos($_GET['powerpress_pinw'], '-') !== false)
 		powerpress_do_pinw(htmlspecialchars($_GET['powerpress_pinw']), !empty($GeneralSettings['process_podpress']) );
-		
-	if( isset($_GET['powerpress_embed']) )
+
+	if (isset($_GET['powerpress_embed'])
+		&& is_string($_GET['powerpress_embed'])
+		&& strpos($_GET['powerpress_embed'], '-') !== false)
 	{
-		$player = ( !empty($_GET['powerpress_player']) ? $_GET['powerpress_player'] : 'mejs-v' );
+		$player = ( !empty($_GET['powerpress_player']) && is_string($_GET['powerpress_player']) ? $_GET['powerpress_player'] : 'mejs-v' );
 		powerpress_do_embed($player, htmlspecialchars($_GET['powerpress_embed']), !empty($GeneralSettings['process_podpress']) );
 	}
 	
@@ -1068,6 +1072,22 @@ add_filter('powerpress_player_links', 'powerpressplayer_link_title', 1000, 3);
 /*
 Do Play in new Window
 */
+function powerpress_player_media_viewable($post_id): bool {
+	$post_id = (int) $post_id;
+	$post = $post_id ? get_post($post_id) : null;
+	if (!$post)
+		return false;
+
+	$publicly_viewable = function_exists('is_post_publicly_viewable') ? is_post_publicly_viewable($post) : ('publish' === get_post_status($post));
+	if (!$publicly_viewable && !current_user_can('read_post', $post->ID))
+		return false;
+
+	if (post_password_required($post))
+		return false;
+
+	return true;
+}
+
 function powerpress_do_pinw($pinw, $process_podpress)
 {
 	if( !WP_DEBUG && defined('POWERPRESS_FIX_WARNINGS') )
@@ -1103,11 +1123,11 @@ body { font-size: 13px; font-family: Arial, Helvetica, sans-serif; /* width: 100
 <div style="margin: 5px;">
 <?php
 	
-	if( !$EpisodeData )
+	if( !$EpisodeData || !powerpress_player_media_viewable($post_id) )
 	{
 		echo '<p>'.  __('Unable to retrieve media information.', 'powerpress') .'</p>';
 	}
-	else if( !empty($GeneralSettings['premium_caps']) && !powerpress_premium_content_authorized($feed_slug) )
+	else if( !empty($GeneralSettings['premium_caps']) && !powerpress_premium_content_authorized($feed_slug, $post_id) )
 	{
 		echo powerpress_premium_content_message($post_id, $feed_slug, $EpisodeData);
 	}
@@ -1137,12 +1157,18 @@ function powerpress_do_embed($player, $embed, $process_podpress)
 {
 	list($post_id, $feed_slug) = explode('-', $embed, 2);
 	$EpisodeData = powerpress_get_enclosure_data($post_id, $feed_slug);
-	
+
 	if( $EpisodeData == false && $process_podpress && $feed_slug == 'podcast' )
 	{
 		$EpisodeData = powerpress_get_enclosure_data_podpress($post_id);
 	}
-	
+
+	$GeneralSettings = get_option('powerpress_general', []);
+	if (!$EpisodeData
+		|| !powerpress_player_media_viewable($post_id)
+		|| (!empty($GeneralSettings['premium_caps']) && !powerpress_premium_content_authorized($feed_slug, $post_id)))
+		exit;
+
 	// Embeds are only available for the following players
 	do_powerpressplayer_embed($player, htmlspecialchars($EpisodeData['url']), $EpisodeData);
 	exit;

@@ -202,7 +202,12 @@
 			if( !isset( $urlParts['scheme']) )
 				$urlParts['scheme'] = 'http';
 			
-			$fp = fsockopen($urlParts['host'], $urlParts['port'], $errno, $errstr, 30);
+			$safe_ip = powerpress_safe_media_ip($urlParts['host']);
+			if( $safe_ip === false ) {
+				$this->SetError( __('Refused to fetch media from a non-public address.', 'powerpress') );
+				return false;
+			}
+			$fp = fsockopen($safe_ip, $urlParts['port'], $errno, $errstr, 30);
 			if ($fp)
 			{
 				// Create and send the request headers
@@ -330,6 +335,95 @@
 			return false;
 		}
 		
+		/** apply ssrf-safe curl transport opts + pinned resolve */
+		function applySafeTransport($curl, $resolve) {
+			curl_setopt($curl, CURLOPT_FOLLOWLOCATION, false);
+			curl_setopt($curl, CURLOPT_MAXREDIRS, 0);
+			curl_setopt($curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+			curl_setopt($curl, CURLOPT_PROXY, '');
+			curl_setopt($curl, CURLOPT_NOPROXY, '*');
+			if (!empty($resolve))
+				curl_setopt($curl, CURLOPT_RESOLVE, $resolve);
+		}
+
+		/** resolve media url to its final hop, ssrf-checked */
+		function SafeResolveChain($url) {
+			// walk redirects ourself, validating and pinning each hop to a vetted public ipv4
+			$resolve = [];
+			$redirects = 0;
+
+			while (true) {
+				$parts = parse_url($url);
+				if (!is_array($parts) || empty($parts['host']) || empty($parts['scheme'])) {
+					$msg = __('Unable to obtain host name from the URL:', 'powerpress');
+					$this->SetError("{$msg} {$url}");
+					return false;
+				}
+
+				$scheme = strtolower($parts['scheme']);
+				if ($scheme != 'http' && $scheme != 'https') {
+					$this->SetError(__('Invalid media URL scheme.', 'powerpress'));
+					return false;
+				}
+
+				$host = $parts['host'];
+				$port = isset($parts['port']) ? (int) $parts['port'] : ($scheme == 'https' ? 443 : 80);
+
+				$ip = powerpress_safe_media_ip($host);
+				if ($ip === false) {
+					$this->SetError(sprintf(__('Refused to fetch media from a non-public address (%s).', 'powerpress'), $host));
+					return false;
+				}
+				$resolve[] = "{$host}:{$port}:{$ip}";
+
+				$curl = curl_init();
+				curl_setopt($curl, CURLOPT_URL, $url);
+				curl_setopt($curl, CURLOPT_NOBODY, true);
+				curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'HEAD');
+				curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+				curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
+				curl_setopt($curl, CURLOPT_TIMEOUT, 15);
+				curl_setopt($curl, CURLOPT_USERAGENT, $this->m_UserAgent);
+				if ($scheme == 'https') {
+					curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
+					curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
+					if (defined('ABSPATH') && defined('WPINC'))
+						curl_setopt($curl, CURLOPT_CAINFO, ABSPATH . WPINC . '/certificates/ca-bundle.crt');
+				}
+				$this->applySafeTransport($curl, $resolve);
+				curl_exec($curl);
+				$code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+				$next = curl_getinfo($curl, CURLINFO_REDIRECT_URL);
+				$errno = curl_errno($curl);
+				if (version_compare(PHP_VERSION, '8.0', '<'))
+					curl_close($curl);
+				else
+					unset($curl);
+
+				if ($errno) {
+					$msg = __('Unable to connect to host:', 'powerpress');
+					$this->SetError("{$msg} {$host}");
+					return false;
+				}
+
+				if ($code >= 300 && $code < 400) {
+					$redirects++;
+					if (empty($next) || $redirects > $this->m_RedirectLimit) {
+						$this->SetError(sprintf(__('Media URL exceeded redirect limit of %d.', 'powerpress'), $this->m_RedirectLimit));
+						return false;
+					}
+					$url = $next;
+					continue;
+				}
+
+				$this->m_RedirectCount = $redirects;
+				return [
+					'url' => $url,
+					'resolve' => $resolve,
+				];
+			}
+		}
+
 		/*
 		Alternative method (curl) for downloading portion of a media file
 		*/
@@ -346,6 +440,12 @@
 				$this->m_RedirectCount = $RedirectCount;
 			}
 			
+			$chain = $this->SafeResolveChain($url);
+			if( $chain === false )
+				return false;
+			$url = $chain['url'];
+			$resolve = $chain['resolve'];
+
 			$curl = curl_init();
 			// First, get the content-length...
 			curl_setopt($curl, CURLOPT_USERAGENT, $this->m_UserAgent );
@@ -366,16 +466,7 @@
 					curl_setopt($curl, CURLOPT_CAINFO, ABSPATH . WPINC . '/certificates/ca-bundle.crt');
 			}
 			
-			if ( !$this->ini_get('safe_mode') && !$this->ini_get('open_basedir') )
-			{
-				curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-				curl_setopt($curl, CURLOPT_MAXREDIRS, $this->m_RedirectLimit);
-			}
-			else
-			{
-				curl_setopt($curl, CURLOPT_FOLLOWLOCATION, false);
-				curl_setopt($curl, CURLOPT_MAXREDIRS, 0 ); // We will attempt to handle redirects ourself
-			}
+			$this->applySafeTransport($curl, $resolve);
 			$Headers = curl_exec($curl);
 			$ContentLength = curl_getinfo($curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
 			$this->m_ContentType = curl_getinfo($curl, CURLINFO_CONTENT_TYPE);
@@ -493,16 +584,7 @@
                     curl_setopt($curl, CURLOPT_CAINFO, ABSPATH . WPINC . '/certificates/ca-bundle.crt');
             }
 
-            if ( !$this->ini_get('safe_mode') && !$this->ini_get('open_basedir') )
-            {
-                curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-                curl_setopt($curl, CURLOPT_MAXREDIRS, $this->m_RedirectLimit);
-            }
-            else
-            {
-                curl_setopt($curl, CURLOPT_FOLLOWLOCATION, false);
-                curl_setopt($curl, CURLOPT_MAXREDIRS, 0 ); // We will attempt to handle redirects ourself
-            }
+            $this->applySafeTransport($curl, $resolve);
             curl_setopt($curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
 
             // First lets try a range request
@@ -524,16 +606,7 @@
 				curl_setopt($curl, CURLOPT_HEADER, false); // header will be at output
 				curl_setopt($curl, CURLOPT_NOBODY, false );
 				curl_setopt($curl, CURLOPT_WRITEFUNCTION, array($this, 'remoteread_curl_writefunc') );
-				if ( !$this->ini_get('safe_mode') && !$this->ini_get('open_basedir') )
-				{
-					curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-					curl_setopt($curl, CURLOPT_MAXREDIRS, $this->m_RedirectLimit);
-				}
-				else
-				{
-					curl_setopt($curl, CURLOPT_FOLLOWLOCATION, false);
-					curl_setopt($curl, CURLOPT_MAXREDIRS, 0 ); // We will attempt to handle redirects ourself
-				}
+				$this->applySafeTransport($curl, $resolve);
 				
 				$success = curl_exec($curl);
 				if( ($success || curl_errno($curl) == 23) && $this->m_data != '' )

@@ -219,6 +219,7 @@ class PowerPressNetwork
      * if the correct shortcode is already present, do nothing.
      */
     private static function ensureShortcodeOnPage($postID, $target, $targetId) {
+        $targetId = preg_replace('/[^A-Za-z0-9_-]/', '', (string) $targetId);
         if (empty($postID) || empty($target) || empty($targetId)) return;
 
         $post = get_post($postID);
@@ -301,14 +302,20 @@ class PowerPressNetwork
         } else {
             if (empty($_POST['pageID'])) {
                 $postID = $this->createPage();
-            } else{
-                $postID = $_POST['pageID'];
+            } else {
+                $postID = (int) $_POST['pageID'];
+                if (!$postID || !current_user_can('edit_post', $postID)) {
+                    powerpress_page_message_add_error(__('You do not have permission to link that page.', 'powerpress'));
+                    return;
+                }
+
                 if ($_POST['target'] == 'List') {
                     $option['l-' . $_POST['targetId']] = $postID;
                 } else if ($_POST['target'] == 'Program') {
                     $option['p-' . $_POST['targetId']] = $postID;
                 }
                 update_option('powerpress_network_map', $option);
+
                 // update shortcode on page if user opted in
                 if (!empty($_POST['updateShortcode'])) {
                     self::ensureShortcodeOnPage($postID, $_POST['target'], $_POST['targetId']);
@@ -398,6 +405,9 @@ class PowerPressNetwork
 		// Only do anything if we are in the network page..unlink a
 		if(empty($_GET['page']) || $_GET['page'] != 'network-plugin' )
 			return;
+
+        if (!current_user_can('manage_options'))
+            return;
 
         // Move wp-admin code here that processes things before any HTML is sent back by the server.
         $apiArray = powerpress_get_api_array();
@@ -1061,8 +1071,8 @@ class PowerPressNetwork
         if ($mode === 'link') {
             // LINK EXISTING PAGE
             $pageId = intval($_POST['pageID'] ?? 0);
-            if (!$pageId) {
-                wp_send_json_error('missing page ID');
+            if (!$pageId || !current_user_can('edit_post', $pageId)) {
+                wp_send_json_error('invalid page');
             }
 
             if ($target === 'List') {

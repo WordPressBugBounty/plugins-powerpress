@@ -31,7 +31,6 @@ export function renderSafeLink(cell, raw, strict = false, truncate = true) {
     if (!raw) return;
 
     if (strict) {
-        // only accept valid http(s) URLs
         try {
             const u = new URL(raw);
             if (u.protocol !== 'http:' && u.protocol !== 'https:' && u.protocol !== 'at:') {
@@ -39,8 +38,7 @@ export function renderSafeLink(cell, raw, strict = false, truncate = true) {
                 return;
             }
         } catch {
-            cell.textContent = 'Unresolved URL';
-            return;
+            // bare filename
         }
     }
 

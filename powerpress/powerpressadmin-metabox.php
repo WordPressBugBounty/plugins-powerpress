@@ -61,6 +61,7 @@ function episode_box_top($EnclosureURL, $FeedSlug, $ExtraData, $GeneralSettings,
                                 name="Powerpress[<?php echo $FeedSlug; ?>][url]" placeholder="https://example.com/path/to/media.mp3"
                                 value="<?php echo esc_attr($EnclosureURL); ?>" />
                             <input type="text" id="powerpress_url_display_<?php echo $FeedSlug; ?>" data-feed-slug="<?php esc_attr_e($FeedSlug); ?>" title="<?php echo esc_attr(__('File Media or URL')); ?>"
+                                data-default-url="<?php echo esc_attr($GeneralSettings['default_url'] ?? ''); ?>"
                                 name="null" placeholder="https://example.com/path/to/media.mp3"
                                 value="<?php echo esc_attr($EnclosureURL); ?>" />
                         </div>

@@ -20,6 +20,7 @@ function powerpress_admin_players_init()
 	switch($action)
 	{
 		case 'powerpress-select-player': {
+			check_admin_referer('powerpress-edit');
 			$SaveSettings = array();
 			if( isset($_POST['Player']) )
 				$SaveSettings = $_POST['Player'];
@@ -38,6 +39,7 @@ function powerpress_admin_players_init()
 
 		} break;
 		case 'powerpress_bplayer':{ // blubrry player
+			check_admin_referer('powerpress-edit');
 			$SaveSettings = !empty($_POST['BBPlayer']) ? $_POST['BBPlayer'] : array();
             $GenSettings = $_POST['General'];
             $ModernPlayerSettings = !empty($_POST['ModernPlayer']) ? $_POST['ModernPlayer'] : array();

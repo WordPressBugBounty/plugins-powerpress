@@ -467,8 +467,6 @@ function powerpress_admin_init()
 					    $General['powerpress_network'] = 0;
                     if(!isset($General['powerpress_accept_json']))
                         $General['powerpress_accept_json'] = 0;
-                    if(!isset($General['pp_show_block_errors']))
-                        $General['pp_show_block_errors'] = 0;
                     if(!isset($General['powerpress_self_hosted_media']))
                         $General['powerpress_self_hosted_media'] = 0;
 
@@ -575,8 +573,6 @@ function powerpress_admin_init()
                         $General['powerpress_network'] = 0;
                     if(!isset($General['powerpress_accept_json']))
                         $General['powerpress_accept_json'] = 0;
-                    if(!isset($General['pp_show_block_errors']))
-                        $General['pp_show_block_errors'] = 0;
                     if(!isset($General['powerpress_self_hosted_media']))
                         $General['powerpress_self_hosted_media'] = 0;
 
@@ -1876,29 +1872,6 @@ function powerpress_client_side_media_processing_enabled($enabled) {
 }
 add_filter('wp_client_side_media_processing_enabled', 'powerpress_client_side_media_processing_enabled');
 
-function powerpress_admin_notices()
-{
-	$errors = get_option('powerpress_errors');
-	if( !empty($errors) )
-	{
-		if( !delete_option('powerpress_errors') ) {
-			// If for some reason we cannot delete this record, maybe we can at least update it with a blank value...
-
-            // wp pulls every autoload row in one query on every request, frontend + feeds included
-            // nothing outside wp-admin reads or renders this option so we can safely set autoload to false so its called on demand in the admin only
-			update_option('powerpress_errors', '', false);
-		}
-		
-		// Clear the SG cachepress plugin:
-		if (function_exists('sg_cachepress_purge_cache')) { sg_cachepress_purge_cache(); }
-		
-		foreach( $errors as $null => $error )
-			echo $error;
-	}
-}
-
-add_action( 'admin_notices', 'powerpress_admin_notices' );
-
 if (!function_exists('powerpress_save_settings')) {
     function powerpress_save_settings($SettingsNew=false, $field = 'powerpress_general' )
     {
@@ -2410,7 +2383,6 @@ function powerpress_edit_post($post_ID, $post)
     $Episodes = ( isset($_POST['Powerpress'])? $_POST['Powerpress'] : false);
 	if( $Episodes )
 	{
-	    $success_array = array();
 		foreach( $Episodes as $feed_slug => $Powerpress )
 		{
             $feed_slug = sanitize_title($feed_slug);
@@ -2450,7 +2422,7 @@ function powerpress_edit_post($post_ID, $post)
 				    continue;
                 }
 
-                    // Initialize the important variables:
+                // Initialize the important variables:
                 $MediaURL = $Powerpress['url'];
 				
 				// skip youtube urls from when used as enclosures
@@ -2460,7 +2432,10 @@ function powerpress_edit_post($post_ID, $post)
 					continue; // Skip this enclosure entirely
 				}
 
-				if( !empty($GeneralSettings['default_url']) && strpos($MediaURL, 'http://') !== 0 && strpos($MediaURL, 'https://') !== 0 && empty($Powerpress['hosting']) ) // If the url entered does not start with a http:// or https://
+				if( !empty($GeneralSettings['default_url'])
+					&& stripos($MediaURL, 'http://') !== 0
+					&& stripos($MediaURL, 'https://') !== 0
+					&& empty($Powerpress['hosting']) ) // If the url entered does not start with a http:// or https://
 				{
 					if( !empty($MediaURL) )
 						$MediaURL = rtrim($GeneralSettings['default_url'], '/') .'/'. ltrim($MediaURL, '/');
@@ -2511,7 +2486,7 @@ function powerpress_edit_post($post_ID, $post)
 							$MediaInfo = null;
 						}
 					}
-					else if( !empty($Powerpress['url']) && SSRFCheck($Powerpress['url'], $feed_slug) )
+					else if( !empty($Powerpress['url']) && SSRFCheck($MediaURL, $feed_slug) )
 					{
 						// local/external media
 						$MediaInfo = powerpress_get_media_info_local($MediaURL, $ContentType, 0, ($set_duration == 0) ? '' : $Duration);
@@ -2578,7 +2553,10 @@ function powerpress_edit_post($post_ID, $post)
                     foreach ($Powerpress['alternate_enclosure'] as $alt_enclosure_data) {
                         $MediaURL = str_replace(['<', '>', '"', '\''], ['', '', '', ''], $alt_enclosure_data['url']);
 						 // Check alternate enclosure hosting flag
-                        if( !empty($GeneralSettings['default_url']) && strpos($MediaURL, 'http://') !== 0 && strpos($MediaURL, 'https://') !== 0 && empty($alt_enclosure_data['hosting']) ) {
+                        if( !empty($GeneralSettings['default_url'])
+                            && stripos($MediaURL, 'http://') !== 0
+                            && stripos($MediaURL, 'https://') !== 0
+                            && empty($alt_enclosure_data['hosting']) ) {
                             if( !empty($MediaURL) ) {
                                 $MediaURL = rtrim($GeneralSettings['default_url'], '/') .'/'. ltrim($MediaURL, '/');
                             }
@@ -2643,7 +2621,17 @@ function powerpress_edit_post($post_ID, $post)
 												$uri_contentType = $uri_data['contentType'] ?? '';
 											} 
 
-											$cleanUri = esc_url_raw(sanitize_text_field($uri_value));
+											if (!empty($GeneralSettings['default_url'])
+												&& !empty($uri_value)
+												&& empty($uri_hosting)
+												&& stripos($uri_value, 'http://') !== 0
+												&& stripos($uri_value, 'https://') !== 0) {
+												$default_base = rtrim($GeneralSettings['default_url'], '/');
+												$uri_path = ltrim($uri_value, '/');
+												$uri_value = "{$default_base}/{$uri_path}";
+											}
+
+											$cleanUri = ($uri_hosting == 1) ? sanitize_text_field($uri_value) : esc_url_raw(sanitize_text_field($uri_value));
 											if (!empty($cleanUri)) {
 												$cleanContentType = sanitize_text_field($uri_contentType);
 												if (empty($cleanContentType)) {
@@ -2660,7 +2648,7 @@ function powerpress_edit_post($post_ID, $post)
 
                                     if (!empty($MediaURL)) {
                                         $AltEnclosureData[] = [
-                                            	'url' => esc_url_raw(sanitize_text_field($MediaURL)),
+                                            	'url' => ($alt_hosting == 1) ? sanitize_text_field($MediaURL) : esc_url_raw(sanitize_text_field($MediaURL)),
                                                 'length' => $FileSize,
                                                 'type' => $ContentType,
                                                 'hosting' => $alt_enclosure_data['hosting'],
@@ -3169,17 +3157,21 @@ function powerpress_edit_post($post_ID, $post)
                             if ($img['existing_file'] != '' && $img['new_file_name'] == '') {
                                 $chapter['img'] = $img['existing_file'];
                             } elseif ($img['new_file_name'] != '') {
-                                // first, check if the image is hosted on this site and if so, access it directly rather than over http
+                                // hosted on this site: read from disk. otherwise fetch safely, validating every redirect hop
+                                $image_body = false;
                                 if (strpos($img['new_file'], wp_upload_dir()['baseurl']) !== false) {
-                                    $image_req_url = str_replace(wp_upload_dir()['baseurl'], wp_upload_dir()['basedir'], $img['new_file']);
+                                    $local_path = str_replace(wp_upload_dir()['baseurl'], wp_upload_dir()['basedir'], $img['new_file']);
+                                    $image_body = file_get_contents($local_path);
                                 } else {
-                                    $image_req_url = $img['new_file'];
-                                    if (!SSRFCheck($image_req_url, $feed_slug, false, "chapter image url")) {
-                                        continue;
+                                    $image_response = powerpress_safe_remote($img['new_file'], ['timeout' => 15, 'limit_response_size' => 10485760], 'GET');
+                                    if (!is_wp_error($image_response) && wp_remote_retrieve_response_code($image_response) === 200) {
+                                        $image_body = wp_remote_retrieve_body($image_response);
                                     }
                                 }
-                                file_put_contents($uploadPath . "/images/" . $img['new_file_name'], file_get_contents($image_req_url));
-                                $chapter['img'] = $uploadURL . "/images/" . $img['new_file_name'];
+                                if ($image_body !== false && $image_body !== '') {
+                                    file_put_contents($uploadPath . "/images/" . $img['new_file_name'], $image_body);
+                                    $chapter['img'] = $uploadURL . "/images/" . $img['new_file_name'];
+                                }
                             }
 
                             if ($img['existing_file'] != '' && $img['remove_existing']) {
@@ -3293,12 +3285,6 @@ function powerpress_edit_post($post_ID, $post)
 						wp_set_post_categories($post_ID, $AddCategories, true);
 					}
 				}
-
-                if (!empty($error)) {
-                    $success_array[$feed_slug] = $error;
-                } else {
-                    $success_array[$feed_slug] = true;
-                }
             }
 		} // Loop through posted episodes...
 		
@@ -3406,18 +3392,6 @@ function powerpress_edit_post($post_ID, $post)
         }
     }
 
-    // cookies to either reload the block on success, or display an error on error
-    if (!empty($success_array) && (!isset($GeneralSettings['pp_show_block_errors']) || $GeneralSettings['pp_show_block_errors'])) {
-        // if successful, success = true. otherwise, success = a string that contains the error
-        foreach($success_array as $feed_slug => $success) {
-            if ($success === true) {
-                setcookie('pp_event_' . $feed_slug . '_' . $post_ID . '_success', "success", 0, '/');
-            } else {
-                setcookie( 'pp_event_' . $feed_slug . '_' . $post_ID . '_add_notice',  $success, 0, '/' );
-            }
-        }
-    }
-
     // And we're done!
 	return $post_ID;
 }
@@ -3484,7 +3458,7 @@ if( defined('POWERPRESS_DO_ENCLOSE_FIX') )
 			else if( !empty($Powerpress['change_podcast']) || !empty($Powerpress['new_podcast']) )
 			{
 				$MediaURL = $Powerpress['url'];
-				if( strpos($MediaURL, 'http://') !== 0 && strpos($MediaURL, 'https://') !== 0 && empty($Powerpress['hosting']) ) // If the url entered does not start with a http:// or https://
+				if( stripos($MediaURL, 'http://') !== 0 && stripos($MediaURL, 'https://') !== 0 && empty($Powerpress['hosting']) ) // If the url entered does not start with a http:// or https://
 				{
 					// Only glitch here is if the media url had an error, and if that's the case then there are other issues the user needs to worry about.
 					$GeneralSettings = get_option('powerpress_general');
@@ -3868,8 +3842,15 @@ function powerpress_check_url(url, DestDiv, hosting)
 	
 	// early failure with URL validation test
 	if (!isHostedFile) {
+		const displayElement = document.getElementById('powerpress_url_display_' + FeedSlug);
+		const defaultUrl = displayElement ? displayElement.dataset.defaultUrl : '';
+		let checkUrl = url;
+		if (defaultUrl && !url.includes('://')) {
+			checkUrl = defaultUrl.replace(/\/+$/, '') + '/' + url.replace(/^\/+/, '');
+		}
+
 		try {
-			const urlObj = new URL(url);
+			const urlObj = new URL(checkUrl);
 			// only allow http/https protocols
 			if (!['http:', 'https:'].includes(urlObj.protocol)) {
 				return showValidationError(
@@ -4360,10 +4341,12 @@ function powerpress_media_info_ajax()
     if (!empty($program_keyword) && !preg_match('/[A-Za-z0-9\_]+/', $program_keyword)) {
         wp_die();
     }
-	if( strpos($media_url, 'http://') !== 0 && strpos($media_url, 'https://') !== 0 && $hosting != 1 ) // If the url entered does not start with a http:// or https://
+
+	if( stripos($media_url, 'http://') !== 0 && stripos($media_url, 'https://') !== 0 && $hosting != 1 ) // If the url entered does not start with a http:// or https://
 	{
 		$media_url = rtrim($GeneralSettings['default_url'], '/') .'/'. $media_url;
-	}
+    }
+
 	// for media creek urls, just verify the content.blubrry.com version
     $orig_url = false;
     if (strpos($media_url, 'mc.blubrry.com') !== false) {
@@ -4406,7 +4389,7 @@ function powerpress_media_info_ajax()
 		$MediaInfo = powerpress_get_media_info_local($media_url, '', 0, '', true);
 
     //If the file is unpublished, check to make sure the user has hosting space
-    if( strpos($media_url, 'http://') !== 0 && strpos($media_url, 'https://') !== 0) {
+    if( stripos($media_url, 'http://') !== 0 && stripos($media_url, 'https://') !== 0) {
         if (!empty($MediaInfo['hosting_status'])) {
             $hosting_status = esc_html($MediaInfo['hosting_status']);
             if (empty($MediaInfo['error'])) {

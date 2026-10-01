@@ -286,9 +286,6 @@ class PowerPress_Hosting
 						// update alternate enclosures with published urls
 						if (!empty($results['alternate_enclosures'])) {
 							foreach ($episode_data['alternate_enclosure'] as $idx => $alternate_enclosure) {
-								// SSRF check on path
-								if (!SSRFCheck($alternate_enclosure['url'], $feed_slug, false, 'alternate enclosure url basename')) continue;
-
 								$alt_filename = powerpress_extract_filename($alternate_enclosure['url']);
 								if (array_key_exists($alt_filename, $results['alternate_enclosures'])) {
 									$new_alt_url = $results['alternate_enclosures'][$alt_filename];
@@ -382,9 +379,6 @@ class PowerPress_Hosting
 						// update alternate enclosures with published urls
 						if (!empty($results['alternate_enclosures'])) {
 							foreach ($episode_data['alternate_enclosure'] as $idx => $alternate_enclosure) {
-								// ssrf check on path (consistent with main publish path)
-								if (!SSRFCheck($alternate_enclosure['url'], $feed_slug, false, 'alternate enclosure url basename')) continue;
-
 								$alt_filename = powerpress_extract_filename($alternate_enclosure['url']);
 								if (array_key_exists($alt_filename, $results['alternate_enclosures'])) {
 									$new_alt_url = $results['alternate_enclosures'][$alt_filename];
@@ -579,7 +573,7 @@ class PowerPress_Hosting
 	                // ID3 CHAP/CTOC embed params
 	                $chapters_body = [];
 	                if (!empty($episode_data['write_chapters_to_id3'])) {
-	                    $response = wp_remote_get($episode_data['pci_chapters_url'], ['timeout' => 5]);
+	                    $response = powerpress_safe_remote($episode_data['pci_chapters_url'], ['timeout' => 5], 'GET');
 	                    if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
 	                        $chapters_json = wp_remote_retrieve_body($response);
 	                        if ($chapters_json !== '') {
@@ -933,9 +927,6 @@ class PowerPress_Hosting
 
 					// process if hosting flag is set
 					if (!empty($uri_hosting) && $uri_hosting == '1' && !empty($uri_value)) {
-						// SSRF check
-						if (!SSRFCheck($uri_value, $feed_slug, false, 'alternate enclosure URI')) continue;
-
 						// Extract filename from URI
 						$uri_filename = powerpress_extract_filename($uri_value);
 
@@ -961,9 +952,6 @@ class PowerPress_Hosting
 				$api_alt_enclosure['size'] = $alternate_enclosure['length'];
 
 				if ($process_main_enclosure) {
-					// SSRF check
-					if (!SSRFCheck($alternate_enclosure['url'], $feed_slug, false, 'alternate enclosure url')) continue;
-
 					// api expects filename not full url
 					$api_alt_enclosure['url'] = powerpress_extract_filename($alternate_enclosure['url']);
 

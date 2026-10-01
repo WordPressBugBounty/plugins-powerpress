@@ -6,21 +6,8 @@ function powerpress_admin_verify_url($url)
 	$wp_remote_options = array();
 	$wp_remote_options['user-agent'] = 'Blubrry PowerPress/'.POWERPRESS_VERSION;
 	$wp_remote_options['httpversion'] = '1.1';
-	$response = wp_remote_head( $url, $wp_remote_options );
-	
-	for( $x = 0; $x < 5; $x++ )
-	{
-		// Redirect 1-5
-		if( !is_wp_error( $response ) && ($response['response']['code'] == 301 || $response['response']['code'] == 302) )
-		{
-			$headers = wp_remote_retrieve_headers( $response );
-			$response = wp_remote_head( $headers['location'], $wp_remote_options );
-		}
-		else
-		{
-			break;// Either we had an error or the response code is no longer a redirect
-		}
-	}
+	// wp_safe_remote_head follows and validates every redirect hop
+	$response = powerpress_safe_remote( $url, $wp_remote_options, 'HEAD' );
 
 	if ( is_wp_error( $response ) )
 	{

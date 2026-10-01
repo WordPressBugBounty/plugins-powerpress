@@ -533,6 +533,11 @@ $program_keyword = $DataSource['program_keyword'] ?? $GeneralSettings['blubrry_p
                                                         data-uri-index="<?php echo $uriIndex; ?>" 
                                                         name="<?php echo $namePrefix; ?>[alternate_enclosure][<?php echo $id; ?>][uris][<?php echo $uriIndex; ?>][uri]" 
                                                         value="<?php echo esc_attr($uri_data['uri']); ?>">
+                                                    <input type="hidden" data-field="alt-enc-uri-hosting"
+                                                        data-alt-enc-idx="<?php echo $id; ?>"
+                                                        data-uri-index="<?php echo $uriIndex; ?>"
+                                                        name="<?php echo $namePrefix; ?>[alternate_enclosure][<?php echo $id; ?>][uris][<?php echo $uriIndex; ?>][hosting]"
+                                                        value="<?php echo esc_attr($uri_data['hosting'] ?? ''); ?>">
                                                 <?php }
                                             }
                                         }

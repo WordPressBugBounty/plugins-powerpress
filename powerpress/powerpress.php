@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.17.9
+Version: 11.17.11
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -134,7 +134,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.17.9' );
+define('POWERPRESS_VERSION', '11.17.11' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -486,13 +486,13 @@ function powerpress_header()
                 $new_window_width = 420;
                 $new_window_height = 240;
 
-                if( isset($Powerpress['new_window_width']) && $Powerpress['new_window_width'] > 0 )
-                    $new_window_width = $Powerpress['new_window_width'];
+                if( isset($Powerpress['new_window_width']) && intval($Powerpress['new_window_width']) > 0 )
+                    $new_window_width = intval($Powerpress['new_window_width']);
                 else if( isset($Powerpress['new_window_width']) )
                     $new_window_width = 420;
 
-                if( isset($Powerpress['new_window_height']) && $Powerpress['new_window_height'] > 0 )
-                    $new_window_height = $Powerpress['new_window_height'];
+                if( isset($Powerpress['new_window_height']) && intval($Powerpress['new_window_height']) > 0 )
+                    $new_window_height = intval($Powerpress['new_window_height']);
                 else if( isset($Powerpress['new_window_height']) )
                     $new_window_height = 240;
 
@@ -774,6 +774,10 @@ function IPAddressIsPublic($ip) {
     if ($longip >= ip2long('0.0.0.0') && $longip <= ip2long('0.255.255.255')) {
         return false;
     }
+    // loopback 127.0.0.0/8
+    if ($longip >= ip2long('127.0.0.0') && $longip <= ip2long('127.255.255.255')) {
+        return false;
+    }
     // private 10.0.0.0/8
     if ($longip >= ip2long('10.0.0.0') && $longip <= ip2long('10.255.255.255')) {
         return false;
@@ -800,6 +804,14 @@ function IPAddressIsPublic($ip) {
     }
     // broadcast
     if ($longip === ip2long('255.255.255.255')) {
+        return false;
+    }
+    // benchmarking 198.18.0.0/15
+    if ($longip >= ip2long('198.18.0.0') && $longip <= ip2long('198.19.255.255')) {
+        return false;
+    }
+    // reserved 240.0.0.0/4
+    if ($longip >= ip2long('240.0.0.0') && $longip <= ip2long('255.255.255.255')) {
         return false;
     }
 
@@ -876,6 +888,11 @@ function SSRFCheck($url, $feed_slug, $echo_error = false, $media_label = "media 
         $redirect_count++;
     } while ($url != false && $redirect_count <= 12);
 
+    // an over-limit chain exits with an unvalidated hop still pending
+    if ($url != false) {
+        $ssrf_valid = false;
+    }
+
     if (!$ssrf_valid) {
         $error = __("Invalid {$media_label}. Please ensure that your url is formatted correctly, e.g https://example.com/filename.mp3.", "powerpress");
         if ($media_label == "media url") {
@@ -891,6 +908,53 @@ function SSRFCheck($url, $feed_slug, $echo_error = false, $media_label = "media 
     }
 
     return true;
+}
+
+function powerpress_safe_remote($url, $args = [], $method = 'GET') {
+    // fetch a user-supplied url, validating every redirect hop unless self-hosted media opts out
+    $GeneralSettings = get_option('powerpress_general', []);
+    $opted_out = !empty($GeneralSettings['powerpress_self_hosted_media']);
+
+    // head requests default to no redirect following, so set a limit to follow + validate each hop
+    if (!isset($args['redirection'])) {
+        $args['redirection'] = 5;
+    }
+
+    if (strtoupper($method) === 'HEAD') {
+        return $opted_out ? wp_remote_head($url, $args) : wp_safe_remote_head($url, $args);
+    }
+
+    return $opted_out ? wp_remote_get($url, $args) : wp_safe_remote_get($url, $args);
+}
+
+function powerpress_safe_media_ip($host) {
+    // resolve host to a vetted public ipv4 to pin, or false when the fetch must be refused
+    if (!is_string($host) || $host === '') return false;
+
+    $ips = gethostbynamel($host);
+    if (empty($ips)) return false;
+
+    // trusted domains bypass the ip check, still pinned to what they resolve to
+    if (defined('POWERPRESS_TRUSTED_DOMAINS')) {
+        foreach (POWERPRESS_TRUSTED_DOMAINS as $trusted_domain) {
+            if (preg_match('/\.' . preg_quote($trusted_domain, '/') . '$/i', $host)) {
+                return $ips[0];
+            }
+        }
+    }
+
+    // self-hosted media opts out of the public-address requirement
+    $GeneralSettings = get_option('powerpress_general', []);
+    if (!empty($GeneralSettings['powerpress_self_hosted_media'])) {
+        return $ips[0];
+    }
+
+    // every resolved address must be public before we pin one
+    foreach ($ips as $ip) {
+        if (!IPAddressIsPublic($ip)) return false;
+    }
+
+    return $ips[0];
 }
 
 function powerpress_remote_fopen($url, $basic_auth = false, $post_args = array(), $timeout = 15, $custom_request = false, $force_curl=false )
@@ -1059,100 +1123,6 @@ function powerpress_json_decode($value)
     }
 }
 
-// =====================
-// ERROR MESSAGE HELPERS
-// =====================
-
-function powerpress_message_allowed_html()
-{
-	$attrs = ['href' => [], 'target' => [], 'rel' => [], 'class' => [], 'style' => [], 'id' => []];
-
-	return [
-		'a'       => $attrs,
-		'p'       => $attrs,
-		'div'     => $attrs,
-		'span'    => $attrs,
-		'strong'  => $attrs,
-		'em'      => $attrs,
-		'br'      => [],
-		'details' => $attrs,
-		'summary' => $attrs,
-		'pre'     => $attrs,
-	];
-}
-
-function powerpress_page_message_store($html, $prepend = false)
-{
-	$messages = get_option('powerpress_errors');
-	if (!is_array($messages))
-		$messages = [];
-
-	if (in_array($html, $messages, true))
-		return;
-
-	// jquery re-orders with first as last, so notices go on the front
-	if ($prepend)
-		array_unshift($messages, $html);
-	else
-		$messages[] = $html;
-
-    // wp pulls every autoload row in one query on every request, frontend + feeds included
-    // nothing outside wp-admin reads or renders this option so we can safely set autoload to false so its called on demand in the admin only
-	update_option('powerpress_errors', $messages, false);
-}
-
-function powerpress_page_message_add_error($msg, $classes = 'inline', $debug = [])
-{
-	$msg = wp_kses($msg, powerpress_message_allowed_html());
-	$msg .= powerpress_message_details($debug);
-
-	powerpress_page_message_store("<div class='error powerpress-error {$classes}'>{$msg}</div>");
-}
-
-function powerpress_page_message_add_notice($msg, $classes = 'inline')
-{
-	$msg = wp_kses($msg, powerpress_message_allowed_html());
-
-	powerpress_page_message_store("<div class='updated fade powerpress-notice {$classes}'>{$msg}</div>", true);
-}
-
-function powerpress_page_message_print()
-{
-	$messages = get_option('powerpress_errors');
-	if (empty($messages) || !is_array($messages))
-		return;
-
-	delete_option('powerpress_errors');
-
-	foreach ($messages as $message)
-		echo $message;
-}
-
-function powerpress_message_details($debug)
-{
-	if (empty($debug) || !is_array($debug))
-		return '';
-
-	$details = [];
-
-	if (!empty($debug['feed_slug']))
-		$details[] = 'Feed: ' . esc_html($debug['feed_slug']);
-
-	if (!empty($debug['media_file']))
-		$details[] = 'File: ' . esc_html($debug['media_file']);
-
-	if (!empty($GLOBALS['g_powerpress_remote_error']))
-		$details[] = 'Response: ' . esc_html($GLOBALS['g_powerpress_remote_error']);
-
-	if (empty($details))
-		return '';
-
-	$details_text = implode("\n", $details);
-	$link_text = __('Show Details', 'powerpress');
-
-	return "<details class='powerpress-error-details'><summary>{$link_text}</summary><pre>{$details_text}</pre></details>";
-}
-
 if (!function_exists('powerpress_clear_blubrry_caches')) {
     function powerpress_clear_blubrry_caches($program_keyword = '') {
         delete_transient('powerpress_programs_list');
@@ -1181,6 +1151,13 @@ if (!function_exists('powerpress_save_settings')) {
             }
             if ($field == 'powerpress_general' && !isset($Settings['timestamp']))
                 $Settings['timestamp'] = time();
+
+            if ($field == 'powerpress_general') {
+                foreach (['new_window_width', 'new_window_height'] as $ppDim) {
+                    if (isset($Settings[$ppDim]))
+                        $Settings[$ppDim] = max(0, min(9999, intval($Settings[$ppDim])));
+                }
+            }
 
             if (isset($Settings['value_recipients'])) {
                 unset(
@@ -5949,7 +5926,7 @@ function get_the_powerpress_all_players($slug = false, $no_link=false)
     return $return;
 }
 
-function powerpress_premium_content_authorized_filter($default, $feed_slug)
+function powerpress_premium_content_authorized_filter($default, $feed_slug, $post_id = false)
 {
     if( $feed_slug != 'podcast' )
     {
@@ -5962,6 +5939,8 @@ function powerpress_premium_content_authorized_filter($default, $feed_slug)
     if ( is_array( $post_type ) ) {
         $post_type = reset( $post_type ); // get first element in array
     }
+    if (empty($post_type) && $post_id)
+        $post_type = get_post_type($post_id);
 
     if( $post_type != 'post' )
     {
@@ -5977,11 +5956,11 @@ function powerpress_premium_content_authorized_filter($default, $feed_slug)
 
     return $default;
 }
-add_filter('powerpress_premium_content_authorized', 'powerpress_premium_content_authorized_filter', 10, 2);
+add_filter('powerpress_premium_content_authorized', 'powerpress_premium_content_authorized_filter', 10, 3);
 
-function powerpress_premium_content_authorized($feed_slug)
+function powerpress_premium_content_authorized($feed_slug, $post_id = false)
 {
-    return apply_filters('powerpress_premium_content_authorized', true, $feed_slug );
+    return apply_filters('powerpress_premium_content_authorized', true, $feed_slug, $post_id );
 }
 
 function powerpress_premium_content_message($post_id, $feed_slug, $EpisodeData = false)
@@ -6145,44 +6124,18 @@ function isYoutubeURL($url)
     return false;
 }
 
-function getRemoteFileSize($url, $userAgent = 'PowerPress')
-{
-    $cUrl = curl_init();
-    curl_setopt($cUrl, CURLOPT_USERAGENT, $userAgent);
-    curl_setopt($cUrl, CURLOPT_URL, $url);
-    curl_setopt($cUrl, CURLOPT_FOLLOWLOCATION, 1); // Handles location: refreshes
-    curl_setopt($cUrl, CURLOPT_MAXREDIRS, 12); // Max 12
-    curl_setopt($cUrl, CURLOPT_HEADER, 1);
-    curl_setopt($cUrl, CURLOPT_TIMEOUT, (45)); // trnasfer timeout (45 seconds)
-    curl_setopt($cUrl, CURLOPT_CONNECTTIMEOUT, 15); // Connect time out (15 seconds)
-    curl_setopt($cUrl, CURLOPT_ENCODING, 'gzip,deflate'); // Added to support compression
-    curl_setopt($cUrl, CURLOPT_SSL_VERIFYHOST, 2);
-    curl_setopt($cUrl, CURLOPT_SSL_VERIFYPEER, true);
-    curl_setopt($cUrl, CURLOPT_CAINFO, dirname(__FILE__) . '/certificates/ca-bundle.crt');
-    curl_setopt($cUrl, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($cUrl, CURLOPT_NOBODY, true); // convert to a HEAD request
-
-    $contentLength = 0;
-    $pageContent = curl_exec($cUrl);
-    $length = curl_getinfo($cUrl, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
-    if (!empty($length)) {
-        $contentLength = intval($length);
-    } else {
-        $lines = explode("\n", $pageContent);
-        foreach ($lines as $rowNumber => $line) {
-
-            if (preg_match('/^content-length: (.*)$/i', $line, $matches)) {
-                $contentLength = $matches[1];
-            }
-        }
+function getRemoteFileSize($url, $userAgent = 'PowerPress') {
+    $response = powerpress_safe_remote($url, [
+        'user-agent' => $userAgent,
+        'timeout' => 45,
+    ], 'HEAD');
+    if (is_wp_error($response)) {
+        return 0;
     }
 
-    if (version_compare(PHP_VERSION, '8.0', '<')) {
-        curl_close($cUrl);
-    } else {
-        unset($cUrl);
-    }
-    return $contentLength;
+    $length = wp_remote_retrieve_header($response, 'content-length');
+
+    return $length ? intval($length) : 0;
 }
 
 /**
@@ -6507,6 +6460,7 @@ function powerpress_normalize_update_frequency($value, $week_indices = null, $mo
     return $result;
 }
 
+require_once(POWERPRESS_ABSPATH.'/powerpress-notices.php');
 require_once(POWERPRESS_ABSPATH.'/powerpress-hosting.class.php');
 
 // Are we in the admin?
