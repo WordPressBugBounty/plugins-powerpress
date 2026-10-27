@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.17.11
+Version: 11.18.0
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -134,7 +134,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.17.11' );
+define('POWERPRESS_VERSION', '11.18.0' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -6640,11 +6640,16 @@ function powerpress_enqueue_assets(array $assets): void {
 // ===================
 // NETWORK ASSET SETUP
 // ===================
+/** network admin assets: the legend on post/page editors, the full set on network pages */
 function powerpress_network_admin_enqueue_scripts() {
+    $ppnScreen = function_exists('get_current_screen') ? get_current_screen() : null;
+    if ($ppnScreen && $ppnScreen->base === 'post' && in_array($ppnScreen->post_type, ['post', 'page'], true)) {
+        powerpress_enqueue_assets(['ppn-admin' => ['path' => 'css/ppn-admin']]);
+    }
+
     if (empty($_GET['page']) || $_GET['page'] !== 'network-plugin') return;
 
     if (is_admin()) {
-        // admin styles + js for network pages
         powerpress_enqueue_assets([
             'powerpress-admin-css'      => ['path' => 'css/admin'],
             'ppn-admin'                 => ['path' => 'css/ppn-admin'],
@@ -6653,6 +6658,9 @@ function powerpress_network_admin_enqueue_scripts() {
             'material-icons-outlined'   => ['type' => 'style', 'url' => 'https://fonts.googleapis.com/icon?family=Material+Icons+Outlined'],
             'roboto-font'               => ['type' => 'style', 'url' => 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap'],
         ]);
+
+        wp_enqueue_style('wp-mediaelement');
+        wp_enqueue_script('wp-mediaelement');
     }
 }
 

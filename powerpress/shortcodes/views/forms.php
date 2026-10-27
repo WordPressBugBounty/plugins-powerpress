@@ -19,7 +19,6 @@ if (!empty($_POST)) {
                 $requestUrl = '/2/powerpress/network/' . $props['powerpress_network']['network_id'] . '/applicant/submit';
                 $requestUrl .= '?feedUrl=' . $results['program_rssurl']. '&programId=' . $results['program_id'];
                 $requestUrl .= '&webName=' . $results['program_keyword'];
-                $requestUrl .= '&listId=0';
 
                 // new application fields, truncated to match db column limits
                 $trim = function_exists('mb_substr')
@@ -33,7 +32,7 @@ if (!empty($_POST)) {
                 $requestUrl .= "&showName={$showName}&podcasterName={$podcasterName}&websiteUrl={$websiteUrl}&listingUrl={$listingUrl}&applicationNote={$applicationNote}";
 
                 $submit = $GLOBALS['ppn_object']->requestAPI($requestUrl, true, $post);
-                if (isset($submit['danger'])) {
+                if (!empty($submit['danger'])) {
                     $error = 'Application could not be submitted. If you have not already submitted an application, please contact the network administrator.';
                 } else {
                     $success = 'Application successfully submitted!';

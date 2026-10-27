@@ -40,20 +40,24 @@ class PowerpressNetworkDataBus{
                 //mail ('use cache 2', 'use cache 2 ', print_r('use cache 2', true));
                 //case 2: if the cache is created from more than 1 days, but the last error is less than 1 hour
                 return $cache['data'];
+            } else if (!empty($cache['data']) && !PowerpressNetworkDataBus::claimRefresh($cacheName)) {
+                return $cache['data'];
             } else {
                 $props = $GLOBALS['ppn_object']->requestAPI($requestUrl, $clientAuth, $creds['post']);
+                PowerpressNetworkDataBus::releaseRefresh($cacheName);
                 if (empty($props['error'])) {
                     $cache['data'] = $props;
                     $cache['insert_timestamp'] = time();
-                    update_option($cacheName, $cache);
+                    update_option($cacheName, $cache, false);
                     //case 3: there is no useful cache in case 1 and 2, call an API. If successful, insert new cache to database
                     //mail ('use API', 'use API ', print_r('use API', true));
                     return $props;
                 } else {
                     $cache['last_error_timestamp'] = time();
                     $cache['insert_timestamp'] = 0;
+                    $cache['error'] = $props['error'];
 					$cache['returned_data'] = $props;
-                    update_option($cacheName, $cache);
+                    update_option($cacheName, $cache, false);
                     if (isset($cache['data'])) {
                         //mail ('use cache 3', 'use cache 3 ', print_r('use cache 3', true));
                         //case 4: if the new API call also produces error, update the timestamp error
@@ -71,7 +75,7 @@ class PowerpressNetworkDataBus{
                 if (empty($props['error'])) {
                     $cache['data'] = $props;
                     $cache['insert_timestamp'] = time();
-                    update_option($cacheName, $cache);
+                    update_option($cacheName, $cache, false);
                     //mail ('use API', 'use API ', print_r('use API', true));
                     return $props;
                 } else {
@@ -79,7 +83,7 @@ class PowerpressNetworkDataBus{
                     $cache['insert_timestamp'] = 0;
                     $cache['error'] = $props['error'];
 					$cache['returned_data'] = $props;
-                    update_option($cacheName, $cache);
+                    update_option($cacheName, $cache, false);
                     if (isset($cache['data'])) {
                         //mail ('use cache 3', 'use cache 3 ', print_r('use cache 3', true));
                         return $cache['data'];
@@ -93,6 +97,30 @@ class PowerpressNetworkDataBus{
         }
     }
 
+    /** seconds a refresh may hold the lock before another request is allowed to take it over */
+    const REFRESH_LOCK_TTL = 30;
+
+    /** claim the right to refresh an expired cache row, add_option fails when the row exists */
+    static function claimRefresh(string $cacheName): bool {
+        $lockName = "{$cacheName} refresh";
+        $held = get_option($lockName, 0);
+
+        if ($held && (int) $held > time() - self::REFRESH_LOCK_TTL) {
+            return false;
+        }
+
+        if ($held) {
+            delete_option($lockName);
+        }
+
+        return add_option($lockName, time(), '', false);
+    }
+
+    /** release a refresh lock, whatever the outcome of the call that held it */
+    static function releaseRefresh(string $cacheName): void {
+        delete_option("{$cacheName} refresh");
+    }
+
     /**
      * Clears the specified cache
      * @param $cacheName string
@@ -102,9 +130,7 @@ class PowerpressNetworkDataBus{
         return delete_option($cacheName);
     }
 
-    /**
-     * Clears cache using LIKE
-     */
+    /** clear every cache row whose option name matches a LIKE pattern */
     static function clearCacheByLike(string $pattern): void {
         global $wpdb;
         $rows = $wpdb->get_col(
@@ -151,7 +177,7 @@ class PowerpressNetworkDataBus{
 
         $cache = get_option($cacheName, []);
         $cache['data'] = $networks;
-        update_option($cacheName, $cache);
+        update_option($cacheName, $cache, false);
 
         return $networks;
     }
@@ -311,11 +337,7 @@ class PowerpressNetworkDataBus{
         if (!empty($networkInfo['network_id']) && !empty ($networkInfo['list_id'])) {
             $cacheName = 'ppn-cache n-' . $networkInfo['network_id'] . '-l-' . $networkInfo['list_id'];
             $requestUrl = $apiUrl . '2/powerpress/network/' . $networkInfo['network_id'] . '/lists/' . $networkInfo['list_id'] . '/programs?cache=' . md5( rand(0, 999) . time()) ;
-            $props = PowerpressNetworkDataBus::getCacheOrCallAPI($creds, $cacheName, $requestUrl, $needDirectAPI = true);
-            if (!empty($props['list_info']['list_title']) && !empty($props['list_info']['list_description'])) {
-                PowerPressNetwork::insertOption('list_title', $props['list_info']['list_title']);
-                PowerPressNetwork::insertOption('list_description', $props['list_info']['list_description']);
-            }
+            $props = PowerpressNetworkDataBus::getCacheOrCallAPI($creds, $cacheName, $requestUrl, $needDirectAPI);
             return $props;
         }
         return false;
@@ -329,15 +351,21 @@ class PowerpressNetworkDataBus{
      * @param $needDirectAPI bool--true if we do not want a cached result
      * @return array|bool--array of program data or false
      */
-    static function getSpecificProgramInNetwork($apiUrl, $creds, $networkInfo, $needDirectAPI)
+    static function getSpecificProgramInNetwork($apiUrl, $creds, $networkInfo, $needDirectAPI, $limit = 0, $start = 0)
     {
-        $cacheName = 'ppn-cache n-'.$networkInfo['network_id'].'-p-'.$networkInfo['program_id'];
+        $limit = (int) $limit;
+        $start = (int) $start;
+        $paging = $limit > 0 ? "&limit={$limit}&start={$start}" : '';
+        $cacheName = 'ppn-cache n-'.$networkInfo['network_id'].'-p-'.$networkInfo['program_id'] . ($limit > 0 ? '-l'.$limit : '');
+        if ($start > 0) {
+            $cacheName = null;
+            $needDirectAPI = true;
+        }
         if (!empty($networkInfo['network_id']) && !empty($networkInfo['program_id']) ) {
-            $requestUrl = $apiUrl . '2/powerpress/network/' . $networkInfo['network_id'] . '/programs/' . $networkInfo['program_id'] . '?cache=' . md5( rand(0, 999) . time()) ;
+            $requestUrl = $apiUrl . '2/powerpress/network/' . $networkInfo['network_id'] . '/programs/' . $networkInfo['program_id'] . '?cache=' . md5( rand(0, 999) . time()) . $paging;
             $props = PowerpressNetworkDataBus::getCacheOrCallAPI(false, $cacheName, $requestUrl, $needDirectAPI);
-            if (!empty($props['program_info']['program_id']) && !empty($props['program_info']['program_title'])) {
+            if ($start === 0 && !empty($props['program_info']['program_id']) && !empty($props['program_info']['program_title'])) {
                 PowerPressNetwork::insertOption('program_id', $props['program_info']['program_id']);
-                PowerPressNetwork::insertOption('program_title', $props['program_info']['program_title']);
             }
             return $props;
         }
@@ -367,80 +395,9 @@ class PowerpressNetworkDataBus{
         return false;
     }
 
-    /**
-     * Returns data about the user account associated to the network
-     * @param $apiUrl string
-     * @param $creds array of oauth credentials for blubrry api
-     * @param $networkInfo array which includes the id of the desired program
-     * @param $needDirectAPI bool--true if we do not want a cached result
-     * @return array|bool--array of account data or false
-     */
-    static function getNetworkOwnerInformation($apiUrl, $creds, $networkInfo, $needDirectAPI)
-    {
-        if(!empty($networkInfo['network_id']))
-        {
-            $requestUrl = $apiUrl . '2/powerpress/network/' . $networkInfo['network_id'] . '/account/information/?cache=' . md5( rand(0, 999) . time()) ;
-            $props = self::getCacheOrCallAPI($creds, null, $requestUrl, $needDirectAPI);
-            return $props;
-        } else {
-            return false;
-        }
-    }
 
-    /**
-     * Given a feed URL, returns information about the applicant
-     * @param $apiUrl string url to Blubrry api
-     * @param $createUrl string url to wordpress site
-     * @param $tokenInfo array which includes the id of the desired program
-     * @return array of credentials
-     */
-    static function refreshTokenToGetCredentials($apiUrl, $createUrl, $tokenInfo)
-    {
-        $clientAuth = $tokenInfo['client_auth'];
-        $refreshToken = $tokenInfo['refresh_token'];
-        $oldAccessToken = $tokenInfo['access_token'];
-        $requestUrl = $apiUrl . 'oauth2/token?grant_type=refresh_token&refresh_token=' . $refreshToken;
-        $post = array('grant_type' => 'refresh_token', 'refresh_token' => $refreshToken, 'redirect_uri' => $createUrl . 'wp-admin/admin.php?page=network-plugin');
-        $creds['post'] = $post;
-        $props = PowerpressNetworkDataBus::getCacheOrCallAPI($creds, null, $requestUrl, true, $clientAuth);
-        $props['client_auth'] = $clientAuth;
-        $props['refresh_token'] = $refreshToken;
-        return $props;
-    }
 
-    /**
-     * Given a feed URL, returns information about the applicant
-     * @param $apiUrl string
-     * @param $creds array of oauth credentials for blubrry api
-     * @param $networkInfo array which includes the id of the desired program
-     * @param $feedUrl string
-     * @return array of applicant data
-     */
-    static function getFeedFromLink($apiUrl, $creds, $networkInfo, $feedUrl)
-    {
-        $feedUrl = trim($feedUrl);
-        $feedUrl = preg_replace('#^(https?://|ftps?://)?(www.)?#', '', $feedUrl);
-        $feedUrl = urlencode($feedUrl);
-        $requestUrl = $apiUrl . '2/powerpress/network/' . $networkInfo['network_id'] . '/applicant/findshow?feedUrl=' . $feedUrl . '&cache=' . md5( rand(0, 999) . time()) ;
-        $props = PowerpressNetworkDataBus::getCacheOrCallAPI($creds, null, $requestUrl, true);
-        $requestUrl = $apiUrl.'2/powerpress/network/'.$networkInfo['network_id'].'/lists/';
-        $props['list'] = PowerpressNetworkDataBus::getCacheOrCallAPI($creds, null, $requestUrl, true);
-        return $props;
-    }
 
-    /**
-     * Returns data relating to one specific list
-     * @param $apiUrl string
-     * @param $creds array of oauth credentials for blubrry api
-     * @param $networkInfo array which includes the id of the desired program
-     * @param $add array of data about the applicant
-     * @return array with return data or error
-     */
-    static function submitApplication($apiUrl, $creds, $networkInfo, $add)
-    {
-        $requestUrl = $apiUrl . '2/powerpress/network/' . $networkInfo['network_id'] . '/applicant/submit?listId=' . $add['listIdForApp'] . '&programId=' . $add['programIdForApp'] . '&feedUrl=' . $add['feedUrl'] . '&webName=' . $add['appLabel'];
-        return PowerpressNetworkDataBus::getCacheOrCallAPI($creds, null, $requestUrl, true);
-    }
 
     /**
      * Returns data relating to one specific list
@@ -459,24 +416,14 @@ class PowerpressNetworkDataBus{
 
     }
 
-    /**
-     * Given a feed URL, returns information about the applicant
-     * @param $apiUrl string
-     * @param $post array
-     * @return array of token data
-     */
-    static function checkTokenValidity($apiUrl, $post)
-    {
-        $creds['post'] = $post;
-        $requestUrl = $apiUrl . '2/powerpress/network/token';
-        return PowerpressNetworkDataBus::getCacheOrCallAPI($creds, null, $requestUrl, true);
-    }
 
     /** updates the network record's own title and description */
     static function updateNetwork(string $apiUrl, $creds, array $networkInfo, array $update) {
         $title = urlencode($update['editNetworkTitle']);
         $description = urlencode($update['editNetworkDescription']);
-        $requestUrl = $apiUrl . '2/powerpress/network/' . $networkInfo['network_id'] . '/edit?title=' . $title . '&description=' . $description;
+        $networkId = $networkInfo['network_id'];
+        $requestUrl = "{$apiUrl}2/powerpress/network/{$networkId}/edit?title={$title}&description={$description}";
+
         return PowerpressNetworkDataBus::getCacheOrCallAPI($creds, null, $requestUrl, true);
     }
 }

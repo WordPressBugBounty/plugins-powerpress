@@ -131,6 +131,11 @@ class PowerPressAuth {
 
     function api($accessToken, $path, $post = false, $custom_request = false, $timeout = 15, $decode_json = true, $encode_json = false )
     {
+        // network builders pass absolute urls, strip to a path so the base isnt doubled
+        if( preg_match('/^https?:\/\/([^\/]*)(.*)$/', $path, $matches) ) {
+            $path = $matches[2];
+        }
+
         $requestUrl = $this->apiUrl[ $this->apiUrlIndex ] . ltrim($path, '/'); // Make sure prefix slash is removed
         $return = $this->_makeApiCall($requestUrl, $post, false, $accessToken, $custom_request, $timeout, $decode_json, $encode_json);
         while( $return === false && $this->_retryApiUrl() ) {

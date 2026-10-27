@@ -30,8 +30,11 @@ var __ = (typeof wp !== 'undefined' && wp.i18n && wp.i18n.__)
     ? wp.i18n.__
     : function(s) { return s; };
 
+// ============
 // DIALOG MODAL
+// ============
 
+/** open the dialog a control names in data-ppn-dialog */
 function ppnDialog(el) {
     var dialogId = el.dataset.ppnDialog || el.getAttribute('data-ppn-dialog');
     if (!dialogId) return;
@@ -41,6 +44,7 @@ function ppnDialog(el) {
     }
 }
 
+/** close the dialog a control sits inside */
 function ppnDialogClose(el) {
     var dialog = el.closest('dialog');
     if (dialog) dialog.close();
@@ -51,15 +55,15 @@ function ppnDialogClose(el) {
 // PAGE TYPE CONFIG
 // ================
 
-/** @type {Object<string, {shortcode: function, defaultTitle: function, hasTargetId: boolean}>} */
+/** the network page kinds, each owning its shortcode and its fallback title */
 var PAGE_TYPES = {
     Program: {
-        shortcode: function(id) { return `[ppn-program id = ${id}]`; },
+        shortcode: function(id) { return `[ppn-show id = ${id}]`; },
         defaultTitle: function(id) { return `program id = ${id}`; },
         hasTargetId: true
     },
     List: {
-        shortcode: function(id) { return `[ppn-gridview id="${id}" rows="100" cols="3"]`; },
+        shortcode: function(id) { return `[ppn-show-grid id="${id}" cols="4"]\n\n[ppn-show-list id="${id}" style="detailed"]`; },
         defaultTitle: function(id) { return `list id = ${id}`; },
         hasTargetId: true
     },
@@ -69,7 +73,7 @@ var PAGE_TYPES = {
         hasTargetId: false
     },
     Homepage: {
-        shortcode: function() { return '[ppn-gridview id="all" rows="100" cols="3"]\n\n[ppn-list id="all" style="detailed"]'; },
+        shortcode: function() { return '[ppn-show-grid id="all" cols="4"]\n\n[ppn-show-list id="all" style="detailed"]'; },
         defaultTitle: function() { return 'Network Page' },
         hasTargetId: false
     }
@@ -92,6 +96,7 @@ async function _ppnPost(body) {
     }
 }
 
+/** add a hidden input to a form */
 function _appendHidden(form, name, value) {
     var input = document.createElement('input');
     input.type = 'hidden';
@@ -158,6 +163,7 @@ async function _ppnAction(el) {
 // TAB NAVIGATION
 // ==============
 
+/** show one tab pane and mark its button active */
 function showPPNTab(application) {
     var x = document.getElementsByClassName("tabContent");
     for (var i = 0; i < x.length; i++) {
@@ -227,7 +233,7 @@ async function _ppnPageAction(el) {
         case 'dialog': {
             const linkRow = document.getElementById('ppn-page-link-row');
             if (!linkRow) {
-                const tabMap = { Program: 'programs', List: 'groups', Application: 'applications' };
+                const tabMap = { Program: 'programs', List: 'groups', Application: 'requests' };
                 _reloadTab(tabMap[target || body.get('target')]);
                 break;
             }
@@ -259,7 +265,7 @@ async function _ppnPageAction(el) {
         }
 
         case 'list':
-            _reloadTab({ Program: 'programs', List: 'groups', Application: 'applications' }[target]);
+            _reloadTab({ Program: 'programs', List: 'groups', Application: 'requests' }[target]);
             break;
 
         case 'group': {
@@ -341,6 +347,7 @@ function updateListOfShows(el) {
     }
 }
 
+/** reveal the unsaved changes indicator */
 function ppnMarkUnsaved() {
     var indicator = document.getElementById('ppn-unsaved-indicator');
     if (indicator) indicator.style.display = '';
@@ -380,6 +387,7 @@ function filterList(el) {
 // APPLICATION APPROVAL
 // ====================
 
+/** the decision dropdown for an applicant, rendered at its current status */
 function _appStatusSelectHtml(applicantId, selectedValue) {
     var safeId = escapeHtml(String(applicantId));
     var attrs = `data-ppn-action="approveProgram" data-applicant-id="${safeId}"`;
@@ -389,6 +397,7 @@ function _appStatusSelectHtml(applicantId, selectedValue) {
     return `<select ${attrs} class="application-dropdown"><option value="0"${pSel}>${__('Pending')}</option><option value="1"${aSel}>${__('Approve')}</option><option value="-1"${rSel}>${__('Reject')}</option></select>`;
 }
 
+/** the read only status pill for an applicant */
 function _appStatusLabelHtml(selectedValue) {
     var label = selectedValue === '1' ? __('Approved') : (selectedValue === '-1' ? __('Rejected') : __('Pending'));
     var mod = selectedValue === '1' ? 'approved' : (selectedValue === '-1' ? 'rejected' : 'pending');
@@ -465,6 +474,13 @@ async function _reloadTab(tabId) {
         var doc = new DOMParser().parseFromString(await resp.text(), 'text/html');
 
         // 3) SWAP tab content or full reload as fallback
+        var freshNotices = doc.getElementById('ppn-notices');
+        var currentNotices = document.getElementById('ppn-notices');
+        if (freshNotices && currentNotices) {
+            currentNotices.innerHTML = freshNotices.innerHTML;
+            ppnDismissTransientNotices();
+        }
+
         var fresh = doc.getElementById(tabId);
         var current = document.getElementById(tabId);
         if (fresh && current) {
@@ -489,7 +505,7 @@ function editPageForProgram(el) {
     var programTitle = el.dataset.programTitle || '';
     document.getElementById('select-page-target-id').value = programId;
     document.getElementById('page-select-ppn').value = el.dataset.linkPage;
-    document.getElementById('ppn-program-shortcode').value = `[ppn-program id="${programId}"]`;
+    document.getElementById('ppn-program-shortcode').value = `[ppn-show id="${programId}"]`;
     // populate create-new-page btn w/ program context
     var createBtn = document.getElementById('ppn-create-page-btn');
     if (createBtn) {
@@ -511,6 +527,7 @@ function editPageForProgram(el) {
     if (dialog) dialog.showModal();
 }
 
+/** open the group picker for a show */
 function addToGroup(el) {
     var programId = el.dataset.programId;
     var input = document.getElementById('add-program-to-group');
@@ -542,7 +559,7 @@ function saveTosUrl(el) {
         if (response.ok) {
             btn.textContent = 'Saved!';
 
-            // clear error message if existing
+            // clear any error from a previous attempt
             const existing = document.getElementById('ppn-tos-error');
             if (existing) existing.remove();
 
@@ -564,7 +581,7 @@ function saveTosUrl(el) {
             setTimeout(function() {
                 btn.textContent = originalText;
                 btn.disabled = false;
-            }, 2000); 
+            }, 2000);
         }
     }).catch(function() {
         btn.textContent = 'Error';
@@ -577,45 +594,48 @@ function saveTosUrl(el) {
 // INIT
 // ====
 
-// strip irrelevant fields from submit application form
-function ppnInitSubmitApp() {
-    var feedUrl = document.getElementById('feedUrl');
-    if (!feedUrl) return;
-    if (!feedUrl.hasAttribute('readonly')) {
-        var addInfo = document.getElementById('addInfo');
-        if (addInfo) addInfo.remove();
-    } else {
-        var find = document.getElementById('findProgram');
-        var back = document.getElementById('backProgram');
-        if (find) find.remove();
-        if (back) back.remove();
-    }
-}
-
+/** ajax: add a show to the network, flipping its icon on success */
 async function addProgramToNetwork(el) {
     const icon = document.getElementById(el.id);
 
-    // ignore clicks on shows that have already been added
-    if(!icon.src.includes('circlecheck_blue')){
-        const body = new FormData();
-        body.append('action', 'add_program_to_network');
-        body.append('nonce', ppnNonce);
-        body.append('program_id', el.dataset.programId);
-        body.append('network_id', el.dataset.networkId);
-        body.append('program_title', el.dataset.title || '');
+    // already added
+    if (icon.src.includes('circlecheck_blue')) return;
 
-        const resp = await fetch(ajaxurl, { method: 'POST', body: body });
-        const data = await resp.json();
+    const body = new FormData();
+    body.append('action', 'add_program_to_network');
+    body.append('nonce', ppnNonce);
+    body.append('program_id', el.dataset.programId);
+    body.append('network_id', el.dataset.networkId);
+    body.append('program_title', el.dataset.title || '');
 
-        if(data.success === true){
-            icon.src = el.dataset.updatedSrc;
-            if(data.data && data.data.message) showToast(data.data.message, { id: 'ppn-add-toast' });
-        } else {
-            // do we need any error messaging?
-        }
-    }
+    const resp = await fetch(ajaxurl, { method: 'POST', body: body });
+    const data = await resp.json();
+
+    if (data.success !== true) return;
+
+    icon.src = el.dataset.updatedSrc;
+    if (data.data && data.data.message) showToast(data.data.message, { id: 'ppn-add-toast' });
 }
 
+/** retire notices that carry a data-ppn-dismiss-after dwell time */
+function ppnDismissTransientNotices() {
+    document.querySelectorAll('[data-ppn-dismiss-after], .ppn-notice--transient').forEach(function(notice) {
+        const after = parseInt(notice.dataset.ppnDismissAfter, 10) || 5000;
+
+        window.setTimeout(function() {
+            notice.style.transition = 'opacity .3s ease';
+            notice.style.opacity = '0';
+            window.setTimeout(function() { notice.remove(); }, 300);
+        }, after);
+    });
+}
+
+/** show the sample matching the player the radio just selected */
+function ppnPlayerPreview(el) {
+    document.querySelectorAll('[data-ppn-player-preview]').forEach(function(sample) {
+        sample.hidden = (sample.dataset.ppnPlayerPreview !== el.value);
+    });
+}
 
 // ================
 // EVENT DELEGATION
@@ -637,12 +657,16 @@ document.addEventListener('DOMContentLoaded', function() {
         updateListOfShows: updateListOfShows,
         filterShows: filterShows,
         filterList: filterList,
-        addProgramToNetwork: addProgramToNetwork
+        addProgramToNetwork: addProgramToNetwork,
+        ppnPlayerPreview: ppnPlayerPreview
     };
 
+    /** run the handler a data-ppn-action names */
     function dispatch(action, el) {
         if (handlers[action]) handlers[action](el);
     }
+
+    ppnDismissTransientNotices();
 
     // CLICK DELEGATION (backdrop close, toggle, action dispatch)
     document.addEventListener('click', function(e) {
@@ -667,8 +691,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var action = el.dataset.ppnAction;
         // skip change/keyup only handlers
         if (action === 'updateListOfShows' || action === 'filterShows' || action === 'filterList') return;
-        // selects handle via change event
-        if (el.tagName === 'SELECT') return;
+        // selects, radios and checkboxes handle via change event
+        if (el.tagName === 'SELECT' || el.type === 'radio' || el.type === 'checkbox') return;
         e.preventDefault();
         dispatch(action, el);
     });
@@ -709,9 +733,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (btn) btn.click();
         });
     }
-
-    // AUTO-INIT
-    ppnInitSubmitApp();
 
     document.querySelectorAll('[data-char-counter]').forEach(function(input) {
         var warnAt = input.dataset.charWarn ? parseInt(input.dataset.charWarn, 10) : null;

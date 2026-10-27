@@ -18,6 +18,7 @@ class PowerPressNetwork
     private $display;
     private $apiBus;
     private $parent_slug;
+    private $justCreatedNetwork = false;
 
     function __construct($parent_slug)
     {
@@ -25,22 +26,53 @@ class PowerPressNetwork
         $this->init();
         $this->apiBus = new PowerpressNetworkDataBus();
 
-        add_action('admin_menu', array($this, 'checkUpdateProgram'));
+        add_action('admin_menu', array($this, 'clearLegacyCron'));
         add_action('wp_ajax_add_program_to_network', array($this, 'addProgramToNetwork'));
         add_action('wp_ajax_ppn_page_action', array($this, 'ajaxPageAction'));
+        add_action('add_meta_boxes', array($this, 'addShortcodeLegendBox'));
+    }
+
+    /** whether the editor legend is wanted, on until the Manage tab turns it off */
+    static function shortcodeLegendEnabled(): bool {
+        $settings = get_option('powerpress_network', []);
+
+        return !isset($settings['shortcode_legend']) || !empty($settings['shortcode_legend']);
+    }
+
+    /** the shortcode legend, on the editor screens a network page is written on */
+    function addShortcodeLegendBox(): void {
+        if (!function_exists('add_meta_box') || !self::shortcodeLegendEnabled()) {
+            return;
+        }
+
+        foreach (['page', 'post'] as $screen) {
+            add_meta_box(
+                'ppn-shortcode-legend',
+                __('PowerPress Network Shortcodes', 'powerpress'),
+                [$this, 'renderShortcodeLegendBox'],
+                $screen,
+                'normal',
+                'low'
+            );
+        }
+    }
+
+    /** render the legend metabox */
+    function renderShortcodeLegendBox(): void {
+        include(dirname(__FILE__) . '/network/shortcode-legend.php');
     }
 
     function init()
     {
+        $ppnFrontAjax = wp_doing_ajax() && isset($_REQUEST['action']) && in_array($_REQUEST['action'], ['ppn_episodes', 'ppn_episode_panel'], true);
 
-        if (!is_admin()) {
+        if (!is_admin() || $ppnFrontAjax) {
             require_once(dirname(__FILE__) . '/shortcodes/ShortCode.php');
             require_once(dirname(__FILE__) . '/shortcodes/Application.php');
-            require_once(dirname(__FILE__) . '/shortcodes/ListPreview.php');
             require_once(dirname(__FILE__) . '/shortcodes/List.php');
             require_once(dirname(__FILE__) . '/shortcodes/Program.php');
             require_once(dirname(__FILE__) . '/shortcodes/Grid.php');
-
+            require_once(dirname(__FILE__) . '/shortcodes/Carousel.php');
         }
 
         if (is_admin() && isset($_GET['page']) && $_GET['page'] == 'powerpress') {
@@ -48,54 +80,30 @@ class PowerPressNetwork
 
             switch ($key) {
                 case 'programs':
-                    include(dirname(__FILE__) . '/admin/programs.php');
+                    include(dirname(__FILE__) . '/network/programs.php');
                     break;
                 case 'lists':
-                    include(dirname(__FILE__) . '/admin/lists.php');
+                    include(dirname(__FILE__) . '/network/lists.php');
                     break;
-                //case 'link':
-                    //include(dirname(__FILE__) . '/admin/link.php');
-                    //break;
-                //case 'index':
-                    //include(dirname(__FILE__) . '/admin/index.php');
-                    //break;
                 case 'base':
-                    include(dirname(__FILE__) . '/admin/base.php');
+                    include(dirname(__FILE__) . '/network/base.php');
                     break;
                 case 'applications':
-                    include(dirname(__FILE__) . '/admin/applications.php');
+                    include(dirname(__FILE__) . '/network/applications.php');
                     break;
                 default:
                     break;
             }
-
         }
-
     }
-	
+
+	/** the blubrry access token powerpress holds, or false when there is none */
 	function getAccessToken()
 	{
-		// Look at the creds and use the latest access token, if its not the latest refresh it...
-		$creds = get_option('powerpress_network_creds');
-		if( !empty($creds['access_token']) && !empty($creds['access_expires']) && $creds['access_expires'] > time() ) { // If access token did not expire
-			return $creds['access_token'];
-		}
-		
-		if( !empty($creds['refresh_token']) && !empty($creds['client_id']) && !empty($creds['client_secret']) ) {
-			
-			// Create new access token with refresh token here...
-			$auth = new PowerPressAuth();
-			$resultTokens = $auth->getAccessTokenFromRefreshToken($creds['refresh_token'], $creds['client_id'], $creds['client_secret']);
-			
-			if( !empty($resultTokens['access_token']) && !empty($resultTokens['expires_in']) ) {
-				powerpress_save_settings( array('access_token'=>$resultTokens['access_token'], 'access_expires'=>( time() + $resultTokens['expires_in'] - 10 ) ), 'powerpress_network_creds');
-				
-				return $resultTokens['access_token'];
-			}
-		}
-		
-		// If we failed to get credentials, return false
-		return false;
+		if( !function_exists('powerpress_getAccessToken') )
+			return false;
+
+		return powerpress_getAccessToken();
 	}
 
     function requestAPI($requestUrl, $auth = false, $post = false)
@@ -118,7 +126,7 @@ class PowerPressNetwork
 		return $response;
     }
 
-    static function getHTML($filename, $props, $networkInfo, $accountInfo, $shows_html = '', $groups_html = '', $requests_html = '', $secondary_props = array(), $manage_html = '')
+    static function getHTML($filename, $props, $networkInfo, $shows_html = '', $groups_html = '', $requests_html = '', $secondary_props = array(), $manage_html = '')
     {
         if (is_file(dirname(__FILE__) . '/shortcodes/views/' . $filename)) {
             ob_start();
@@ -126,9 +134,9 @@ class PowerPressNetwork
             $html = ob_get_contents();
             ob_end_clean();
             return $html;
-        } else if (is_file(dirname(__FILE__) . '/admin/' . $filename)) {
+        } else if (is_file(dirname(__FILE__) . '/network/' . $filename)) {
             ob_start();
-            include(dirname(__FILE__) . '/admin/' . $filename);
+            include(dirname(__FILE__) . '/network/' . $filename);
             $html = ob_get_contents();
             ob_end_clean();
             return $html;
@@ -211,13 +219,7 @@ class PowerPressNetwork
         return $postID;
     }
 
-    /**
-     * ensure page content has the correct ppn shortcode after linking
-     *
-     * if a stale shortcode of the same type exists (wrong id), replace it.
-     * if no matching shortcode exists, append one.
-     * if the correct shortcode is already present, do nothing.
-     */
+    /** put the right ppn shortcode on a linked page, swapping a stale id or appending when absent */
     private static function ensureShortcodeOnPage($postID, $target, $targetId) {
         $targetId = preg_replace('/[^A-Za-z0-9_-]/', '', (string) $targetId);
         if (empty($postID) || empty($target) || empty($targetId)) return;
@@ -230,34 +232,48 @@ class PowerPressNetwork
         if ($target === 'List') {
             $changed = false;
 
-            // fix stale ppn-gridview (skip id="all")
-            $gridShortcode = "[ppn-gridview id=\"{$targetId}\" rows=\"100\" cols=\"3\"]";
-            $gridPattern = '/\[ppn-gridview\s+id="(?!all)[^"]*"[^\]]*\]/';
-            if (strpos($content, $gridShortcode) === false && preg_match($gridPattern, $content)) {
-                $content = preg_replace($gridPattern, $gridShortcode, $content, 1);
+            // LEGACY: also matches ppn-gridview
+            $gridShortcode = "[ppn-show-grid id=\"{$targetId}\" cols=\"4\"]";
+            $grid = self::findShortcode($content, ['ppn-show-grid', 'ppn-gridview']);
+            $gridId = $grid ? ($grid['atts']['id'] ?? null) : null;
+
+            if ($gridId !== null && $gridId !== 'all' && strpos($content, $gridShortcode) === false) {
+                $content = str_replace($grid['text'], $gridShortcode, $content);
                 $changed = true;
             }
 
-            // fix stale ppn-list (skip id="all")
-            $listPattern = '/\[ppn-list\s+id="(?!all)[^"]*"[^\]]*\]/';
-            if (preg_match($listPattern, $content, $m)) {
-                // preserve existing attrs (style, etc) but swap the id
-                $fixed = preg_replace('/id="[^"]*"/', "id=\"{$targetId}\"", $m[0], 1);
-                $content = str_replace($m[0], $fixed, $content);
-                $changed = true;
+            // LEGACY: also matches ppn-list
+            $listShortcode = "[ppn-show-list id=\"{$targetId}\" style=\"detailed\"]";
+            $list = self::findShortcode($content, ['ppn-show-list', 'ppn-list']);
+
+            if ($list && ($list['atts']['id'] ?? null) !== 'all') {
+                $atts = $list['atts'];
+                $atts['id'] = $targetId;
+                $scoped = self::buildShortcode($list['tag'], $atts);
+
+                if ($scoped !== $list['text']) {
+                    $content = str_replace($list['text'], $scoped, $content);
+                    $changed = true;
+                }
             }
 
-            // if no ppn shortcode found at all, append default gridview
+            // if no ppn shortcode found at all, append the group grid
             if (!$changed && strpos($content, $gridShortcode) === false) {
                 $content = trim($content) . "\n\n" . $gridShortcode;
             }
+
+            if (!$list) {
+                $content = trim($content) . "\n\n" . $listShortcode;
+            }
         } elseif ($target === 'Program') {
-            $shortcode = "[ppn-program id=\"{$targetId}\"]";
+            $shortcode = "[ppn-show id=\"{$targetId}\"]";
             if (strpos($content, $shortcode) !== false) return;
-            // replace stale ppn-program w/ different id
-            $pattern = '/\[ppn-program\s+id\s*=\s*"?[^"\]]*"?\]/';
-            if (preg_match($pattern, $content)) {
-                $content = preg_replace($pattern, $shortcode, $content, 1);
+
+            // LEGACY: also matches ppn-program
+            $show = self::findShortcode($content, ['ppn-show', 'ppn-program']);
+
+            if ($show && isset($show['atts']['id'])) {
+                $content = str_replace($show['text'], $shortcode, $content);
             } else {
                 $content = trim($content) . "\n\n" . $shortcode;
             }
@@ -271,32 +287,53 @@ class PowerPressNetwork
         ]);
     }
 
+    /** first of these shortcode tags in content, w/ its attributes parsed, null when absent */
+    private static function findShortcode(string $content, array $tags) {
+        if (!preg_match('/' . get_shortcode_regex($tags) . '/', $content, $match)) {
+            return null;
+        }
+
+        return [
+            'text' => $match[0],
+            'tag' => $match[2],
+            'atts' => shortcode_parse_atts($match[3]),
+        ];
+    }
+
+    /** renders a shortcode tag back out, attribute order as parsed */
+    private static function buildShortcode(string $tag, array $atts): string {
+        $parts = [$tag];
+
+        foreach ($atts as $name => $value) {
+            $parts[] = is_int($name) ? $value : "{$name}=\"{$value}\"";
+        }
+
+        return '[' . implode(' ', $parts) . ']';
+    }
+
     private function handlePageAction($createUrl)
     {
         $option = get_option('powerpress_network_map');
         $postID = 0;
-        if (isset($_POST['pageAction']) && $_POST['pageAction'] == 'unlink'){
+        if (isset($_POST['pageAction']) && $_POST['pageAction'] == 'unlink') {
             if ($_POST['target'] == 'List') {
                 unset($option['l-' . $_POST['targetId']]);
                 $this->removeOption('link_page_list');
             } else if ($_POST['target'] == 'Program') {
                 unset($option['p-' . $_POST['targetId']]);
-                $this->removeOption('link_page_program');
             }
-            update_option ('powerpress_network_map', $option);
+            update_option('powerpress_network_map', $option);
             powerpress_page_message_add_notice(__('Page unlinked.', 'powerpress'));
         } else if (isset($_POST['pageAction']) && $_POST['pageAction'] == 'clearSiteCache') {
             $network_id = get_option('powerpress_network_id');
             if ($network_id) {
-                $cacheNameBase = 'ppn-cache n-' . $network_id;
-                // base network data
-                $this->apiBus->clearCache($cacheNameBase);
-                // applications
-                $this->apiBus->clearCache($cacheNameBase . '-a');
-                // programs
-                $this->apiBus->clearCache($cacheNameBase . '-p');
-                // lists
-                $this->apiBus->clearCache($cacheNameBase . '-l');
+                $cacheNameBase = "ppn-cache n-{$network_id}";
+
+                // base, applications, programs, lists
+                foreach (['', '-a', '-p', '-l'] as $suffix) {
+                    $this->apiBus->clearCache("{$cacheNameBase}{$suffix}");
+                }
+
                 powerpress_page_message_add_notice(__('Cache cleared.', 'powerpress'));
             }
         } else {
@@ -327,68 +364,14 @@ class PowerPressNetwork
                     $this->insertOption('link_page_list', get_permalink($postID));
                 } else if ($_POST['target'] == 'Program') {
                     $option['p-' . $_POST['targetId']] = $postID;
-                    $this->insertOption('link_page_program', get_permalink($postID));
                 }
                 powerpress_page_message_add_notice(__('Page linked successfully.', 'powerpress'));
             }
         }
-        if ($postID!= 0 && !(isset($_POST['redirectUrl']) && $_POST['redirectUrl'] == 'false')) {
-            header('location: ' . $createUrl . 'wp-admin/post.php?post=' . $postID . '&action=edit');
+        if ($postID != 0 && !(isset($_POST['redirectUrl']) && $_POST['redirectUrl'] == 'false')) {
+            header("location: {$createUrl}wp-admin/post.php?post={$postID}&action=edit");
             exit;
         }
-    }
-
-    private function handleCodeReturn()
-    {
-		if( empty($_GET['state']) || empty($_GET['code']) ) {
-			powerpress_page_message_add_error( __('An error occurred linking your account. Missing parameters.', 'powerpress') );
-			return false;
-		}
-		
-		$tempClient = get_option('powerpress_network_temp_client');
-		if( $_GET['state'] != $tempClient['state'] ) {
-			powerpress_page_message_add_error( __('An error occurred linking your account. State does not match.', 'powerpress') );
-			return false;
-		} 
-		$redirectUri = admin_url('admin.php?page=network-plugin');
-		$auth = new PowerPressAuth();
-		
-		// Get the client ID for this installation
-		$resultClient = $auth->issueClient($_GET['code'], $tempClient['temp_client_id'], $tempClient['temp_client_secret'], $redirectUri);
-		if( $resultClient === false || empty($resultClient['client_id']) || empty($resultClient['client_secret']) ) {
-			if( !empty($resultClient['error_description']) )
-				powerpress_page_message_add_error( $resultClient['error_description'] );
-			else if( !empty($resultClient['error']) )
-					powerpress_page_message_add_error( $resultClient['error'] );
-			else
-				powerpress_page_message_add_error( __('Error issuing client:','powerpress') .' '.$auth->GetLastError() . $auth->getDebugInfo() );
-			return false;
-		}
-		
-		// Get the access and refresh token for this client
-		$resultTokens = $auth->getAccessTokenFromCode( $_GET['code'], $resultClient['client_id'], $resultClient['client_secret'], $redirectUri);
-		if( $resultTokens === false || empty($resultTokens['access_token']) || empty($resultTokens['refresh_token']) ) {
-			if( !empty($resultTokens['error_description']) )
-				powerpress_page_message_add_error( $resultTokens['error_description'] );
-			else if( !empty($resultTokens['error']) )
-					powerpress_page_message_add_error( $resultTokens['error'] );
-			else
-				powerpress_page_message_add_error( __('Error retrieving access token:','powerpress') .' '.$auth->GetLastError() );
-			return false;
-		}
-		
-		$props = array();
-		$props['code'] = $_GET['code'];
-		$props['client_id'] = $resultClient['client_id'];
-		$props['client_secret'] = $resultClient['client_secret'];
-		$props['access_token'] = $resultTokens['access_token'];
-		$props['access_expires'] = ( time() + $resultTokens['expires_in'] - 10 );
-		$props['refresh_token'] = $resultTokens['refresh_token'];
-		////update_option('network_general', $props);
-		powerpress_save_settings( $props, 'powerpress_network_creds');
-		
-		powerpress_page_message_add_notice( __('Account linked successfully.', 'powerpress') );
-		return;
     }
 
     private function checkSignin()
@@ -424,48 +407,17 @@ class PowerPressNetwork
         if (isset ($_POST['target']) || isset($_POST['clearSiteCache'])) {
             $this->handlePageAction($createUrl);
         }
-        if (isset($_GET['code'])) {
-            $this->handleCodeReturn();
-        }
-
         if (isset($_POST['unlinkAccount'])){
             // flush network cache
             PowerpressNetworkDataBus::clearCacheByLike("ppn-cache %");
 
-            delete_option('powerpress_network_creds');
             delete_option('powerpress_network_id');
             delete_option('powerpress_network_title');
-            delete_option('powerpress_network_temp_client');
-            powerpress_page_message_add_notice(__('Account unlinked.', 'powerpress'));
+            powerpress_page_message_add_notice(__('Network unlinked.', 'powerpress'));
         }
 		
 		if( !empty($_POST['ppn-action']) ) {
 			switch( $_POST['ppn-action']) {
-				case 'link-account': {
-					// Link account action requested
-					if (isset($_POST['signinRequest'])) {
-					
-						$auth = new PowerPressAuth();
-						$result = $auth->getTemporaryCredentials();
-					   
-						// Okay we got it!
-						if( $result !== false && !empty($result['temp_client_id']) && !empty($result['temp_client_secret']) ) {
-							$state = md5( rand(0, 999999) . time() );
-							update_option('powerpress_network_temp_client', array('temp_client_id' => $result['temp_client_id'], 'temp_client_secret' =>$result['temp_client_secret'], 'state'=>$state ));
-							header('location:' . $auth->getApiUrl() . 'oauth2/authorize?response_type=code&client_id=' . $result['temp_client_id'] . '&redirect_uri=' . $createUrl . 'wp-admin/admin.php?page=network-plugin&state='.$state );
-							exit;
-						}
-						
-						// Handle error here
-						if( !empty($result['error_description']) )
-							powerpress_page_message_add_error( $result['error_description'] );
-						else if( !empty($result['error']) )
-							powerpress_page_message_add_error( $result['error'] );
-						else
-							powerpress_page_message_add_error( __('Error creating temporary client:','powerpress') .' '.$auth->GetLastError() );
-					}
-				}; break;
-
                 case 'create-network': {
                     $requestUrl = '/2/powerpress/network/create/';
                     $props = $this->requestAPI($requestUrl, true, $_POST);
@@ -489,8 +441,12 @@ class PowerPressNetwork
                             $ppnSettings['network_description'] = $props['network_description'];
                             update_option('powerpress_network', $ppnSettings);
                         }
+                        $this->justCreatedNetwork = true;
+
                         powerpress_page_message_add_notice(__('Network successfully created.', 'powerpress-network'));
-                    } else {
+                    } else if (is_array($props) && !empty($props['error'])) {
+                        powerpress_page_message_add_error($props['error']);
+                    } else if ($props !== false) {
                         powerpress_page_message_add_error(__('Could not create network. Please check the title and description and try again.', 'powerpress-network'));
                     }
                 } break;
@@ -519,7 +475,7 @@ class PowerPressNetwork
                     elseif (!empty($props['error']) && $props['error'] == 'Your account does not have the network with specified id') {
                         // API confirms network is gone, scrub from local list cache
                         $this->scrubStaleNetwork($networkId);
-                        powerpress_page_message_add_error(__('That network no longer exists. It has been removed from your list.', 'powerpress'));
+                        powerpress_page_message_add_error(__('That network is not available on the linked Blubrry account. It has been removed from your list.', 'powerpress'));
                     }
 
                     
@@ -579,7 +535,6 @@ class PowerPressNetwork
         $networkInfo['network_title'] = $networkTitle;
 		//echo "PowerPress Network ID: $networkId <br />";
 
-        $accountInfo = $this->apiBus->getNetworkOwnerInformation($apiUrl, $creds, $networkInfo, $needDirectAPI);
 
         // pull the network record on admin load w/ 1 hour throttle
         if (!empty($networkId) && !get_transient('ppn_network_info_synced')) {
@@ -611,24 +566,21 @@ class PowerPressNetwork
 				$networkInfo['network_id'] = $networkId;
                 $networkInfo['network_title'] = $networkTitle;
             }
-            if (isset($_POST['linkPageProgram'])){
-                $this->insertOption('link_page_program', $_POST['linkPageProgram']);
-                $networkInfo = get_option('powerpress_network');
-				$networkInfo['network_id'] = $networkId;
-                $networkInfo['network_title'] = $networkTitle;
-            }
             if (isset($_POST['linkPageList'])){
                 $this->insertOption('link_page_list', $_POST['linkPageList']);
                 $networkInfo = get_option('powerpress_network');
 				$networkInfo['network_id'] = $networkId;
                 $networkInfo['network_title'] = $networkTitle;
             }
-            if (isset($_POST['needDirectAPI']) && $_POST['needDirectAPI'] == true){
-                // flush all ppn-cache options
-                global $wpdb;
-                $wpdb->query(
-                    $wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", 'ppn-cache %')
-                );
+            if (isset($_POST['shortcodeLegend'])) {
+                $this->insertOption('shortcode_legend', $_POST['shortcodeLegend'] === '1' ? 1 : 0);
+            }
+
+            if (isset($_POST['playerStyle'])) { //Player choice, local only, never leaves the site
+                $playerStyle = PowerPressNetwork::resolvePlayer(sanitize_text_field(wp_unslash($_POST['playerStyle'])));
+
+                $this->insertOption('player_style', $playerStyle);
+                $networkInfo['player_style'] = $playerStyle;
             }
 
             if (isset($_POST['editNetworkTitle'])) { //Edit Network record
@@ -636,24 +588,32 @@ class PowerPressNetwork
                     'editNetworkTitle' => mb_substr(wp_unslash($_POST['editNetworkTitle']), 0, 255),
                     'editNetworkDescription' => mb_substr(wp_unslash($_POST['editNetworkDescription'] ?? ''), 0, 255),
                 ];
-                $props = $this->apiBus->updateNetwork($apiUrl, $creds, $networkInfo, $update);
-                $needDirectAPI = true;
+                $stored = get_option('powerpress_network', []);
+                $edited = $update['editNetworkTitle'] !== (string) $networkTitle
+                    || $update['editNetworkDescription'] !== (string) ($stored['network_description'] ?? '');
 
-                if ($props !== false && empty($props['danger'])) {
-                    // set local data for shortcodes
-                    update_option('powerpress_network_title', $props['network_title']);
-                    $this->insertOption('network_description', $props['network_description']);
-                    delete_option('ppn-cache n');
-                    delete_option('ppn-cache n-'.$networkInfo['network_id']);
-                    $networkInfo['network_title'] = $props['network_title'];
-                    $networkTitle = $props['network_title'];
+                if ($edited) {
+                    $props = $this->apiBus->updateNetwork($apiUrl, $creds, $networkInfo, $update);
+                    $needDirectAPI = true;
 
-                    // set transient to prevent load sync + send success to user
-                    set_transient('ppn_network_info_synced', 1, HOUR_IN_SECONDS);
-                    update_option('ppn_manage_notice', ['text' => __('Network details saved.', 'powerpress'), 'error' => false]);
+                    if ($props !== false && empty($props['danger'])) {
+                        // set local data for shortcodes
+                        update_option('powerpress_network_title', $props['network_title']);
+                        $this->insertOption('network_description', $props['network_description']);
+                        delete_option('ppn-cache n');
+                        delete_option('ppn-cache n-'.$networkInfo['network_id']);
+                        $networkInfo['network_title'] = $props['network_title'];
+                        $networkTitle = $props['network_title'];
+
+                        // set transient to prevent load sync + send success to user
+                        set_transient('ppn_network_info_synced', 1, HOUR_IN_SECONDS);
+                        powerpress_page_message_add_notice(__('Network details saved.', 'powerpress'), 'inline ppn-notice--transient');
+                    } else {
+                        $failure = (is_array($props) && !empty($props['alert'])) ? $props['alert'] : __('Could not save network details. Please try again.', 'powerpress');
+                        powerpress_page_message_add_error($failure);
+                    }
                 } else {
-                    $failure = (is_array($props) && !empty($props['alert'])) ? $props['alert'] : __('Could not save network details. Please try again.', 'powerpress');
-                    update_option('ppn_manage_notice', ['text' => $failure, 'error' => true]);
+                    powerpress_page_message_add_notice(__('Settings saved.', 'powerpress'), 'inline ppn-notice--transient');
                 }
             }
 
@@ -753,9 +713,6 @@ class PowerPressNetwork
                 }
             }
 
-            $requestUrl = null;
-//            $status = 'Manage Program';
-//            $_POST['linkPage'] = 'Nothing here';
             switch ($status) {
                 case 'List Networks':
                     $props = $this->apiBus->getNetworksInAccount($creds);
@@ -765,14 +722,30 @@ class PowerPressNetwork
                     break;
 
                 case 'Select Choice':
-                    // pre-flight probe
-                    $probe = $this->requestAPI('/2/powerpress/network/' . absint($networkId), true);
-                    if (is_array($probe) && !empty($probe['error']) && $probe['error'] == 'Your account does not have the network with specified id') {
+                    if ($this->justCreatedNetwork) {
+                        $probeState = 'confirmed';
+                    } else {
+                        $probe = $this->requestAPI('/2/powerpress/network/' . absint($networkId), true);
+                        $probeState = $this->networkProbeState($probe);
+                    }
+
+                    if ($probeState === 'confirmed') {
+                        $program_props = $this->apiBus->getProgramsInNetwork($apiUrl, $creds, $networkInfo, $needDirectAPI );
+                        $list_props = $this->apiBus->getListsInNetwork($apiUrl, $creds, $networkInfo, $needDirectAPI );
+                        $application_props = $this->apiBus->getApplicantsInNetwork($apiUrl, $creds, $networkInfo, true );
+                        $props = $this->apiBus->getSpecificNetworkInAccount($apiUrl, $creds, $networkInfo, $needDirectAPI );
+                        $networkInfo = get_option('powerpress_network', array());
+                        $networkInfo['network_id'] = $networkId;
+                        $networkInfo['network_title'] = $networkTitle;
+                        break;
+                    }
+
+                    if ($probeState === 'not_found') {
                         $this->scrubStaleNetwork($networkId);
                         delete_option('powerpress_network_id');
                         delete_option('powerpress_network_title');
 
-                        powerpress_page_message_add_error(__('That network no longer exists. It has been removed from your list.', 'powerpress'));
+                        powerpress_page_message_add_error(__('That network is not available on the linked Blubrry account. It has been removed from your list.', 'powerpress'));
 
                         $networkId = '';
                         $networkTitle = '';
@@ -781,30 +754,11 @@ class PowerPressNetwork
                         $status = 'List Networks';
                         $props = $this->apiBus->getNetworksInAccount($creds);
                         break;
-                    } 
+                    }
 
-                    $program_props = $this->apiBus->getProgramsInNetwork($apiUrl, $creds, $networkInfo, $needDirectAPI );
-                    $list_props = $this->apiBus->getListsInNetwork($apiUrl, $creds, $networkInfo, $needDirectAPI );
-                    $application_props = $this->apiBus->getApplicantsInNetwork($apiUrl, $creds, $networkInfo, true );
-                    $props = $this->apiBus->getSpecificNetworkInAccount($apiUrl, $creds, $networkInfo, $needDirectAPI );
-                    $networkInfo = get_option('powerpress_network', array());
-					$networkInfo['network_id'] = $networkId;
-                    $networkInfo['network_title'] = $networkTitle;
-                    break;
-
-                case 'List Programs':
-                    $props = $this->apiBus->getProgramsInNetwork($apiUrl, $creds, $networkInfo, $needDirectAPI );
-                    break;
-
-                case 'List Lists':
-                    $props = $this->apiBus->getListsInNetwork($apiUrl, $creds, $networkInfo, $needDirectAPI );
-                    $networkInfo = get_option('powerpress_network');
-					$networkInfo['network_id'] = $networkId;
-                    $networkInfo['network_title'] = $networkTitle;
-                    break;
-
-                case 'List Applicants':
-                    $props = $this->apiBus->getApplicantsInNetwork($apiUrl, $creds, $networkInfo, true );
+                    powerpress_page_message_add_error(__('Could not reach Blubrry to load your network. Please try again in a moment.', 'powerpress'));
+                    $status = 'List Networks';
+                    $props = $this->cachedNetworks();
                     break;
 
                 case 'Manage List':
@@ -831,26 +785,6 @@ class PowerPressNetwork
                     }
                     break;
 
-                case 'Manage Program':
-                    $props = $this->apiBus->getSpecificProgramInNetwork($apiUrl, $creds, $networkInfo, $needDirectAPI);
-                    $networkInfo = get_option ('powerpress_network');
-					$networkInfo['network_id'] = $networkId;
-                    $networkInfo['network_title'] = $networkTitle;
-                    // clean up stale page link if page was deleted
-                    if (!empty($networkInfo['link_page_program'])) {
-                        $map = get_option('powerpress_network_map', []);
-                        $mapKey = 'p-' . ($networkInfo['program_id'] ?? '');
-                        $pageId = $map[$mapKey] ?? 0;
-                        if (!$pageId || get_post_status($pageId) !== 'publish') {
-                            $this->removeOption('link_page_program');
-                            $networkInfo['link_page_program'] = '';
-                            if ($pageId) {
-                                unset($map[$mapKey]);
-                                update_option('powerpress_network_map', $map);
-                            }
-                        }
-                    }
-                    break;
             }
 
         }
@@ -860,7 +794,6 @@ class PowerPressNetwork
         $return['program_props'] = $program_props;
         $return['list_props'] = $list_props;
         $return['application_props'] = $application_props;
-        $return['accountInfo'] = $accountInfo;
         $return['network_info'] = $networkInfo;
         return $return;
 
@@ -871,6 +804,100 @@ class PowerPressNetwork
         $result = get_option ('powerpress_network');
         unset ($result[$key]);
         update_option('powerpress_network', $result);
+    }
+
+    /** the last known network list, for rendering when the origin cannot be reached */
+    private function cachedNetworks(): array {
+        $cache = get_option('ppn-cache n', []);
+
+        if (!is_array($cache) || !isset($cache['data']) || !is_array($cache['data'])) {
+            return [];
+        }
+
+        return $cache['data'];
+    }
+
+    /** a program's coverart url, or the local placeholder when the api gave us no filename */
+    static function programArtworkUrl(array $show, int $size = 90): string {
+        $image = trim((string) ($show['program_itunes_image'] ?? ''));
+
+        if ($image === '') {
+            return powerpress_get_root_url() . 'images/pts_cover.jpg';
+        }
+
+        return "https://assets.blubrry.com/coverart/{$size}/{$image}";
+    }
+
+    /** the two players a network may pick from, keyed by the value powerpress_general stores */
+    static function playerChoices(): array {
+        return [
+            'blubrrymodern' => 'Blubrry Player',
+            'mediaelement-audio' => 'Default Media Player',
+        ];
+    }
+
+    /** the player a network gets when it has never chosen one */
+    static function defaultPlayer(): string {
+        return 'blubrrymodern';
+    }
+
+    /** site wide player values that predate the network's two choices, mapped onto their match */
+    static function playerAliases(): array {
+        return [
+            'blubrryaudio' => 'blubrrymodern',
+            'html5audio' => 'mediaelement-audio',
+        ];
+    }
+
+    /** resolve a stored player value to a network choice, the one path admin and render share */
+    static function resolvePlayer($stored): string {
+        $stored = (string) $stored;
+        $stored = self::playerAliases()[$stored] ?? $stored;
+
+        return isset(self::playerChoices()[$stored]) ? $stored : self::defaultPlayer();
+    }
+
+    /** every shortcode's attributes, accepted values and defaults, read from the classes themselves */
+    static function shortcodeLegend(): array {
+        $legend = [];
+
+        foreach (self::shortcodeClasses() as $tag => $class) {
+            $defaults = $class::attributeDefaults();
+            $accepted = $class::attributeLegend();
+            $inert = $class::inertAttributes();
+            $rows = [];
+
+            foreach ($defaults as $name => $default) {
+                if (in_array($name, $inert, true)) {
+                    continue;
+                }
+
+                $rows[$name] = [
+                    'accepts' => $accepted[$name] ?? '',
+                    'enumerated' => is_array($accepted[$name] ?? ''),
+                    'default' => ($default === null || $default === '') ? '-' : (string) $default,
+                ];
+            }
+
+            $legend[$tag] = [
+                'description' => $class::shortcodeDescription(),
+                'example' => $class::shortcodeExample(),
+                'attributes' => $rows,
+            ];
+        }
+
+        return $legend;
+    }
+
+    /** shortcode tag to the class that owns its attribute vocabulary */
+    static function shortcodeClasses(): array {
+        return [
+            'ppn-show' => 'PowerPressNetworkProgram',
+            'ppn-show-list' => 'PowerPressNetworkList',
+            'ppn-show-grid' => 'PowerPressNetworkGrid',
+            'ppn-show-carousel' => 'PowerPressNetworkCarousel',
+            'ppn-application' => 'PowerPressNetworkApplication',
+        ];
     }
 
     /** refresh the cached network title and description from api response */
@@ -908,51 +935,42 @@ class PowerPressNetwork
 
     function display_plugin()
     {
-		if( function_exists('powerpress_page_message_print') )
+        echo '<div id="ppn-notices">';
+        if (function_exists('powerpress_page_message_print') && ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
             powerpress_page_message_print();
+        }
+        echo '</div>';
 
         $status = $this->display['status'];
         $props = $this->display['props'];
         $program_props = $this->display['program_props'];
         $list_props = $this->display['list_props'];
         $application_props = $this->display['application_props'];
-        $accountInfo = $this->display['accountInfo'];
         $networkInfo = $this->display['network_info'];
         ?>
 
         <div class="ppn-admin">
         <?php
         $ppn_nonce = wp_create_nonce('powerpress');
-        echo '<script>var ppnNonce = ' . json_encode($ppn_nonce) . ';</script>';
+        $ppn_nonce_json = json_encode($ppn_nonce);
+        echo "<script>var ppnNonce = {$ppn_nonce_json};</script>";
         switch ($status) {
             case 'List Networks':
-                echo $this->getHTML('networks.php', $props, $networkInfo, $accountInfo);
+                echo $this->getHTML('networks.php', $props, $networkInfo);
                 break;
             case 'Select Choice':
-                $shows_html = $this->getHTML('programs.php', $program_props, $networkInfo, $accountInfo, '', '', '', $list_props);
-                $groups_html = $this->getHTML('lists.php', $list_props, $networkInfo, $accountInfo);
-                $requests_html = $this->getHTML('applications.php', $application_props, $networkInfo, $accountInfo);
-                $manage_html = $this->getHTML('managenetwork.php', $props, $networkInfo, $accountInfo);
-                echo $this->getHTML('base.php', $props, $networkInfo, $accountInfo, $shows_html, $groups_html, $requests_html, [], $manage_html);
-                break;
-            case 'List Programs':
-                echo $this->getHTML('programs.php', $props, $networkInfo, $accountInfo);
-                break;
-            case 'List Lists':
-                echo $this->getHTML('lists.php', $props, $networkInfo, $accountInfo);
-                break;
-            case 'List Applicants':
-                echo $this->getHTML('applications.php', $props, $networkInfo, $accountInfo);
+                $shows_html = $this->getHTML('programs.php', $program_props, $networkInfo, '', '', '', $list_props);
+                $groups_html = $this->getHTML('lists.php', $list_props, $networkInfo);
+                $requests_html = $this->getHTML('applications.php', $application_props, $networkInfo);
+                $manage_html = $this->getHTML('managenetwork.php', $props, $networkInfo);
+                echo $this->getHTML('base.php', $props, $networkInfo, $shows_html, $groups_html, $requests_html, [], $manage_html);
                 break;
             case 'Create List':
             case 'Manage List':
-                echo $this->getHTML('managelist.php', $props, $networkInfo, $accountInfo);
-                break;
-            case 'Manage Program':
-                echo $this->getHTML('manageprogram.php', $props, $networkInfo, $accountInfo);
+                echo $this->getHTML('managelist.php', $props, $networkInfo);
                 break;
             default:
-                echo $this->getHTML('signin.php', $props, $networkInfo, $accountInfo);
+                echo $this->getHTML('signin.php', $props, $networkInfo);
                 break;
         }
         ?>
@@ -960,96 +978,67 @@ class PowerPressNetwork
 <?php
     }
 
-    static function updateMeta ($meta_key)
+    /** clears the orphaned hourly updateProgram event */
+    function clearLegacyCron()
     {
-        global $wpdb;
-        $update = serialize(['last_update' => time(), 'need_update' => true]);
-        $wpdb->update(
-            "{$wpdb->prefix}postmeta",
-            ['meta_value' => $update],
-            ['meta_key' => $meta_key]
-        );
-    }
-
-    function checkUpdateProgram()
-    {
-        $option = get_option ('powerpress_network_creds');
-        if (empty($option)){
-            return;
-        }
-		
-        if (!wp_next_scheduled ( 'updateProgram' )) {
-            wp_schedule_event(time(), 'hourly', 'updateProgram');
-        }
-
-        $timeExecute = wp_next_scheduled('updateProgram');
-        if (time() >= $timeExecute){
-            $networkId = get_option('powerpress_network_id');
-			if( empty($networkId) )
-				return;
-            $apiArray = powerpress_get_api_array();
-            $apiUrl = $apiArray[0];
-            // $post = false; // array('grant_type'=>'client_credentials', 'access_token'=>$accessToken );
-            $requestUrl = $apiUrl.'2/powerpress/network/'.$networkId.'/update?since='.($timeExecute - 24*60*60);
-            $programUpdate = $this->requestAPI($requestUrl);
-            foreach ($programUpdate ?: [] as $program) {
-                PowerPressNetwork::updateMeta($program);
-            }
+        if (wp_next_scheduled('updateProgram')) {
+            wp_clear_scheduled_hook('updateProgram');
         }
     }
 
+    /** ajax: add one show to the network, refusing a show it already holds */
     function addProgramToNetwork() {
-        // verify nonce
-        if(!wp_verify_nonce($_POST['nonce'] ?? '', 'powerpress')){
+        // 1) AUTHORIZE
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'powerpress')) {
             wp_send_json_error('error');
         }
 
-        // verify options management
-        if(!current_user_can('manage_options')){
+        if (!current_user_can('manage_options')) {
             wp_send_json_error('error');
         }
 
-        // collect POST values
+        // 2) READ POST
         $networkID = htmlspecialchars($_POST['network_id'] ?? '');
-        $programID = htmlspecialchars($_POST['program_id'] ?? ''); // currently don't need
 
-        if(empty($networkID)) {
+        if (empty($networkID)) {
             wp_send_json_error('error');
         }
 
-        // compare networkID from POST to networkID from PP
-        if((string)get_option('powerpress_network_id') !== $networkID){
+        // 3) POSTED NETWORK MUST BE THE LINKED ONE
+        if ((string) get_option('powerpress_network_id') !== $networkID) {
             wp_send_json_error('error');
         }
 
-        // verify programID is not ALREADY within the network
-        $requestUrl = '/2/powerpress/network/' . $networkID . '/exists-program/';
+        // 4) REJECT A SHOW ALREADY IN THE NETWORK
+        $requestUrl = "/2/powerpress/network/{$networkID}/exists-program/";
         $result = $this->requestAPI($requestUrl, true, $_POST);
 
-        if(!$result || isset($result['error'])){
+        if (!$result || isset($result['error'])) {
             wp_send_json_error('error');
         }
 
-        if($result['exists']){
+        if ($result['exists']) {
             wp_send_json_error('error');
         }
 
-        // program does not exist within network, add it
-        $requestUrl = '/2/powerpress/network/' . $networkID . '/programs/add/';
+        // 5) ADD
+        $requestUrl = "/2/powerpress/network/{$networkID}/programs/add/";
         $result = $this->requestAPI($requestUrl, true, $_POST);
 
-        if(empty($result) || isset($result['error'])){
+        if (empty($result) || isset($result['error'])) {
             wp_send_json_error('error');
         }
 
+        // 6) CONFIRM
         $programTitle = sanitize_text_field(wp_unslash($_POST['program_title'] ?? ''));
         $networkTitle = wp_unslash(get_option('powerpress_network_title', ''));
         $msg = sprintf(__('%s added to %s', 'powerpress'), $programTitle, $networkTitle);
+
         wp_send_json_success(['message' => $msg]);
     }
 
+    /** ajax: link a network target to an existing page, or create the page for it */
     function ajaxPageAction() {
-        // init checks
         if (!wp_verify_nonce($_POST['nonce'] ?? '', 'powerpress')) {
             wp_send_json_error('invalid nonce');
         }
@@ -1095,11 +1084,8 @@ class PowerPressNetwork
             wp_send_json_error('page creation failed');
         }
 
-        // store link in network info
         if ($target === 'List') {
             $this->insertOption('link_page_list', get_permalink($postId));
-        } elseif ($target === 'Program') {
-            $this->insertOption('link_page_program', get_permalink($postId));
         }
 
         wp_send_json_success([
@@ -1109,30 +1095,36 @@ class PowerPressNetwork
         ]);
     }
 
-    /** 
-     * clear local state for a network 
-     * acts as a sync when network removed from blubrry server but still exists on local wp db
-     * scrubs network etnry from list cache and deletes network caches
-     */
+    /** drop local caches for a network the server no longer has, a one way sync */
     private function scrubStaleNetwork($networkId) {
         $networkId = absint($networkId);
         if (!$networkId) {
             return;
         }
 
-        // clean cache
         $cache = get_option('ppn-cache n', []);
         if (!empty($cache['data']) && is_array($cache['data'])) {
-            $cache['data'] = array_values(
-                    array_filter($cache['data'], function($n) use ($networkId) {
-                    return empty($n['network_id']) || (int)$n['network_id'] !== $networkId;
-                })
-            );
+            $cache['data'] = array_values(array_filter($cache['data'], function($n) use ($networkId) {
+                return empty($n['network_id']) || (int) $n['network_id'] !== $networkId;
+            }));
             update_option('ppn-cache n', $cache);
         }
 
         delete_option("ppn-cache n-{$networkId}");
         PowerpressNetworkDataBus::clearCacheByLike("ppn-cache n-{$networkId}-%");
+    }
+
+    /** what a network probe told us: it is there, it is gone, or the api could not say */
+    private function networkProbeState($probe) {
+        if (is_array($probe) && !empty($probe['network_id'])) {
+            return 'confirmed';
+        }
+
+        if (is_array($probe) && !empty($probe['error']) && $probe['error'] == 'Your account does not have the network with specified id') {
+            return 'not_found';
+        }
+
+        return 'unavailable';
     }
 
 }

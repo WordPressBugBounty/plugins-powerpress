@@ -1426,7 +1426,7 @@ function powerpressplayer_build_blubrryaudio($media_url, $EpisodeData=array(), $
     $instance++;
 
     // media URL is all we need., as long as it's hosted at blubrry.com...
-    if( preg_match('/(content|protected|ins|mc)\.blubrry\.com/', $media_url) )
+    if( preg_match('/(content[0-9]*|protected|ins|mc)\.blubrry\.(com|biz)/', $media_url) )
     {
         $GeneralSettings = get_option('powerpress_general', []);
         $playerSettings = get_option('powerpress_bplayer', []);
@@ -1448,13 +1448,16 @@ function powerpressplayer_build_blubrryaudio($media_url, $EpisodeData=array(), $
             }
         }
 
+        $local = (strpos(isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '', '.local') !== false);
+        $playerHost = ($local ? 'http://player.blubrry.local' : 'https://player.blubrry.com');
+
         if( !empty($EpisodeData['podcast_id']) ) {
-            $url = 'https://player.blubrry.com/?podcast_id='. intval($EpisodeData['podcast_id']) . '&amp;media_url='. urlencode($media_url);
+            $url = $playerHost . '/?podcast_id='. intval($EpisodeData['podcast_id']) . '&amp;media_url='. urlencode($media_url);
             if ($GeneralSettings['player'] == 'blubrrymodern') {
                 $url .= '&amp;modern=1';
             }
         } else {
-            $url = 'https://player.blubrry.com/?media_url='. urlencode($media_url);
+            $url = $playerHost . '/?media_url='. urlencode($media_url);
             if ($GeneralSettings['player'] == 'blubrrymodern') {
                 $url .= '&amp;modern=1';
             }
