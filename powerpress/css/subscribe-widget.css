@@ -517,6 +517,10 @@ a.pp-ssb-btn.horizontal {
     content: none;
 }
 
+.pp-ssb-widget-modern a.horizontal .pp-ssb-ic {
+    background-position-x: center;
+}
+
 .pp-ssb-nm {
     line-height: 46px;
     padding-left: 10px;

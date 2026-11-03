@@ -145,6 +145,8 @@ function powerpress_shortcode_handler( $attributes, $content = null )
 
     $url = esc_url_raw($url);
     $image = esc_url_raw($image);
+    $width = absint($width);
+    $height = absint($height);
 
 	if( empty($channel) && !empty($feed) ) // Feed for backward compat.
 		$channel = $feed;
@@ -1237,7 +1239,7 @@ function powerpressplayer_build_html5video($media_url, $EpisodeData=array(), $em
 		if( !empty($EpisodeData['webm_src']) )
 			$webm_src = powerpress_add_flag_to_redirect_url($EpisodeData['webm_src'], 'p');
 		$content .= '<div class="powerpress_player" id="powerpress_player_'. $player_id .'">';
-		$content .= '<a href="'. htmlspecialchars($media_url) .'" title="'. htmlspecialchars(POWERPRESS_PLAY_TEXT) .'" onclick="return powerpress_embed_html5v(\''.$player_id.'\',\''.htmlspecialchars($media_url).'\',\''. htmlspecialchars($player_width) .'\',\''. htmlspecialchars($player_height) .'\', \''. htmlspecialchars($webm_src) .'\');" target="_blank" style="position: relative;">';
+		$content .= '<a href="'. htmlspecialchars($media_url) .'" title="'. htmlspecialchars(POWERPRESS_PLAY_TEXT) .'" onclick="return powerpress_embed_html5v(\''.$player_id.'\',\''.esc_js($media_url).'\',\''. absint($player_width) .'\',\''. absint($player_height) .'\', \''. esc_js($webm_src) .'\');" target="_blank" style="position: relative;">';
 		if( !empty($EpisodeData['custom_play_button']) ) // This currently does not apply
 		{
 			$cover_image = $EpisodeData['custom_play_button'];
@@ -1269,7 +1271,7 @@ function powerpressplayer_build_html5video($media_url, $EpisodeData=array(), $em
 		if( $autoplay )
 		{
 			$content .= '<script type="text/javascript"><!--'.PHP_EOL;
-			$content .= "powerpress_embed_html5v('{$player_id}','" . htmlspecialchars($media_url) . "'," . htmlspecialchars($player_width) . "," . htmlspecialchars($player_height) . ",'" . htmlspecialchars($webm_src) . "');\n";
+			$content .= "powerpress_embed_html5v('{$player_id}','" . esc_js($media_url) . "'," . absint($player_width) . "," . absint($player_height) . ",'" . esc_js($webm_src) . "');\n";
 			$content .= "//-->\n";
 			$content .= "</script>\n";
 		}
@@ -1397,7 +1399,7 @@ function powerpressplayer_build_html5audio($media_url, $EpisodeData=array(), $em
 		}
 		
 		$content .= '<div class="powerpress_player" id="powerpress_player_'. $player_id .'">';
-		$content .= '<a href="'. htmlspecialchars($media_url) .'" title="'. htmlspecialchars(POWERPRESS_PLAY_TEXT) .'" onclick="return powerpress_embed_html5a(\''.$player_id.'\',\''.htmlspecialchars($media_url).'\');" target="_blank">';
+		$content .= '<a href="'. htmlspecialchars($media_url) .'" title="'. htmlspecialchars(POWERPRESS_PLAY_TEXT) .'" onclick="return powerpress_embed_html5a(\''.$player_id.'\',\''.esc_js($media_url).'\');" target="_blank">';
 		if( $cover_image_default == $cover_image )
 			$content .= '<img src="'. htmlspecialchars($cover_image) .'" title="'. htmlspecialchars(POWERPRESS_PLAY_TEXT) .'" alt="'. htmlspecialchars(POWERPRESS_PLAY_TEXT) .'" style="border:0;" width="23px" height="24px" />';
 		else
@@ -1408,7 +1410,7 @@ function powerpressplayer_build_html5audio($media_url, $EpisodeData=array(), $em
 		if( $autoplay )
 		{
 			$content .= '<script type="text/javascript"><!--'.PHP_EOL;
-			$content .= "powerpress_embed_html5a('{$player_id}','" . htmlspecialchars($media_url) . "');\n";
+			$content .= "powerpress_embed_html5a('{$player_id}','" . esc_js($media_url) . "');\n";
 			$content .= "//-->\n";
 			$content .= "</script>\n";
 		}

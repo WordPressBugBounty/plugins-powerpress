@@ -922,109 +922,109 @@ function powerpress_admin_init()
                 // ====================
 
                 $cadence_preset = '';
-                $valid_presets = ['daily', 'weekly', 'semiweekly', 'biweekly', 'monthly', 'semimonthly', 'bimonthly', 'custom', 'complete'];
+                $valid_presets = [
+                    'daily',
+                    'weekly',
+                    'semiweekly',
+                    'biweekly',
+                    'monthly',
+                    'semimonthly',
+                    'bimonthly',
+                    'custom',
+                ];
                 if (isset($Feed['cadence_preset']) && in_array($Feed['cadence_preset'], $valid_presets, true)) {
                     $cadence_preset = $Feed['cadence_preset'];
                 }
                 $Feed['cadence_preset'] = $cadence_preset;
 
-                if ($cadence_preset === 'complete') {
-                    $Feed['itunes_complete'] = '1';
-                    unset($Feed['update_frequency']);
-                } else {
-                    if (isset($Feed['itunes_complete']) && $Feed['itunes_complete'] !== '1') {
-                        unset($Feed['itunes_complete']);
+                $cadence_rrule_map = [
+                    'daily' => ['freq' => 'DAILY',   'interval' => 1],
+                    'weekly' => ['freq' => 'WEEKLY',  'interval' => 1],
+                    'semiweekly' => ['freq' => 'WEEKLY',  'interval' => 1, 'byday' => 'MO,TH'],
+                    'biweekly' => ['freq' => 'WEEKLY',  'interval' => 2],
+                    'monthly'  => ['freq' => 'MONTHLY', 'interval' => 1],
+                    'semimonthly' => ['freq' => 'MONTHLY', 'interval' => 1, 'bymonthday' => '1,15'],
+                    'bimonthly' => ['freq' => 'MONTHLY', 'interval' => 2],
+                ];
+
+                if (isset($cadence_rrule_map[$cadence_preset])) {
+                    $Feed['update_frequency'] = $cadence_rrule_map[$cadence_preset];
+                } elseif ($cadence_preset === 'custom' && isset($Feed['update_frequency']) && is_array($Feed['update_frequency'])) {
+                    $uf = $Feed['update_frequency'];
+                    $assoc = [];
+
+                    $valid_freq = ['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'];
+                    $freq = strtoupper(trim($uf['freq'] ?? ''));
+                    if (in_array($freq, $valid_freq, true)) {
+                        $assoc['freq'] = $freq;
                     }
 
-                    $cadence_rrule_map = [
-                        'daily' => ['freq' => 'DAILY',   'interval' => 1],
-                        'weekly' => ['freq' => 'WEEKLY',  'interval' => 1],
-                        'semiweekly' => ['freq' => 'WEEKLY',  'interval' => 1, 'byday' => 'MO,TH'],
-                        'biweekly' => ['freq' => 'WEEKLY',  'interval' => 2],
-                        'monthly'  => ['freq' => 'MONTHLY', 'interval' => 1],
-                        'semimonthly' => ['freq' => 'MONTHLY', 'interval' => 1, 'bymonthday' => '1,15'],
-                        'bimonthly' => ['freq' => 'MONTHLY', 'interval' => 2],
-                    ];
-
-                    if (isset($cadence_rrule_map[$cadence_preset])) {
-                        $Feed['update_frequency'] = $cadence_rrule_map[$cadence_preset];
-                    } elseif ($cadence_preset === 'custom' && isset($Feed['update_frequency']) && is_array($Feed['update_frequency'])) {
-                        $uf = $Feed['update_frequency'];
-                        $assoc = [];
-
-                        $valid_freq = ['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'];
-                        $freq = strtoupper(trim($uf['freq'] ?? ''));
-                        if (in_array($freq, $valid_freq, true)) {
-                            $assoc['freq'] = $freq;
+                    $byday_parts = [];
+                    $common_codes = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+                    if (!empty($uf['byday']) && is_array($uf['byday'])) {
+                        foreach ($uf['byday'] as $code) {
+                            $code = strtoupper(trim($code));
+                            if (in_array($code, $common_codes, true)) $byday_parts[] = $code;
                         }
+                    }
 
-                        $byday_parts = [];
-                        $common_codes = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-                        if (!empty($uf['byday']) && is_array($uf['byday'])) {
-                            foreach ($uf['byday'] as $code) {
-                                $code = strtoupper(trim($code));
-                                if (in_array($code, $common_codes, true)) $byday_parts[] = $code;
+                    $monthly_pattern = $uf['monthly_pattern'] ?? 'bymonthday';
+                    if (($freq === 'MONTHLY' || $freq === 'YEARLY') && $monthly_pattern === 'ordinal') {
+                        $valid_pos = ['+1', '+2', '+3', '+4', '-1'];
+                        $pos = trim($uf['ordinal_pos'] ?? '');
+                        $day = strtoupper(trim($uf['ordinal_day'] ?? ''));
+                        if (in_array($pos, $valid_pos, true) && in_array($day, $common_codes, true)) {
+                            $byday_parts[] = $pos . $day;
+                        }
+                    }
+                    if (!empty($byday_parts)) $assoc['byday'] = implode(',', $byday_parts);
+
+                    if (($freq === 'MONTHLY' || $freq === 'YEARLY') && $monthly_pattern === 'bymonthday') {
+                        $days = [];
+                        if (!empty($uf['bymonthday']) && is_array($uf['bymonthday'])) {
+                            foreach ($uf['bymonthday'] as $d) {
+                                $d = (int) $d;
+                                if ($d >= 1 && $d <= 31) $days[] = $d;
                             }
                         }
+                        if (!empty($days)) $assoc['bymonthday'] = implode(',', array_unique($days));
+                    }
 
-                        $monthly_pattern = $uf['monthly_pattern'] ?? 'bymonthday';
-                        if (($freq === 'MONTHLY' || $freq === 'YEARLY') && $monthly_pattern === 'ordinal') {
-                            $valid_pos = ['+1', '+2', '+3', '+4', '-1'];
-                            $pos = trim($uf['ordinal_pos'] ?? '');
-                            $day = strtoupper(trim($uf['ordinal_day'] ?? ''));
-                            if (in_array($pos, $valid_pos, true) && in_array($day, $common_codes, true)) {
-                                $byday_parts[] = $pos . $day;
+                    if ($freq === 'YEARLY') {
+                        $months = [];
+                        if (!empty($uf['bymonth']) && is_array($uf['bymonth'])) {
+                            foreach ($uf['bymonth'] as $m) {
+                                $m = (int) $m;
+                                if ($m >= 1 && $m <= 12) $months[] = $m;
                             }
                         }
-                        if (!empty($byday_parts)) $assoc['byday'] = implode(',', $byday_parts);
+                        if (!empty($months)) $assoc['bymonth'] = implode(',', array_unique($months));
+                    }
 
-                        if (($freq === 'MONTHLY' || $freq === 'YEARLY') && $monthly_pattern === 'bymonthday') {
-                            $days = [];
-                            if (!empty($uf['bymonthday']) && is_array($uf['bymonthday'])) {
-                                foreach ($uf['bymonthday'] as $d) {
-                                    $d = (int) $d;
-                                    if ($d >= 1 && $d <= 31) $days[] = $d;
-                                }
-                            }
-                            if (!empty($days)) $assoc['bymonthday'] = implode(',', array_unique($days));
-                        }
+                    if (isset($uf['interval']) && is_numeric($uf['interval']) && $uf['interval'] > 0) {
+                        $assoc['interval'] = (int) $uf['interval'];
+                    }
 
-                        if ($freq === 'YEARLY') {
-                            $months = [];
-                            if (!empty($uf['bymonth']) && is_array($uf['bymonth'])) {
-                                foreach ($uf['bymonth'] as $m) {
-                                    $m = (int) $m;
-                                    if ($m >= 1 && $m <= 12) $months[] = $m;
-                                }
-                            }
-                            if (!empty($months)) $assoc['bymonth'] = implode(',', array_unique($months));
-                        }
+                    $ends_mode = $uf['ends_mode'] ?? 'never';
+                    if ($ends_mode === 'count' && isset($uf['count']) && is_numeric($uf['count']) && $uf['count'] > 0) {
+                        $assoc['count'] = (int) $uf['count'];
+                    } elseif ($ends_mode === 'until' && !empty($uf['until'])) {
+                        $assoc['until'] = trim($uf['until']);
+                    }
 
-                        if (isset($uf['interval']) && is_numeric($uf['interval']) && $uf['interval'] > 0) {
-                            $assoc['interval'] = (int) $uf['interval'];
-                        }
-
-                        $ends_mode = $uf['ends_mode'] ?? 'never';
-                        if ($ends_mode === 'count' && isset($uf['count']) && is_numeric($uf['count']) && $uf['count'] > 0) {
-                            $assoc['count'] = (int) $uf['count'];
-                        } elseif ($ends_mode === 'until' && !empty($uf['until'])) {
-                            $assoc['until'] = trim($uf['until']);
-                        }
-
-                        if (!empty($assoc['freq'])) {
-                            $Feed['update_frequency'] = $assoc;
-                        } else {
-                            unset($Feed['update_frequency']);
-                        }
+                    if (!empty($assoc['freq'])) {
+                        $Feed['update_frequency'] = $assoc;
                     } else {
                         unset($Feed['update_frequency']);
                     }
+                } else {
+                    unset($Feed['update_frequency']);
+                }
 
-                    // CLEAR LEGACY STORAGE KEY
-                    unset($Feed['update_frequency_week'], $Feed['update_frequency_month']);
-                    for ($i = 0; $i < 7; $i++) {
-                        unset($Feed['freq-day-' . $i]);
-                    }
+                // CLEAR LEGACY STORAGE KEY
+                unset($Feed['update_frequency_week'], $Feed['update_frequency_month']);
+                for ($i = 0; $i < 7; $i++) {
+                    unset($Feed['freq-day-' . $i]);
                 }
 
                 // =====
@@ -5141,11 +5141,13 @@ function powerpress_admin_page_tools()
 {
 	$Action = (!empty($_GET['action'])? $_GET['action'] : false);
 	if ($Action == 'powerpress-network-mode-off') {
+        check_admin_referer('powerpress-network-mode');
         $GeneralSettings = get_option('powerpress_general');
         $GeneralSettings['network_mode'] = 0;
         powerpress_save_settings($GeneralSettings);
         $Action = '';
     } elseif ($Action == 'powerpress-network-mode-on') {
+        check_admin_referer('powerpress-network-mode');
         $GeneralSettings = get_option('powerpress_general');
 	    $GeneralSettings['network_mode'] = 1;
         powerpress_save_settings($GeneralSettings);

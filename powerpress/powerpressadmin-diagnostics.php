@@ -177,7 +177,12 @@ function powerpressadmin_diagnostics_process(){
     }
 
     $user_info = wp_get_current_user();
-    if(!empty($user_info->user_email) && isset($_GET['Submit'])){
+    if(!empty($user_info->user_email) && isset($_POST['Submit'])){
+        // nonce + cap gate the send
+        check_admin_referer('powerpress-diagnostics');
+        if(!current_user_can(POWERPRESS_CAPABILITY_EDIT_PAGES)){
+            wp_die(__('You do not have permission to send diagnostics.', 'powerpress'));
+        }
         $emailResults = powerpressadmin_diagnostics_email($user_info->user_email);
 
         if(isset($emailResults['additional_email_error'])){
@@ -219,7 +224,14 @@ function get_apache_info(){
     }
 
     if(function_exists('apache_request_headers')){
-        $return['request_headers'] = apache_request_headers();
+        $req_headers = apache_request_headers();
+        // strip cookie/auth headers, never expose session creds in diagnostics
+        foreach($req_headers as $name => $value){
+            if(in_array(strtolower($name), array('cookie', 'authorization'))){
+                unset($req_headers[$name]);
+            }
+        }
+        $return['request_headers'] = $req_headers;
     }
 
     if(function_exists('apache_response_headers')){
@@ -426,20 +438,20 @@ function powerpressadmin_diagnostics_email($email, $returnRawData = false){
         .'Reply-To: "'.$from_name.'" <'.$from_email.'>'."\n"
         .'Return-Path: "'.$from_name.'" <'.$from_email.'>'."\n";
 
-    if(!empty($_GET['support'])){
+    if(!empty($_POST['support'])){
         $from_name = 'Blubrry Support';
         $from_email = 'support@blubrry.com';
         $headers .= 'CC: "'.$from_name.'" <'.$from_email.'>'."\n";
     }
 
-    if(!empty($_GET['additional']) && !empty($_GET['additional_email'])){
-        $from_email = htmlspecialchars($_GET['additional_email']);
+    if(!empty($_POST['additional']) && !empty($_POST['additional_email'])){
+        $additional_email = sanitize_email(wp_unslash($_POST['additional_email']));
 
         // validate additional email
-        if(!filter_var($from_email, FILTER_SANITIZE_EMAIL)){
+        if(!is_email($additional_email)){
             $additionalEmailInvalid = "The additional email you provided is invalid. Please check the address and try again.";
         } else {
-            $headers .= 'CC: <'.$from_email.'>'."\n";
+            $headers .= 'CC: <'.$additional_email.'>'."\n";
         }
     }
 
@@ -1032,9 +1044,7 @@ function powerpressadmin_diagnostics(){
                     <p class="pp-tools-text">Send the results to the selected email addresses.</p>
                 </div>
 
-                <form enctype="multipart/form-data" method="get" action="<?php echo admin_url('admin.php'); ?>">
-                    <input type="hidden" name="action" value="powerpress-diagnostics" />
-                    <input type="hidden" name="page" value="powerpress/powerpressadmin_tools.php" />
+                <form enctype="multipart/form-data" method="post" action="<?php echo esc_url(admin_url('admin.php?page=powerpress/powerpressadmin_tools.php&action=powerpress-diagnostics')); ?>">
 
                     <?php // Print nonce
                         wp_nonce_field('powerpress-diagnostics');

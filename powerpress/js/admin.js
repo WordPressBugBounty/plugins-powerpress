@@ -726,17 +726,10 @@ function showHideTranscriptBox(setting_type, feed_slug){
 
     function applyCadencePreset(cadence) {
         const customPanel = document.querySelector('[data-uf-custom-panel]');
-        const itunesComplete = document.querySelector('[data-uf-itunes-complete]');
         const freqSelect = document.querySelector('[data-uf-freq]');
         const intervalInput = document.getElementById(freqSelect ? freqSelect.id.replace(/_freq$/, '_interval') : '');
 
         if (customPanel) customPanel.style.display = (cadence === 'custom') ? 'block' : 'none';
-
-        if (cadence === 'complete') {
-            if (itunesComplete) itunesComplete.value = '1';
-            return;
-        }
-        if (itunesComplete) itunesComplete.value = '';
 
         if (cadence === '' || cadence === 'custom') return;
 

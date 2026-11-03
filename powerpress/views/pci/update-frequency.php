@@ -46,16 +46,13 @@ $section_data = [
     'count' => $uf_data['count'] ?? '',
     'until' => $uf_data['until'] ?? '',
     'dtstart' => $DataSource['dtstart'] ?? '',
-    'itunes_complete' => !empty($DataSource['itunes_complete']),
 ];
 
 // EXTRACT CADENCE FROM SELECT DATA
 $cadence_preset = $DataSource['cadence_preset'] ?? '';
 if ($cadence_preset === '') {
     $interval_int = (int) ($section_data['interval'] ?: 1);
-    if ($section_data['itunes_complete']) {
-        $cadence_preset = 'complete';
-    } elseif ($section_data['freq'] === 'DAILY' && $interval_int === 1) {
+    if ($section_data['freq'] === 'DAILY' && $interval_int === 1) {
         $cadence_preset = 'daily';
     } elseif ($section_data['freq'] === 'WEEKLY' && $interval_int === 1 && empty($checkbox_codes) && $ordinal_pos === '') {
         $cadence_preset = 'weekly';
@@ -102,7 +99,6 @@ $cadence_options = [
     'semimonthly' => __('Semimonthly (twice a month)', 'powerpress'),
     'bimonthly' => __('Bimonthly (every 2 months)', 'powerpress'),
     'custom' => __('Custom', 'powerpress'),
-    'complete' => __('Series complete (no more episodes)', 'powerpress'),
 ];
 
 $custom_display = $cadence_preset === 'custom' ? 'block' : 'none';
@@ -378,10 +374,4 @@ $custom_display = $cadence_preset === 'custom' ? 'block' : 'none';
         </div>
 
     </div>
-
-    <!-- ALIGN <itunes:complete> WITH UPDATE FREQUENCY COMPLETE STATE -->
-    <input type="hidden"
-           name="<?php echo $namePrefix; ?>[itunes_complete]"
-           value="<?php echo $section_data['itunes_complete'] ? '1' : ''; ?>"
-           data-uf-itunes-complete>
 </div>

@@ -141,12 +141,11 @@ class PowerPressNetworkShortCode
         return self::buildPlayerAs($player, self::PREVIEW_MEDIA, []);
     }
 
-    /** episode data the blubrry player needs to resolve a show, which is what gives it artwork */
+    /** episode data for the blubrry player, program artwork. player resolves the episode from media_url */
     static function playerEpisodeData(array $props): array {
         $artwork = (isset($props['artwork_url']) && is_array($props['artwork_url'])) ? $props['artwork_url'] : [];
 
         return [
-            'podcast_id' => (int) ($props['program_id'] ?? 0),
             'itunes_image' => (string) ($artwork['300'] ?? ''),
         ];
     }

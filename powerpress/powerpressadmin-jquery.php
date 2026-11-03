@@ -1297,9 +1297,14 @@ jQuery(document).ready(function($) {
         }
         case 'powerpress-jquery-vts-add-edit-recipient':
         {
-            check_admin_referer('powerpress-jquery-vts-add-edit-recipient');
+            $post_id = intval($_GET['post_id'] ?? $_POST['post_id'] ?? 0);
+            check_admin_referer('powerpress-jquery-vts-add-edit-recipient_' . $post_id);
 
-            $post_id = htmlspecialchars($_GET['post_id'] ?? $_POST['post_id']);
+            // authz: must be able to edit this post before any vts read/write
+            if (!current_user_can('edit_post', $post_id)) {
+                wp_die(__('You do not have permission to edit this post.', 'powerpress'));
+            }
+
             $feed_slug = htmlspecialchars($_GET['feed_slug'] ?? $_POST['feed_slug']);
             $vts_id = htmlspecialchars($_GET['vts_id'] ?? $_POST['vts_id']);
 
@@ -1551,7 +1556,7 @@ jQuery(document).ready(function($) {
             }
         </style>
         <form id="vts-recipient-form" action="<?php echo admin_url(); ?>" enctype="multipart/form-data" method="post">
-            <?php wp_nonce_field('powerpress-jquery-vts-add-edit-recipient'); ?>
+            <?php wp_nonce_field('powerpress-jquery-vts-add-edit-recipient_' . $post_id); ?>
             <input type="hidden" name="post_id" value="<?php echo $post_id?>" />
             <input type="hidden" name="vts_id" value="<?php echo $vts_id?>" />
             <input type="hidden" name="feed_slug" value="<?php echo $feed_slug?>" />

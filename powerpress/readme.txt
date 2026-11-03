@@ -4,7 +4,7 @@ Tags: podcast, apple podcasts, podcast rss feed, spotify, podcast publishing
 Requires at least: 3.6
 Requires PHP: 5.2
 Tested up to: 7.1
-Stable tag: 11.18.0
+Stable tag: 11.18.2
 Donate link: https://blubrry.com/services/podcast-hosting/
 License: GPLv2 or later
 
@@ -164,6 +164,13 @@ If you are a fan of PowerPress, we would greatly appreciate it if you could take
 
 
 == Changelog ==
+
+= 11.18.2 =
+* Security hardening improvements
+
+= 11.18.1 =
+* Fix Apple Complete setting not clearing when unticked
+* Fix Blubrry players not loading on network program pages
 
 = 11.18.0 = 
 * Network update
