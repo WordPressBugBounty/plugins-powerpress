@@ -9,6 +9,7 @@ require_once(POWERPRESS_ABSPATH . '/powerpress-metamarks.php');
 function powerpress_admin_enqueue_scripts($hook)
 {
     if ('post-new.php' === $hook || 'post.php' === $hook) {
+        wp_enqueue_media(['post' => get_post()]);
         powerpress_enqueue_assets([
             'powerpress-episode-box' => [
                 'path' => 'css/episode-box',
@@ -25,6 +26,11 @@ function powerpress_admin_enqueue_scripts($hook)
                 'type' => 'script',
                 'path' => 'js/post',
                 'module' => true,
+            ],
+            'powerpress-media-picker' => [
+                'type' => 'script',
+                'path' => 'js/media-picker',
+                'deps' => ['media-views'],
             ],
         ]);
     }

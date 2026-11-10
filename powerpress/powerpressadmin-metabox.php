@@ -662,6 +662,9 @@ function print_table_body($chapter, $FeedSlug, $object, $row_num)
 
     $uploadDisp = $chapter['img'] == '' ? 'block' : 'none !important';
     $imDisp = $chapter['img'] == '' ? 'none !important' : 'block';
+    $picker_title = esc_attr__('Chapter Image', 'powerpress');
+    $picker_button = esc_attr__('Use this image', 'powerpress');
+    $picker_type_error = esc_attr__('Chapter images must be JPEG or PNG.', 'powerpress');
 
     // add episode data for each row
     $html .= "<div class='{$card} mb-0' style='width: 100%;border-left-color: #1976D2; border-bottom: 1px solid #eee; box-shadow: none;'>";
@@ -679,8 +682,11 @@ function print_table_body($chapter, $FeedSlug, $object, $row_num)
     $html .= "                       name='" . $FeedSlug . "-images[]'";
     $html .= "                       value=''";
     $html .= "                       style='font-size: 90%;' size='250' onchange='powerpress_chapters_art_preview(this)'/>";
+    $html .= "                <input type='hidden' id='powerpress_chapters_image_id_$FeedSlug-row-$row_num' name='{$FeedSlug}-imageIds[]' value='' />";
     $html .= "                <a href='' class='powerpress-chapters-image-browser'";
-    $html .= "                   id='powerpress_chapters_image_browser_$FeedSlug-row-$row_num' onclick='event.preventDefault();browseChapterImages(event);'";
+    $html .= "                   id='powerpress_chapters_image_browser_$FeedSlug-row-$row_num' data-pp-picker='chapter-image'";
+    $html .= "                   data-pp-target='powerpress_chapters_image_$FeedSlug-row-$row_num' data-pp-id-target='powerpress_chapters_image_id_$FeedSlug-row-$row_num'";
+    $html .= "                   data-pp-title='{$picker_title}' data-pp-button='{$picker_button}' data-pp-type-error='{$picker_type_error}'";
     $html .= "                   title='" . esc_attr(__('Select Chapter Image', 'powerpress')) . "'>";
     $html .= "                    " . esc_html(__('UPLOAD', 'powerpress')) . "";
     $html .= "                </a>";
@@ -691,7 +697,7 @@ function print_table_body($chapter, $FeedSlug, $object, $row_num)
     $html .= "                <a id='remove-im-$FeedSlug-row-$row_num' class='ml-2' style='color: #1976D2; cursor: pointer;' onclick='removeIm(this);'>Remove</a>";
     $html .= "            </div>";
     $html .= "</div>";
-    $html .= "<input type='hidden' name='" . $FeedSlug . "-existingIms[]' value='" . $chapter['img'] . "' />";
+    $html .= "<input type='hidden' name='" . $FeedSlug . "-existingIms[]' value='" . esc_attr($chapter['img']) . "' />";
     $html .= "<input id='remove-existing-$FeedSlug-row-$row_num' type='hidden' name='" . $FeedSlug . "-removeExisting[]' value='0' />";
     $html .= "</div>";
     $html .= "<div class='col-sm-1 d-flex align-items-center'><div class='row d-flex justify-content-end align-items-center'>";
@@ -707,6 +713,9 @@ function print_table_body_empty($FeedSlug, $object)
     $html = '';
     // determine styles / colors
     $card = 'card-c chapter-row card-left-border-c';
+    $picker_title = esc_attr__('Chapter Image', 'powerpress');
+    $picker_button = esc_attr__('Use this image', 'powerpress');
+    $picker_type_error = esc_attr__('Chapter images must be JPEG or PNG.', 'powerpress');
 
     // add episode data for each row
     $html .= "<div class='{$card} mb-0 ml-2' style='width: 100%;border-left-color: #1976D2; border-bottom: 1px solid #eee; box-shadow: none;'>";
@@ -725,9 +734,12 @@ function print_table_body_empty($FeedSlug, $object)
     $html .= "                       name='" . $FeedSlug . "-images[]'";
     $html .= "                       value=''";
     $html .= "                       style='font-size: 90%;' size='250' onchange='powerpress_chapters_art_preview(this)'/>";
+    $html .= "                <input type='hidden' id='powerpress_chapters_image_id_$FeedSlug-row-0' name='{$FeedSlug}-imageIds[]' value='' />";
 
     $html .= "                <a href='' class='powerpress-chapters-image-browser'";
-    $html .= "                   id='powerpress_chapters_image_browser_$FeedSlug-row-0' onclick='event.preventDefault();browseChapterImages(event);'";
+    $html .= "                   id='powerpress_chapters_image_browser_$FeedSlug-row-0' data-pp-picker='chapter-image'";
+    $html .= "                   data-pp-target='powerpress_chapters_image_$FeedSlug-row-0' data-pp-id-target='powerpress_chapters_image_id_$FeedSlug-row-0'";
+    $html .= "                   data-pp-title='{$picker_title}' data-pp-button='{$picker_button}' data-pp-type-error='{$picker_type_error}'";
     $html .= "                   title='" . esc_attr(__('Select Chapters Image', 'powerpress')) . "'>";
     $html .= "                    " . esc_html(__('UPLOAD', 'powerpress')) . "";
     $html .= "                </a>";
@@ -760,13 +772,9 @@ function chapters_tab($EnclosureURL, $FeedSlug, $object, $GeneralSettings, $PCIT
     }
     if ($PCIChapters == 1) {
         // first, check if the chapters are hosted on this site. if so, access them directly rather than over http
-        if (strpos($PCIChaptersURL, wp_upload_dir()['baseurl']) !== false) {
-            $self_hosted = true;
-            $chapters_req_url = str_replace(wp_upload_dir()['baseurl'], wp_upload_dir()['basedir'], $PCIChaptersURL);
-        } else {
-            $self_hosted = false;
-            $chapters_req_url = $PCIChaptersURL;
-        }
+        $local_path = PowerPress_Uploader::localPath($PCIChaptersURL);
+        $self_hosted = ($local_path !== false);
+        $chapters_req_url = $self_hosted ? $local_path : $PCIChaptersURL;
         // phpstan: file_get_contents returns false on failure (doesn't throw), suppress warning instead
         $json = false;
         if ($self_hosted || SSRFCheck($chapters_req_url, $FeedSlug, false, "chapters URL")) {
@@ -1199,6 +1207,7 @@ function chapters_tab($EnclosureURL, $FeedSlug, $object, $GeneralSettings, $PCIT
 function print_table_body_vts($timeSplit, $FeedSlug, $vts_id, $post_id)
 {
     $html = '';
+    $vts_id = esc_attr($vts_id);
 
     // determine styles / colors
     $card = 'card-c card-left-border-c';
@@ -1209,6 +1218,7 @@ function print_table_body_vts($timeSplit, $FeedSlug, $vts_id, $post_id)
     $duration = sprintf('%02d:%02d:%02d', intval($seconds / 3600), intval($seconds / 60) % 60, $seconds % 60);
 
     $title = (!empty($timeSplit['recipient']) && $timeSplit['recipient'] == 1) ? 'Value Recipient(s)' : ($timeSplit['remote_item']['item_title'] ?? '');
+    $title = esc_html($title);
 
     $html = "<div class='card-c card-left-border-c mb-0 ml-2' style='border-left-color: #1976D2; border-bottom: 1px solid #eee; box-shadow: none;'>";
     $html .= "<input type='hidden' name='Powerpress[$FeedSlug][vts][$vts_id][post_id]' value='$post_id' />";

@@ -3,6 +3,8 @@
 if( !function_exists('add_action') )
 	die("access denied.");
 
+require_once(POWERPRESS_ABSPATH.'/powerpress-uploader.class.php');
+
 add_action ('wp_loaded', 'redirect_to_settings');
 
 function redirect_to_settings() {
@@ -136,8 +138,10 @@ function powerpress_admin_init()
 		}
 	}
 
-	if( function_exists('powerpress_admin_jquery_init') )
+	// POPUP AND EPISODE BOX DISPATCHER, EDIT_POSTS ROLES
+	if (current_user_can('edit_posts') && function_exists('powerpress_admin_jquery_init')) {
 		powerpress_admin_jquery_init();
+	}
 
 	if( !current_user_can(POWERPRESS_CAPABILITY_MANAGE_OPTIONS) )
 	{
@@ -3072,8 +3076,9 @@ function powerpress_edit_post($post_ID, $post)
                             'chapters' => []
                         );
 
-                        $uploadPath = wp_upload_dir()['basedir'] . '/' . $feed_slug . '/' . intval($_POST['post_ID']);
-                        $uploadURL = wp_upload_dir()['baseurl'] . '/' . $feed_slug . '/' . intval($_POST['post_ID']);
+                        $chapter_post_id = intval(wp_is_post_revision($post_ID) ?: $post_ID);
+                        $uploadPath = wp_upload_dir()['basedir'] . '/' . $feed_slug . '/' . $chapter_post_id;
+                        $uploadURL = wp_upload_dir()['baseurl'] . '/' . $feed_slug . '/' . $chapter_post_id;
                         if (!is_dir($uploadPath)) {
                             wp_mkdir_p($uploadPath);
                             wp_mkdir_p($uploadPath . "/images");
@@ -3087,6 +3092,7 @@ function powerpress_edit_post($post_ID, $post)
                         $chapterTitles = $_POST[$feed_slug."-titles"];
                         $chapterURLs = $_POST[$feed_slug."-urls"];
                         $chapterIms = $_POST[$feed_slug."-images"] ?? [];
+                        $chapterImageIds = $_POST[$feed_slug."-imageIds"] ?? [];
                         $existingIms = $_POST[$feed_slug."-existingIms"];
                         $removeIms = $_POST[$feed_slug."-removeExisting"];
 
@@ -3128,15 +3134,16 @@ function powerpress_edit_post($post_ID, $post)
                                     'existing_file_name' => basename($existingIm),
                                     'remove_existing' => $removeIm == '1',
                                     'new_file_name' => $fileName,
-                                    'new_file' => $fileURL
+                                    'new_file' => $fileURL,
+                                    'new_id' => intval($chapterImageIds[$i] ?? 0),
                                 )
                             );
                         }
 
                         ksort($tempChapters);
 
-                        $uploadPath = wp_upload_dir()['basedir'] . '/' . $feed_slug . '/' . intval($_POST['post_ID']);
-                        $uploadURL = wp_upload_dir()['baseurl'] . '/' . $feed_slug . '/' . intval($_POST['post_ID']);
+                        $uploadPath = wp_upload_dir()['basedir'] . '/' . $feed_slug . '/' . $chapter_post_id;
+                        $uploadURL = wp_upload_dir()['baseurl'] . '/' . $feed_slug . '/' . $chapter_post_id;
                         if (!is_dir($uploadPath)) {
                             wp_mkdir_p($uploadPath);
                             wp_mkdir_p($uploadPath . "/images");
@@ -3154,23 +3161,14 @@ function powerpress_edit_post($post_ID, $post)
 
                             $img = $chapterInfo['img'];
 
+                            // KEEP THE EXISTING IMAGE, OR COPY THE NEW PICK OR URL INTO THE POST'S IMAGES FOLDER
                             if ($img['existing_file'] != '' && $img['new_file_name'] == '') {
                                 $chapter['img'] = $img['existing_file'];
                             } elseif ($img['new_file_name'] != '') {
-                                // hosted on this site: read from disk. otherwise fetch safely, validating every redirect hop
-                                $image_body = false;
-                                if (strpos($img['new_file'], wp_upload_dir()['baseurl']) !== false) {
-                                    $local_path = str_replace(wp_upload_dir()['baseurl'], wp_upload_dir()['basedir'], $img['new_file']);
-                                    $image_body = file_get_contents($local_path);
-                                } else {
-                                    $image_response = powerpress_safe_remote($img['new_file'], ['timeout' => 15, 'limit_response_size' => 10485760], 'GET');
-                                    if (!is_wp_error($image_response) && wp_remote_retrieve_response_code($image_response) === 200) {
-                                        $image_body = wp_remote_retrieve_body($image_response);
-                                    }
-                                }
-                                if ($image_body !== false && $image_body !== '') {
-                                    file_put_contents($uploadPath . "/images/" . $img['new_file_name'], $image_body);
-                                    $chapter['img'] = $uploadURL . "/images/" . $img['new_file_name'];
+                                $image = PowerPress_Uploader::chapterImage($img['new_id'], $img['new_file']);
+                                if ($image !== false) {
+                                    file_put_contents("{$uploadPath}/images/{$image['name']}", $image['bytes']);
+                                    $chapter['img'] = "{$uploadURL}/images/{$image['name']}";
                                 }
                             }
 
@@ -3521,8 +3519,9 @@ function powerpress_admin_head()
 	// Powerpress page
 	if( isset($_GET['page']) && strstr($_GET['page'], 'powerpress' ) !== false )
 	{
+		$subscribe_nonce = current_user_can(POWERPRESS_CAPABILITY_MANAGE_OPTIONS) ? wp_create_nonce('powerpress-create-subscribe-page') : '';
 		powerpress_wp_print_styles();
-		echo "<script type=\"text/javascript\" src=\"". powerpress_get_root_url() ."player.min.js\"></script>\n";
+		echo "<script type=\"text/javascript\" src=\"". powerpress_get_root_url() ."player.min.js?ver=". POWERPRESS_VERSION ."\"></script>\n";
 ?>
 <script type="text/javascript"><!--
 function powerpress_show_field(id, show) {
@@ -3547,7 +3546,7 @@ function powerpress_create_subscribe_page()
 	jQuery.ajax( {
 		type: 'POST',
 		url: '<?php echo admin_url(); ?>admin-ajax.php', 
-		data: { action: 'powerpress_create_subscribe_page', nonce: '<?php echo wp_create_nonce('powerpress-create-subscribe-page'); ?>' },
+		data: { action: 'powerpress_create_subscribe_page', nonce: '<?php echo esc_js($subscribe_nonce); ?>' },
 		timeout: (30 * 1000),
 		success: function(response) {
 			
@@ -4622,6 +4621,11 @@ add_action('wp_ajax_powerpress_refresh_stats', 'powerpress_refresh_stats_ajax');
 
 function powerpress_create_subscribe_page()
 {
+    if (!current_user_can(POWERPRESS_CAPABILITY_MANAGE_OPTIONS)) {
+        $denied = esc_html__('You do not have sufficient permission to manage options.', 'powerpress');
+        wp_die("PAGE-ERROR\n{$denied}");
+    }
+
     // Check for nonce security
     if (!isset($_POST['nonce'])) {
         exit;

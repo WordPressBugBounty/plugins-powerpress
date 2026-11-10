@@ -197,3 +197,29 @@ function powerpress_stp(e) {
 	
 	return false;
 }
+
+/** html5 player link clicks run the embed from the link's data-pp-* attributes */
+if (!window.powerpress_embed_bound) {
+	window.powerpress_embed_bound = true;
+	document.addEventListener('click', function (event) {
+		const path = event.composedPath ? event.composedPath() : [];
+		const link = path.find(function (el) {
+			return el.dataset && el.dataset.ppEmbed;
+		});
+		if (!link) {
+			return;
+		}
+
+		const data = link.dataset;
+		let embedded = true;
+		if (data.ppEmbed === 'html5v') {
+			embedded = powerpress_embed_html5v(data.ppPlayerId, data.ppMediaUrl, data.ppWidth, data.ppHeight, data.ppWebmUrl);
+		} else if (data.ppEmbed === 'html5a') {
+			embedded = powerpress_embed_html5a(data.ppPlayerId, data.ppMediaUrl);
+		}
+
+		if (embedded === false) {
+			event.preventDefault();
+		}
+	});
+}

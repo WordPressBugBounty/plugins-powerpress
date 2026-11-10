@@ -418,29 +418,6 @@ function powerpress_epboxPCIToggle(el){
     }
 }
 
-function browseChapterImages(event) {
-    event.preventDefault();
-    tb_show('Select Chapter Image', 'media-upload.php?type=image&amp;TB_iframe=true&amp;post_id=0', false);
-    g_powerpress_chapters_img_input_id = event.currentTarget.id.replace('image_browser', 'image');
-    if( pp_upload_image_button_funct == false )
-        pp_upload_image_button_funct = window.send_to_editor;
-
-    window.send_to_editor = function(html)
-    {
-        url = jQuery('img', html).attr('src');
-        if (url === undefined) {
-            url = jQuery(html).attr('src');
-        }
-        console.log(g_powerpress_chapters_img_input_id);
-        console.log(url);
-        jQuery('#' + g_powerpress_chapters_img_input_id).val( url ).change();
-        tb_remove();
-        window.send_to_editor = pp_upload_image_button_funct;
-        pp_upload_image_button_funct = false;
-    }
-    return false;
-}
-
 function escapeHTML(str) {
     return str.replace(/[<>"']/g, function (char) {
         switch (char) {

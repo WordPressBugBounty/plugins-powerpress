@@ -579,14 +579,21 @@ function select_all(index,value)
 						$filename = substr($Parts['path'], strrpos($Parts['path'], '/')+1 );
 						echo "File&nbsp;$index:&nbsp;";
 						
+						$file_label = __('File', 'powerpress');
+						$url_label = __('URL', 'powerpress');
+
 						if( empty($episode_data['not_podpress']) && empty($episode_data['imported']) )
 						{
-							echo '<span style="color: #CC0000; font-weight: bold; cursor:pointer;" onclick="alert(\''. __('File', 'powerpress') . ': '. htmlspecialchars($filename) .'\n'. __('URL', 'powerpress') . ': '. htmlspecialchars($episode_data['url']) .'\')">';
+							$label_title = esc_attr("{$file_label}: {$filename}\n{$url_label}: {$episode_data['url']}");
+							echo "<span style=\"color: #CC0000; font-weight: bold; cursor: help;\" title=\"{$label_title}\">";
 							$AllowCleanup = false;
 							$StrandedEpisodes++;
 						}
 						else if( empty($episode_data['not_podpress']) && $episode_data['imported'] )
-							echo '<span style="color: green; font-weight: bold; cursor:pointer;" onclick="alert(\''. __('File', 'powerpress') . ' '. htmlspecialchars($filename) .'\n'. __('URL', 'powerpress') . ': '. htmlspecialchars($episode_data['url']) .'\')">';
+						{
+							$label_title = esc_attr("{$file_label} {$filename}\n{$url_label}: {$episode_data['url']}");
+							echo "<span style=\"color: green; font-weight: bold; cursor: help;\" title=\"{$label_title}\">";
+						}
 						
 						if( empty($episode_data['not_podpress']) && empty($episode_data['imported']) )
 							echo '*';

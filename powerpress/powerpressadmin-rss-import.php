@@ -548,19 +548,6 @@ jQuery(document).ready( function() {
 				{
 					$upload_path =  $UploadArray['basedir'].'/powerpress/';
 					$upload_url =  $UploadArray['baseurl'].'/powerpress/';
-					$filename = str_replace(" ", "_", basename($itunes_image) );
-					
-					if( file_exists($upload_path . $filename ) )
-					{
-						$filenameParts = pathinfo($filename);
-						if( !empty($filenameParts['extension']) ) {
-							do {
-								$filename_no_ext = substr($filenameParts['basename'], 0, (strlen($filenameParts['extension'])+1) * -1 );
-								$filename = sprintf('%s-%03d.%s', $filename_no_ext, md5( rand(0, 999) . time() ), $filenameParts['extension'] );
-							} while( file_exists($upload_path . $filename ) );
-						}
-					}
-					
 					$options = array();
 					$options['user-agent'] = 'Blubrry PowerPress/'.POWERPRESS_VERSION;
 					if( !empty($_GET['import']) && $_GET['import'] == 'powerpress-squarespace-rss-podcast' )
@@ -575,13 +562,30 @@ jQuery(document).ready( function() {
 						$this->addError( __('Error downloading program image.', 'powerpress') );
 					}
 		
-					if( !empty($image_data) ) {
+					// DETECTED IMAGE TYPE, JPEG OR PNG, SETS THE EXTENSION
+					$image_info = !empty($image_data) ? @getimagesizefromstring($image_data) : false;
+					$image_types = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png'];
+					$image_ext = ($image_info && isset($image_types[$image_info[2]])) ? $image_types[$image_info[2]] : '';
+
+					// SAVE UNDER A UNIQUE NAME AND PREVIEW, OR REPORT WHY NOT
+					if ($image_ext !== '') {
+						$image_path = (string) parse_url($itunes_image, PHP_URL_PATH);
+						$image_base = sanitize_file_name(pathinfo(rawurldecode(basename($image_path)), PATHINFO_FILENAME));
+						if ($image_base === '') {
+							$image_base = 'program-image';
+						}
+						$filename = wp_unique_filename($upload_path, "{$image_base}.{$image_ext}");
+
 						file_put_contents($upload_path.$filename, $image_data);
 						$NewSettings['itunes_image'] = $upload_url . $filename;
-                        echo "<img id='pp-onboarding-artwork-preview' src='{$NewSettings['itunes_image']}' alt='{$NewSettings['itunes_image']}' />";
+						$image_url = esc_url($NewSettings['itunes_image']);
+                        echo "<img id='pp-onboarding-artwork-preview' src='{$image_url}' alt='{$image_url}' />";
                         echo '<ul class="ul-disc" id="pp-onboarding-artwork-link">';
-						echo sprintf('Program image saved to:<br /> <a href="%s" style="margin-top: 1em;">%s</a>.', ($upload_url . $filename), ($upload_url . $filename) );
+						echo sprintf('Program image saved to:<br /> <a href="%s" style="margin-top: 1em;">%s</a>.', $image_url, $image_url);
                         echo '</ul>';
+					} else if (!empty($image_data)) {
+						$this->addError(__('Program image is not a JPEG or PNG.', 'powerpress'));
+						echo esc_html__('Program image is not a JPEG or PNG.', 'powerpress');
 					} else {
 						$this->addError( __('No program image downloaded.', 'powerpress') );
 						echo 'Error occurred downloading program image.';

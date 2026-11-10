@@ -9,6 +9,8 @@ $feed_desc = !empty($FeedSettings['description']) ? $FeedSettings['description']
 $explicit = !empty($FeedSettings['itunes_explicit']) ? $FeedSettings['itunes_explicit'] : 0;
 $category = !empty($FeedSettings['apple_cat_1']) ? $FeedSettings['apple_cat_1'] : '';
 if (isset($_FILES['itunes_image_file'])) {
+    check_admin_referer('powerpress-show-basics', 'pp_show_basics_nonce');
+
     $feed_info = explode(" ", $_POST['basic_details']);
     foreach ($feed_info as $i => $word) {
         switch($word) {
@@ -75,7 +77,11 @@ if (isset($_FILES['itunes_image_file'])) {
     }
 }
 if (isset($_POST['pp_start']['title'])) {
-    $SaveSettings = powerpress_stripslashes($_POST['pp_start']);
+    check_admin_referer('powerpress-show-basics', 'pp_show_basics_nonce');
+
+    // THIS STEP'S FIELDS ONLY
+    $show_basics_keys = array_flip(['title', 'description', 'apple_cat_1', 'itunes_explicit', 'itunes_image', 'name', 'email']);
+    $SaveSettings = array_intersect_key(powerpress_stripslashes($_POST['pp_start']), $show_basics_keys);
     if (isset($previewImageURL)) {
         unset($SaveSettings['itunes_image']);
         $SaveSettings['itunes_image'] = $previewImageURL;
@@ -103,6 +109,7 @@ if (isset($_POST['pp_start']['title'])) {
                 <div class="pp_flex-grid">
                     <div class="pp_col" style="margin-left: 0;">
                         <form id="basic-feed" enctype="multipart/form-data" action="" method="post">
+                            <?php wp_nonce_field('powerpress-show-basics', 'pp_show_basics_nonce', false); ?>
                             <h4 style="margin-bottom: 2ch;"><?php echo __('Podcaster Information', 'powerpress'); ?></h4>
                             <div style="width: 200%;">
                                 <div class="pp_form-group" style="display: inline-block; width: 40%;">
@@ -182,6 +189,7 @@ if (isset($_POST['pp_start']['title'])) {
 
                     <div id="artwork-onboarding-container" class="pp_col" style="">
                         <form id="artwork" enctype="multipart/form-data" action="" method="post">
+                            <?php wp_nonce_field('powerpress-show-basics', 'pp_show_basics_nonce', false); ?>
                             <div style="margin-left: 3em;">
                                 <div id="error-container" style="display: none;"><h5 style="font-weight: bold;color: red;"><img style="vertical-align: middle;margin: 0 5px 3px 0;" src="<?php echo powerpress_get_root_url(); ?>images/onboarding/cancel.svg"><?php echo __('Your image is not valid.', 'powerpress'); ?></h5></div>
 

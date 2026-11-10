@@ -316,9 +316,9 @@ function wp_powerpress_player_scripts()
 {
 	// include what's needed for each plaer
 	if( defined('POWERPRESS_JS_DEBUG') )
-		wp_enqueue_script( 'powerpress-player', powerpress_get_root_url() .'player.js');
+		wp_enqueue_script( 'powerpress-player', powerpress_get_root_url() .'player.js', [], POWERPRESS_VERSION);
 	else
-		wp_enqueue_script( 'powerpress-player', powerpress_get_root_url() .'player.min.js');
+		wp_enqueue_script( 'powerpress-player', powerpress_get_root_url() .'player.min.js', [], POWERPRESS_VERSION);
 }
 add_action( 'wp_powerpress_player_scripts', 'wp_powerpress_player_scripts' );
 
@@ -1239,7 +1239,23 @@ function powerpressplayer_build_html5video($media_url, $EpisodeData=array(), $em
 		if( !empty($EpisodeData['webm_src']) )
 			$webm_src = powerpress_add_flag_to_redirect_url($EpisodeData['webm_src'], 'p');
 		$content .= '<div class="powerpress_player" id="powerpress_player_'. $player_id .'">';
-		$content .= '<a href="'. htmlspecialchars($media_url) .'" title="'. htmlspecialchars(POWERPRESS_PLAY_TEXT) .'" onclick="return powerpress_embed_html5v(\''.$player_id.'\',\''.esc_js($media_url).'\',\''. absint($player_width) .'\',\''. absint($player_height) .'\', \''. esc_js($webm_src) .'\');" target="_blank" style="position: relative;">';
+
+		// EMBED ARGS AS DATA ATTRIBUTES, PLAYER.JS RUNS THE EMBED ON CLICK
+		$embed_attrs = [
+			'data-pp-embed' => 'html5v',
+			'data-pp-player-id' => $player_id,
+			'data-pp-media-url' => $media_url,
+			'data-pp-width' => absint($player_width),
+			'data-pp-height' => absint($player_height),
+			'data-pp-webm-url' => $webm_src,
+		];
+		$embed_html = '';
+		foreach ($embed_attrs as $attr => $value) {
+			$value = esc_attr($value);
+			$embed_html .= " {$attr}=\"{$value}\"";
+		}
+
+		$content .= '<a href="'. htmlspecialchars($media_url) .'" title="'. htmlspecialchars(POWERPRESS_PLAY_TEXT) .'"'. $embed_html .' target="_blank" style="position: relative;">';
 		if( !empty($EpisodeData['custom_play_button']) ) // This currently does not apply
 		{
 			$cover_image = $EpisodeData['custom_play_button'];
@@ -1399,7 +1415,20 @@ function powerpressplayer_build_html5audio($media_url, $EpisodeData=array(), $em
 		}
 		
 		$content .= '<div class="powerpress_player" id="powerpress_player_'. $player_id .'">';
-		$content .= '<a href="'. htmlspecialchars($media_url) .'" title="'. htmlspecialchars(POWERPRESS_PLAY_TEXT) .'" onclick="return powerpress_embed_html5a(\''.$player_id.'\',\''.esc_js($media_url).'\');" target="_blank">';
+
+		// EMBED ARGS AS DATA ATTRIBUTES, PLAYER.JS RUNS THE EMBED ON CLICK
+		$embed_attrs = [
+			'data-pp-embed' => 'html5a',
+			'data-pp-player-id' => $player_id,
+			'data-pp-media-url' => $media_url,
+		];
+		$embed_html = '';
+		foreach ($embed_attrs as $attr => $value) {
+			$value = esc_attr($value);
+			$embed_html .= " {$attr}=\"{$value}\"";
+		}
+
+		$content .= '<a href="'. htmlspecialchars($media_url) .'" title="'. htmlspecialchars(POWERPRESS_PLAY_TEXT) .'"'. $embed_html .' target="_blank">';
 		if( $cover_image_default == $cover_image )
 			$content .= '<img src="'. htmlspecialchars($cover_image) .'" title="'. htmlspecialchars(POWERPRESS_PLAY_TEXT) .'" alt="'. htmlspecialchars(POWERPRESS_PLAY_TEXT) .'" style="border:0;" width="23px" height="24px" />';
 		else

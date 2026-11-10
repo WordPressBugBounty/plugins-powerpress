@@ -74,27 +74,6 @@ class PowerPressNetwork
             require_once(dirname(__FILE__) . '/shortcodes/Grid.php');
             require_once(dirname(__FILE__) . '/shortcodes/Carousel.php');
         }
-
-        if (is_admin() && isset($_GET['page']) && $_GET['page'] == 'powerpress') {
-            $key = $_GET['key'] ?? '';
-
-            switch ($key) {
-                case 'programs':
-                    include(dirname(__FILE__) . '/network/programs.php');
-                    break;
-                case 'lists':
-                    include(dirname(__FILE__) . '/network/lists.php');
-                    break;
-                case 'base':
-                    include(dirname(__FILE__) . '/network/base.php');
-                    break;
-                case 'applications':
-                    include(dirname(__FILE__) . '/network/applications.php');
-                    break;
-                default:
-                    break;
-            }
-        }
     }
 
 	/** the blubrry access token powerpress holds, or false when there is none */

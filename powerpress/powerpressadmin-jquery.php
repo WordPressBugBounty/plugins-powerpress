@@ -1306,7 +1306,7 @@ jQuery(document).ready(function($) {
             }
 
             $feed_slug = htmlspecialchars($_GET['feed_slug'] ?? $_POST['feed_slug']);
-            $vts_id = htmlspecialchars($_GET['vts_id'] ?? $_POST['vts_id']);
+            $vts_id = sanitize_key($_GET['vts_id'] ?? $_POST['vts_id'] ?? '');
 
             if ($feed_slug == 'podcast')
                 $enclosureArray = get_post_meta($post_id, 'enclosure', true);
@@ -1502,7 +1502,7 @@ jQuery(document).ready(function($) {
             let unset = <?php echo intval($unset); ?>;
 
             if (exit == 1) {
-                window.parent.document.getElementById("recipient-title-<?php echo $get_vts_id; ?>").innerHTML = '<?php echo htmlspecialchars($vtsInfo[$vts_id]['remote_item']['item_title'] ?? ''); ?>';
+                window.parent.document.getElementById("recipient-title-<?php echo $get_vts_id; ?>").innerHTML = <?php echo wp_json_encode(esc_html($vtsInfo[$vts_id]['remote_item']['item_title'] ?? '')); ?>;
                 window.parent.document.getElementById("add-edit-recipient-<?php echo $get_vts_id; ?>").innerHTML = 'Edit Recipient';
                 window.parent.tb_remove();
             }
@@ -2196,6 +2196,11 @@ self.parent.tb_remove();
 				echo "Error";
 		}; break;
         case 'powerpress-ep-box-options': {
+            if (!current_user_can(POWERPRESS_CAPABILITY_MANAGE_OPTIONS)) {
+                $denied = esc_html__('You do not have sufficient permission to manage options.', 'powerpress');
+                wp_die($denied, 403);
+            }
+
         if (defined('WP_DEBUG')) {
             if (WP_DEBUG) {?>
         <link rel="stylesheet" href="<?php echo powerpress_get_root_url(); ?>css/episode-box.css" type="text/css" media="screen" />

@@ -192,7 +192,7 @@ function powerpress_admin_players($type = 'audio'){
 
     <link rel="stylesheet" href="<?php echo powerpress_get_root_url(); ?>3rdparty/colorpicker/css/colorpicker.css" type="text/css" />
     <script type="text/javascript" src="<?php echo powerpress_get_root_url(); ?>3rdparty/colorpicker/js/colorpicker.js"></script>
-    <script type="text/javascript" src="<?php echo powerpress_get_root_url(); ?>player.min.js"></script>
+    <script type="text/javascript" src="<?php echo powerpress_get_root_url(); ?>player.min.js?ver=<?php echo POWERPRESS_VERSION; ?>"></script>
 
     <script type="text/javascript">
 
