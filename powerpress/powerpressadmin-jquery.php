@@ -118,7 +118,8 @@ function powerpress_admin_jquery_init()
 
 		case 'powerpress-jquery-media-delete': {
 
-			if( !current_user_can('edit_posts') )
+			// A HOSTED DELETE ACTS ON THE PROGRAM, SITE CAPABILITY ONLY
+			if( !current_user_can(POWERPRESS_CAPABILITY_MANAGE_OPTIONS) )
 			{
 				powerpress_admin_jquery_header('Uploader');
 				powerpress_page_message_add_notice( __('You do not have sufficient permission to upload media.', 'powerpress') );
@@ -187,21 +188,30 @@ function powerpress_admin_jquery_init()
             if( !empty($_GET['blubrryProgramKeyword']) && !empty($_GET['remSel']) &&  $_GET['remSel'] == 'true' ) {
                 update_user_meta(get_current_user_id(), 'pp_default_podcast', $blubrryProgramKeyword);
             }
+			// ONLY AN UNPUBLISHED FILE THE PROGRAM LISTS
+			if( $DeleteFile && !powerpress_hosted_media_is_unpublished($Settings, $creds, $blubrryProgramKeyword, $DeleteFile) )
+			{
+				$Msg = __('Only unpublished media files in this program can be deleted.', 'powerpress');
+				$DeleteFile = false;
+			}
+
 			if( $DeleteFile )
 			{
+				// PROGRAM AND FILE ENCODED INTO THE API PATH
+				$keyword_path = rawurlencode($blubrryProgramKeyword);
+				$file_path = rawurlencode($DeleteFile);
 				$json_data = false;
 				$results = array();
 				$api_url_array = powerpress_get_api_array();
 				if ($creds) {
                     $accessToken = powerpress_getAccessToken();
-                    $req_url = sprintf('/2/media/%s/%s?format=json', $Settings['blubrry_program_keyword'], $DeleteFile);
-                    $req_url = sprintf('/2/media/%s/%s?format=json', $blubrryProgramKeyword, $DeleteFile);
+                    $req_url = "/2/media/{$keyword_path}/{$file_path}?format=json";
                     $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA')?'?'. POWERPRESS_BLUBRRY_API_QSA:'');
                     $results = $auth->api($accessToken, $req_url, false, 'DELETE');
                 } else {
                     foreach ($api_url_array as $index => $api_url) {
-                        $req_url = sprintf('%s/media/%s/%s?format=json', rtrim($api_url, '/'), $Settings['blubrry_program_keyword'], $DeleteFile);
-                        $req_url = sprintf('%s/media/%s/%s?format=json', rtrim($api_url, '/'), $blubrryProgramKeyword, $DeleteFile);
+                        $api_base = rtrim($api_url, '/');
+                        $req_url = "{$api_base}/media/{$keyword_path}/{$file_path}?format=json";
                         $req_url .= (defined('POWERPRESS_BLUBRRY_API_QSA') ? '&' . POWERPRESS_BLUBRRY_API_QSA : '');
                         $json_data = powerpress_remote_fopen($req_url, $Settings['blubrry_auth'], array(), 10, 'DELETE');
                         if (!$json_data && $api_url == 'https://api.blubrry.com/') { // Lets force cURL and see if that helps...
@@ -696,7 +706,7 @@ window.onload = function() {
                                            onclick="SelectURL('<?php echo esc_js($data['url']); ?>'); return false;"><?php echo __('Select', 'powerpress'); ?></a>
                                     <?php } else { ?>
                                     <!-- Unpublished Media -->
-                                        <?php if (function_exists('curl_init')) { ?>
+                                        <?php if (function_exists('curl_init') && current_user_can(POWERPRESS_CAPABILITY_MANAGE_OPTIONS)) { ?>
                                             <a href="<?php echo admin_url() . wp_nonce_url("admin.php?action=powerpress-jquery-media-delete", 'powerpress-jquery-media-delete'); ?>&amp;podcast-feed=<?php echo $FeedSlug; ?>&amp;blubrryProgramKeyword=<?php echo urlencode($blubrryProgramKeyword); ?>&amp;delete=<?php echo !empty($data['name']) ? urlencode($data['name']) : ''; ?>"
                                                onclick="return DeleteMedia('<?php echo !empty($data['name']) ? htmlspecialchars($data['name']) : ''; ?>');"><?php echo __('Delete', 'powerpress'); ?></a> |
                                         <?php }
@@ -2366,6 +2376,44 @@ if( $other ) echo $other; ?>
 <div id="container">
 <p style="display: none; text-align: right; position: absolute; top: 5px; right: 5px; margin: 0; padding: 0;"><a href="#" onclick="self.parent.tb_remove();" title="<?php echo __('Cancel', 'powerpress'); ?>"><img src="<?php echo admin_url(); ?>/images/no.png" /></a></p>
 <?php
+}
+
+/** true when the program's hosted media list has $file and it is not published, the files the picker offers to delete */
+function powerpress_hosted_media_is_unpublished($Settings, $creds, $keyword, $file)
+{
+	// 1. THE PROGRAM'S MEDIA LIST, THE SAME REQUEST THE PICKER MAKES
+	$keyword_path = rawurlencode($keyword);
+	$qsa = defined('POWERPRESS_BLUBRRY_API_QSA') ? '&' . POWERPRESS_BLUBRRY_API_QSA : '';
+	$results = false;
+	if ($creds) {
+		require_once(POWERPRESS_ABSPATH .'/powerpressadmin-auth.class.php');
+		$auth = new PowerPressAuth();
+		$req_url = "/2/media/{$keyword_path}/index.json?quota=true&published=true&detail=true{$qsa}";
+		$results = $auth->api(powerpress_getAccessToken(), $req_url);
+	} else {
+		$json_data = false;
+		foreach (powerpress_get_api_array() as $api_url) {
+			$api_base = rtrim($api_url, '/');
+			$req_url = "{$api_base}/media/{$keyword_path}/index.json?quota=true&published=true&detail=true{$qsa}";
+			$json_data = powerpress_remote_fopen($req_url, $Settings['blubrry_auth']);
+			if ($json_data != false) {
+				break;
+			}
+		}
+		$results = powerpress_json_decode($json_data);
+	}
+
+	// 2. LISTED BY NAME AND NOT PUBLISHED
+	if (!is_array($results)) {
+		return false;
+	}
+	foreach ($results as $data) {
+		if (is_array($data) && isset($data['name']) && $data['name'] === $file) {
+			return empty($data['published']);
+		}
+	}
+
+	return false;
 }
 
 function powerpress_admin_jquery_header($title, $jquery = false)
