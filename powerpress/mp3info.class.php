@@ -749,7 +749,7 @@
 					
 					if( !preg_match('/(audio|video)/i', $this->GetContentType() ) )
 					{
-						$this->SetError( sprintf(__('Media URL reporting incorrect content type: %s', 'powerpress'), $this->GetContentType()) );
+						$this->SetError(sprintf(__('Media URL reporting incorrect content type: %s', 'powerpress'), esc_html($this->GetContentType())));
 						return false;
 					}
 					

@@ -4063,14 +4063,10 @@ function powerpress_get_media_info(FeedSlug)
 					}
 					else
 					{
-						var Parts = response.split("\n", 5);
-						if( Parts.length > 5 )
-						{
-							var server_error = response.replace(/\n/g, "<br \/>");
-							jQuery( '#powerpress_warning_'+FeedSlug ).html( '<div style="text-align: left;">Server Error:</div><div style="text-align: left; font-weight: normal;">' + server_error +'<\/div>' );
-						}
-						else if( Parts[1] )
-							jQuery( '#powerpress_warning_'+FeedSlug ).html( Parts[1] );
+						// verification error, show server error line or generic message
+						const errorLine = (Parts[0] === FeedSlug) ? Parts[1] : '';
+						if (errorLine)
+							jQuery( '#powerpress_warning_'+FeedSlug ).html( errorLine );
 						else
 							jQuery( '#powerpress_warning_'+FeedSlug ).text( '<?php echo __('Unknown error occurred while checking Media URL. You can still publish this episode, but will need to enter filesize and duration manually.', 'powerpress'); ?>' );
 
@@ -4317,6 +4313,11 @@ function powerpress_media_info_ajax()
     if ( ! wp_verify_nonce( $_POST['nonce'], 'powerpress-media-info' ) ) {
         wp_die();
     }
+
+    if (!current_user_can('edit_posts')) {
+        wp_die();
+    }
+
     $feed_slug = htmlspecialchars($_POST['feed_slug']);
 	$hosting = $_POST['hosting'];
 	$size = 0;
@@ -4414,7 +4415,7 @@ function powerpress_media_info_ajax()
         }
     }
     if( !empty($MediaInfo['error']) ) {
-        echo $MediaInfo['error'];
+        echo esc_html($MediaInfo['error']);
         if( preg_match('/^https?\:\/\//i', $media_url) )
             echo '<br />'. sprintf('Test: %s', "<a href=\"" . esc_attr($media_url) . "\" target=\"_blank\">" . htmlspecialchars($media_url) . "</a>");
     }
@@ -5704,7 +5705,7 @@ function powerpress_get_media_info_local($media_file, $content_type='', $file_si
 		if( $Mp3Info->GetRedirectCount() > 5 )
 		{
 			// Add a warning that the redirect count exceeded 5, which may prevent some podcatchers from downloading the media.
-			$warning = sprintf( __('Warning, the Media URL %s contains %d redirects.', 'powerpress'), $media_file, $Mp3Info->GetRedirectCount() );
+			$warning = sprintf(__('Warning, the Media URL %s contains %d redirects.', 'powerpress'), esc_html($media_file), $Mp3Info->GetRedirectCount());
 			$warning .=	' [<a href="https://blubrry.com/support/powerpress-documentation/warning-messages-explained/" title="'. __('PowerPress Warnings Explained', 'powerpress') .'" target="_blank">'. __('PowerPress Warnings Explained') .'</a>]';
 			if( $return_warnings )
 				$warning_msg .= $warning;

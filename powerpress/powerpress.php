@@ -3,7 +3,7 @@
 Plugin Name: Blubrry PowerPress
 Plugin URI: https://blubrry.com/services/powerpress-plugin/
 Description: <a href="https://blubrry.com/services/powerpress-plugin/" target="_blank">Blubrry PowerPress</a> is the No. 1 Podcasting plugin for WordPress. Developed by podcasters for podcasters; features include Simple and Advanced modes, multiple audio/video player options, subscribe to podcast tools, podcast SEO features, and more! Fully supports Apple Podcasts (previously iTunes), Google Podcasts, Spotify, and Blubrry Podcasting directories, as well as all podcast applications and clients.
-Version: 11.18.4
+Version: 11.18.5
 Author: Blubrry
 Author URI: https://blubrry.com/
 Requires at least: 3.6
@@ -134,7 +134,7 @@ function PowerPress_PRT_incidence_response() {
 add_action('init', 'PowerPress_PRT_incidence_response');
 
 // WP_PLUGIN_DIR (REMEMBER TO USE THIS DEFINE IF NEEDED)
-define('POWERPRESS_VERSION', '11.18.4' );
+define('POWERPRESS_VERSION', '11.18.5' );
 
 // Translation support:
 if ( !defined('POWERPRESS_ABSPATH') )
@@ -921,10 +921,33 @@ function powerpress_safe_remote($url, $args = [], $method = 'GET') {
     }
 
     if (strtoupper($method) === 'HEAD') {
-        return $opted_out ? wp_remote_head($url, $args) : wp_safe_remote_head($url, $args);
+        return powerpress_safe_remote_head($url, $args, $opted_out);
     }
 
     return $opted_out ? wp_remote_get($url, $args) : wp_safe_remote_get($url, $args);
+}
+
+/** head that sends every redirect hop as its own head, core turns a followed 302 into a get */
+function powerpress_safe_remote_head(string $url, array $args, bool $opted_out) {
+    // HOP BUDGET, CORE FOLLOWING OFF
+    $max_hops = (int)$args['redirection'];
+    $args['redirection'] = 0;
+
+    for ($hop = 0; $hop <= $max_hops; $hop++) {
+        // ONE HEAD, DONE UNLESS IT REDIRECTS
+        $response = $opted_out ? wp_remote_head($url, $args) : wp_safe_remote_head($url, $args);
+        $code = (int)wp_remote_retrieve_response_code($response);
+        $location = wp_remote_retrieve_header($response, 'location');
+        $is_redirect = $code >= 300 && $code < 400 && is_string($location) && $location !== '';
+        if (!$is_redirect || $max_hops === 0) {
+            return $response;
+        }
+
+        // NEXT HOP FROM THE LOCATION
+        $url = WP_Http::make_absolute_url($location, $url);
+    }
+
+    return new WP_Error('http_request_failed', __('Too many redirects.', 'powerpress'));
 }
 
 function powerpress_safe_media_ip($host) {
